@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge report — scaleway-manager</title>
+<style>
+  :root { --bg:#faf7f2; --ink:#1f1b16; --muted:#6b6258; --line:#e2dacd; --card:#fff; --seal:#9b1c1c; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 Georgia, "Times New Roman", serif; padding:2rem 1rem 4rem; }
+  main { max-width:820px; margin:0 auto; }
+  header { display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; border-bottom:2px solid var(--ink); padding-bottom:1.25rem; margin-bottom:1.5rem; }
+  header h1 { margin:0; font-size:1.9rem; }
+  header p { margin:.25rem 0 0; color:var(--muted); }
+  h2 { font-size:1.15rem; margin:2rem 0 .6rem; letter-spacing:.04em; text-transform:uppercase; }
+  ul { margin:.3rem 0; padding-left:1.2rem; }
+  li { margin:.35rem 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:.8rem 1.1rem; }
+  ol.stages li { margin:.5rem 0; }
+  .persona { display:flex; gap:.7rem; padding:.45rem 0; border-bottom:1px dashed var(--line); }
+  .persona:last-child { border-bottom:0; }
+  .persona .icon { font-size:1.3rem; width:1.8rem; text-align:center; }
+  .persona small { color:var(--muted); display:block; }
+  .tag { font:600 .72rem/1 system-ui, sans-serif; letter-spacing:.06em; padding:.2rem .45rem; border-radius:3px; border:1px solid var(--line); color:var(--muted); text-transform:uppercase; }
+  svg { flex:none; max-width:100%; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg width="132" height="132" viewBox="0 0 132 132" role="img" aria-label="HARDENED seal">
+      <circle cx="66" cy="66" r="62" fill="none" stroke="#9b1c1c" stroke-width="4"/>
+      <circle cx="66" cy="66" r="52" fill="none" stroke="#9b1c1c" stroke-width="1.5" stroke-dasharray="3 4"/>
+      <g transform="rotate(-12 66 66)">
+        <rect x="14" y="48" width="104" height="36" rx="3" fill="none" stroke="#9b1c1c" stroke-width="3"/>
+        <text x="66" y="74" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="21" letter-spacing="2" fill="#9b1c1c">HARDENED</text>
+      </g>
+    </svg>
+    <div>
+      <h1>scaleway-manager</h1>
+      <p>Forge report — web UI hosted in a Kubernetes cluster, driving Scaleway through <code>scaleway-operator</code> custom resources.</p>
+    </div>
+  </header>
+
+  <h2>Outcome</h2>
+  <div class="card">
+    The idea is specific enough to start. Purpose, staging, control model and a handful of hard rules are locked. Design, forms and the Scaleway-connectivity check are deliberately left open.
+  </div>
+
+  <h2>What it is</h2>
+  <p>A web service running in a (usually throwaway kind) cluster. Its backend creates, reads, updates and deletes custom resources; <code>scaleway-operator</code>, and later KRO, turn them into real Scaleway infrastructure. The UI is the master on board.</p>
+
+  <h2>Stages, one after the other</h2>
+  <ol class="stages">
+    <li>Test <code>scaleway-operator</code>.</li>
+    <li>Test quick deployment of objects into Scaleway.</li>
+    <li>Test compositions of infrastructure objects with KRO, which could lead to a landing zone.</li>
+  </ol>
+
+  <h2>Locked decisions</h2>
+  <ul>
+    <li>The cluster is the control plane; every managed Scaleway resource is a CR. Existing infrastructure is taken over by writing matching CRs (the operator adopts by name or tags).</li>
+    <li>Delete has no confirmation and no "forget" gesture. It can break things, on purpose.</li>
+    <li>Reach: once a namespace can manage a Scaleway project, the UI does whatever it wants there.</li>
+    <li>The UI fills gaps in the cluster, it does not only report them.</li>
+    <li>kind is disposable; durable state is YAML export and later re-import.</li>
+    <li>At least one non-default namespace is needed before talking to Scaleway; <code>default</code>, <code>kube-system</code>, <code>kube-public</code>, <code>kube-node-lease</code> are never valid support. Fixed list.</li>
+    <li>Forms are hand-written per resource type, iteratively.</li>
+    <li>Edit only on resources that are <code>Synced</code>.</li>
+  </ul>
+
+  <h2>Rejected, and why</h2>
+  <ul>
+    <li><strong>First slice: list Instances, create form, delete.</strong> Too small; ignores the operator's real workflow and the cluster check.</li>
+    <li><strong>Guided wizard creating namespace + NamespaceRole + Secret.</strong> Unbalanced.</li>
+    <li><strong>Two-section home page.</strong> Only an idea; design is not done.</li>
+    <li><strong>Showing Scaleway resources that have no CR.</strong> Meaningless in this model: no CR, no operator.</li>
+  </ul>
+
+  <h2>Weak points that survived</h2>
+  <ul>
+    <li><span class="tag">open</span> How to ensure the cluster can talk to Scaleway. The operator health endpoint covers the global token only, not per-namespace credentials.</li>
+    <li><span class="tag">open</span> Hand-written forms vs. KRO-composed CRDs the UI has never seen (stage 3).</li>
+    <li><span class="tag">open</span> What each namespace section displays; multiple Scaleway accounts (minor).</li>
+  </ul>
+
+  <h2>Voices that pressure-tested it</h2>
+  <div class="card">
+    <div class="persona"><span class="icon">🏗️</span><div><strong>Winston</strong> — System Architect<small>Control-plane identity, bootstrap from an ephemeral cluster.</small></div></div>
+    <div class="persona"><span class="icon">📊</span><div><strong>Mary</strong> — Business Analyst<small>Diagnose vs. fix: auto-repair hides the operator errors being tested.</small></div></div>
+    <div class="persona"><span class="icon">📋</span><div><strong>John</strong> — Product Manager<small>Time for a new user to see what is missing.</small></div></div>
+    <div class="persona"><span class="icon">🎨</span><div><strong>Sally</strong> — UX Designer<small>Hand-written vs. generated forms.</small></div></div>
+    <div class="persona"><span class="icon">🧑‍🔧</span><div><strong>Karim Vasseur</strong> — competitor, internal platform portal (generated)<small>RBAC bypass through a shared service account.</small></div></div>
+    <div class="persona"><span class="icon">🚨</span><div><strong>Léa Brandt</strong> — on-call SRE (generated)<small>Destructive delete, kind teardown vs. real teardown.</small></div></div>
+    <div class="persona"><span class="icon">🧩</span><div><strong>Aurélien Roche</strong> — platform engineer (generated)<small>State living in a laptop cluster.</small></div></div>
+  </div>
+</main>
+</body>
+</html>
