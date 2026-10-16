@@ -2,3 +2,6 @@
 # Les overrides d'équipe (_bmad/custom/config.toml, {skill}.toml) restent versionnés.
 _bmad/config.user.toml
 *.user.toml
+
+# BMad : mémoire de travail des sessions, pas un livrable.
+.memlog.md
