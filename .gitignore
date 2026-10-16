@@ -1,0 +1,4 @@
+# BMad : réglages personnels (générés par l'installeur ou propres à chaque poste).
+# Les overrides d'équipe (_bmad/custom/config.toml, {skill}.toml) restent versionnés.
+_bmad/config.user.toml
+*.user.toml
