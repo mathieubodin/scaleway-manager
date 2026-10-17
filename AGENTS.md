@@ -8,6 +8,7 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 - Never reassure. State facts and results only.
 - Honor every rule the user gives. Never replace a rule with your own judgment; if you think a rule should be broken, say so before acting.
 - Be concise. Verbosity is forbidden.
+- Every file committed to the project is written in English, whatever language the conversation uses. This matches `document_output_language` in `_bmad/`, which only BMAD skills read.
 
 ## Policy
 
@@ -21,7 +22,7 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 ## Versioning
 
 - Everything in `_bmad-output/` is committed to Git: brainstorms, plans, briefs, forge sessions. This overrides the global rule "brainstorm and plan files are never committed" for this project.
-- Exception: `.memlog.md` files are git-ignored (working memory, not deliverables).
+- `.memlog.md` files are committed too: `bmad-spec` treats its memlog as the canonical source and derives `SPEC.md` from it, and work must be resumable on another machine.
 
 ## Where things are
 
