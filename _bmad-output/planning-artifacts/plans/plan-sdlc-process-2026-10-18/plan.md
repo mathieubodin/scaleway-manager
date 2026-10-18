@@ -46,13 +46,14 @@ Verified facts: `gh` token has the `project` scope; Project v2 #4 has the status
 
 Status: **ready** or **blocked (stack)**.
 
-### U1. GitHub repository setup — ready
+### U1. GitHub repository setup — done
 
 - Create labels `route:short`, `route:bug`, `route:long` (`epic` already exists, created with this plan's epic).
-- Create a ruleset on `main`: no direct push, PR required, required status checks (`pr-title`, then the checks of U11 once they exist).
+- Keep the existing classic branch protection on `main` (checked on 2026-10-18: PR required with 0 approvals, required status check `conventional-title`, the job of `.github/workflows/pr-title.yml`, `enforce_admins` on, force pushes and deletions refused). No ruleset is created. The checks of U11 are added to it once they exist.
 - Enable the Project v2 built-in workflows "Item closed → Done" and "Pull request merged → Done" (long G24).
 - Acceptance: `gh label list` shows the four labels; a direct push to `main` is refused; closing a test issue moves it to Done.
 - Depends on: nothing. Required checks are extended after U11.
+- Verified on 2026-10-18: `gh label list` shows `epic`, `route:short`, `route:bug`, `route:long`; GraphQL lists "Item closed" and "Pull request merged" as enabled (switched on in the UI, the API cannot do it); a test issue (#36) added to the Project without status moved to `Done` about 10 s after being closed, then was deleted; a direct push of an empty commit to `main` was refused with `GH006` ("Changes must be made through a pull request", "Required status check \"conventional-title\" is expected") and the remote `main` stayed at `945c57b`.
 
 ### U2. `docs/development-process.md` — ready
 
@@ -138,7 +139,7 @@ Status: **ready** or **blocked (stack)**.
 
 - Workflow `pr-checks.yml` on every PR: `make lint-docs`, `make lint-workflows`, `make test-workflows`, `make check-frozen`, `make check-migration`. Code tests added by U12.
 - The behavior diff stays local.
-- Add the jobs to the required checks of the U1 ruleset.
+- Add the jobs to the required status checks of the `main` branch protection (U1).
 - Acceptance: a PR breaking each check fails on the right job.
 - Depends on: U8, U9, U1, U26.
 
