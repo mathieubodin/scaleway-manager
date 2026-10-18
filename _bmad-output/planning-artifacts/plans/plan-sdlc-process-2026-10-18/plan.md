@@ -117,7 +117,7 @@ Status: **ready** or **blocked (stack)**.
 - `freeze`: `make freeze FILES="..."` records the sha256 of the given test files (code tests and Gherkin features) in the committed manifest `frozen-tests.sha256` (`sha256sum` format), replacing the entries of those files and keeping the others; run only after a human decision.
 - `check-frozen`: recomputes and fails on any changed or missing frozen file; passes when the manifest is absent or empty.
 - Variable `MUTATION` (on by default, `MUTATION=0` switches it off, any other value is an error), used by U12.
-- `prek.toml` (as in `scaleway-operator`): prek only runs things, one tool per file type. Builtin hooks `check-yaml`, `check-toml`, `mixed-line-ending`, shebang checks; local hooks `make fix-docs` and `make check-frozen`. JSON and trailing whitespace are left to Biome (U26) and markdownlint. Install once per clone with `prek install`. `make lint-workflows` is added as a local hook in U26.
+- `prek.toml` (as in `scaleway-operator`): prek only runs things, one tool per file type. Builtin hooks `check-yaml`, `check-toml`, `mixed-line-ending`, shebang checks; local hooks `make fix-docs` and `make check-frozen`. JSON and trailing whitespace are left to Biome (U26) and markdownlint. Install once per clone with `prek install`; when a global `core.hooksPath` is set (on the author's machine it delegates every hook to `.git/hooks/`), `prek install` refuses and `prek install --git-dir "$(git rev-parse --absolute-git-dir)"` is used instead (checked: the global `pre-commit` then runs prek). `make lint-workflows` is added as a local hook in U26.
 - Shell only, no Python.
 - Acceptance: editing a frozen file makes `make check-frozen` fail; `make freeze` then makes it pass.
 - Depends on: nothing.
