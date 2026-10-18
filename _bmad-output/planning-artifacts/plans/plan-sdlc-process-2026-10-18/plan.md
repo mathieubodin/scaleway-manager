@@ -20,7 +20,7 @@ These supersede the brainstorm where they differ.
 | Topic | Decision |
 | --- | --- |
 | Stack-dependent `make` targets (coverage, mutation, code tests, behavior diff, manual kind cluster) | Separate units, marked "blocked by stack choice". Stack-independent targets are delivered now. |
-| Epic | Parent issue + `epic` label + native sub-issues. Verified: creating sub-issues works on this personal repository (epic #2, sub-issues #3 to #32, unit U*n* = issue #*n+2*). |
+| Epic | Parent issue + `epic` label + native sub-issues. Verified: creating sub-issues works on this personal repository (epic #2, sub-issues #3 to #32 and #35; unit U*n* = issue #*n+2* for U1 to U30, U31 = #35). |
 | Route labels | `route:short`, `route:bug`, `route:long`; `epic` added on the parent issue of long work. Default labels stay. |
 | Custom BMad module | `mathieubodin-sdlc`, under `skills/` (`bmad_builder_output_folder`). |
 | Skill names | `sdlc-work` (replaces `/work` everywhere) and `sdlc-gate-page`. The `x:y` form exists only for Claude Code plugins; the BMad installer copies skills flat into `.claude/skills/`. |
