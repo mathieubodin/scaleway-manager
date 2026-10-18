@@ -12,7 +12,7 @@ $(error MUTATION must be 0 or 1, got '$(MUTATION)')
 endif
 export MUTATION
 
-.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report
+.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -52,3 +52,28 @@ cost: ## Token cost of ISSUE=<n> into its work folder cost.json; prints Tokens
 
 cost-report: ## Token cost of every work, per route and step (Markdown)
 	@scripts/cost-report.sh
+
+# Workflow scripts (.claude/workflows, harness fixtures) use a top-level `return`,
+# which Biome cannot parse: oxlint and oxfmt check them. Biome checks the harness,
+# the tests and the JSON files. See docs/development-process.md, "Workflow tooling".
+NODE_BIN := node_modules/.bin
+WORKFLOW_SCRIPTS := $(wildcard .claude/workflows/*.js tests/workflows/fixtures/*.js)
+
+check-node:
+	@[ -x $(NODE_BIN)/biome ] && [ -x $(NODE_BIN)/oxlint ] && [ -x $(NODE_BIN)/oxfmt ] && [ -x $(NODE_BIN)/c8 ] || { \
+		echo "Error: Node tooling missing. Install with: npm ci"; \
+		exit 1; }
+
+lint-workflows: check-node ## Lint and format check: workflow scripts (oxlint, oxfmt), harness and JSON (Biome)
+	$(if $(WORKFLOW_SCRIPTS),$(NODE_BIN)/oxlint --deny-warnings $(WORKFLOW_SCRIPTS))
+	$(if $(WORKFLOW_SCRIPTS),$(NODE_BIN)/oxfmt --check $(WORKFLOW_SCRIPTS))
+	$(NODE_BIN)/biome ci .
+
+fix-workflows: check-node ## Fix lint and format in place, then lint
+	-$(if $(WORKFLOW_SCRIPTS),$(NODE_BIN)/oxlint --fix $(WORKFLOW_SCRIPTS))
+	-$(if $(WORKFLOW_SCRIPTS),$(NODE_BIN)/oxfmt $(WORKFLOW_SCRIPTS))
+	-$(NODE_BIN)/biome check --write .
+	@$(MAKE) --no-print-directory lint-workflows
+
+test-workflows: check-node ## Run the workflow tests under the harness, with coverage (c8)
+	$(NODE_BIN)/c8 node --test 'tests/workflows/**/*.test.js'

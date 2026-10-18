@@ -1,6 +1,7 @@
 # Git hooks run by prek (https://prek.j178.dev). Install once per clone: `prek install`.
 # One tool per file type: local hooks call the same make targets as CI.
-# JSON and trailing whitespace are left to Biome and markdownlint.
+# Workflow scripts go to oxlint and oxfmt, the harness and JSON to Biome (make fix-workflows);
+# trailing whitespace is left to them and markdownlint.
 exclude = { glob = [".claude/skills/bmad-*/**", "_bmad/**"] }
 
 [[repos]]
@@ -17,5 +18,6 @@ hooks = [
 repo = "local"
 hooks = [
     { id = "fix-docs", name = "Markdown lint", entry = "make fix-docs", language = "system", files = "\\.md$", pass_filenames = false },
+    { id = "fix-workflows", name = "Workflows and JSON", entry = "make fix-workflows", language = "system", files = "\\.(js|json)$", pass_filenames = false },
     { id = "check-frozen", name = "Frozen tests", entry = "make check-frozen", language = "system", pass_filenames = false, always_run = true },
 ]

@@ -5,10 +5,7 @@
   },
   "homepage": "https://github.com/mathieubodin/scaleway-manager",
   "repository": "https://github.com/mathieubodin/scaleway-manager",
-  "keywords": [
-    "bmad",
-    "sdlc"
-  ],
+  "keywords": ["bmad", "sdlc"],
   "plugins": [
     {
       "name": "mathieubodin-sdlc",

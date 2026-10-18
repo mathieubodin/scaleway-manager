@@ -529,6 +529,21 @@ Migration: no impact
 
 `make check-migration ISSUE=<n>` fails when the file is not added or changed on the branch. Files are never moved after a release: "Deliver" reads only those changed since the previous tag.
 
+## Workflow tooling
+
+Node tooling is pinned in `package.json` and `package-lock.json`; install it once per clone with `npm ci`.
+
+| Files | Tool | Configuration |
+| --- | --- | --- |
+| Workflow scripts: `.claude/workflows/*.js`, `tests/workflows/fixtures/*.js` | oxlint (lint), oxfmt (format) | `.oxlintrc.json`, `.oxfmtrc.json` |
+| Harness and tests (`tests/workflows/*.js`), JSON files | Biome | `biome.json` |
+| Coverage of the workflow scripts | c8 | `.c8rc.json` |
+
+- `make lint-workflows` checks, `make fix-workflows` fixes then checks, `make test-workflows` runs the tests with coverage and fails below 100 % (branches, lines, functions, statements) of the workflow scripts: their logic is small and fully driven by fake hooks.
+- Why two tools: a workflow script returns its result with a top-level `return`. Biome cannot parse it and has no option for it; ESLint forces it off for ES modules with its default parser. The oxc parser (oxlint, oxfmt) always accepts it. Hooks provided by Claude Code (`agent`, `parallel`, `pipeline`, `phase`, `log`, `args`, `budget`, `workflow`) are declared as globals in `.oxlintrc.json`, so that `no-undef` catches anything else, Node APIs included. `.oxfmtrc.json` sets the line width to 80, as Biome; the other defaults already match.
+- Harness: `tests/workflows/harness.js` runs a workflow script in a fresh V8 context with fake hooks. `runWorkflow(path, { args, respond, budget, workflow })` calls `respond({ prompt, opts, index })` for each `agent()` call and returns the script's result, its `meta`, the agent calls, phases and logs. A `respond` that throws makes that `agent()` return `null`, as a subagent that died; a thunk or stage that throws yields `null` in `parallel` and `pipeline`. `budget.total` is the `budget` option, nothing is spent; `workflow()` calls the `workflow` option. `Date.now()`, `Math.random()`, `Date()` and `new Date()` without argument throw. The script must begin with `export const meta =`; the harness does not check that `meta` is a pure literal. Result and `meta` must be plain data (cloned with `structuredClone`). Errors and coverage point to the lines of the source file.
+- Saved workflows are read from `.claude/workflows/`: tests and fixtures live in `tests/workflows/`, never there.
+
 ## CI
 
 On every PR, `pr-checks.yml` runs `make lint-docs`, `make lint-workflows`, `make test-workflows`, `make check-frozen` and `make check-migration`, with `<n>` read from `Closes #<n>` in the PR body (the check fails without it); `<n>` is the issue of the work, the epic for long work. The jobs are required status checks of `main`, with `conventional-title` (PR title in Conventional Commits form).

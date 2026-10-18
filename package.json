@@ -1,0 +1,12 @@
+{
+  "name": "scaleway-manager-tooling",
+  "private": true,
+  "description": "Development tooling of the process: Biome, workflow test harness",
+  "type": "module",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "c8": "12.0.0",
+    "oxfmt": "0.71.0",
+    "oxlint": "1.86.0"
+  }
+}

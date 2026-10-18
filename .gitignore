@@ -5,3 +5,7 @@ _bmad/config.user.toml
 
 # Claude Code worktrees (sessions and workflow agents).
 .claude/worktrees/
+
+# Node tooling (npm ci).
+node_modules/
+coverage/
