@@ -11,7 +11,7 @@ const VOTE = {
   required: ["yes"],
 };
 
-phase("Vote");
+phase( "Vote" )
 const questions = args?.questions ?? [];
 if (questions.length === 0) {
   log("no question");

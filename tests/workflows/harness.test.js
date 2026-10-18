@@ -40,7 +40,7 @@ test("votes: majority accepts, a dead agent counts as a missing vote", async () 
   });
   assert.deepEqual(run.result, { accepted: ["a"], checked: ["a: ok"] });
   assert.deepEqual(run.phases, ["Vote", "Check"]);
-  assert.equal(run.calls.length, 7);
+  assert.equal(run.calls.length, 8);
   assert.deepEqual(
     run.calls.filter((c) => c.phase === "Check").map((c) => c.prompt),
     ["check a"],
