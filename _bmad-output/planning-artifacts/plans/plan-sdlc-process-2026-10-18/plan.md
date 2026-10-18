@@ -9,7 +9,9 @@ source: _bmad-output/brainstorming/brainstorm-sdlc-local-workflow-2026-10-16/
 
 Scope: "Step 4" and "GitHub mapping" of `decisions.md`. Each unit below is meant to become one GitHub sub-issue of a parent issue labeled `epic`.
 
-Out of scope: the Setup skill, the fake operator (project code), the choice of stack.
+Out of scope: the Setup skill (Setup is run manually; `sdlc-work` only guards it), the fake operator (project code), the choice of stack.
+
+The simulations `simulation-long.md`, `simulation-short.md` and `simulation-bug.md` walk each route on a concrete case. Their decisions (referenced below as long G*n*, short G*n*, bug G*n*) supersede the brainstorm and are carried into the units.
 
 ## Decisions taken while planning
 
@@ -24,10 +26,13 @@ These supersede the brainstorm where they differ.
 | Skill names | `sdlc-work` (replaces `/work` everywhere), `sdlc-parallax`, `sdlc-cold-start`, `sdlc-gate-page`. The `x:y` form exists only for Claude Code plugins; the BMad installer copies skills flat into `.claude/skills/`. |
 | Triage criteria | None fixed. `sdlc-work` proposes a route justified by risk × blast radius; the human confirms. Documented as open. |
 | Documentation lint | `markdownlint-cli2`, configured in `.markdownlint-cli2.yaml`, run by `make lint-docs` locally and in CI. |
-| Process memlog | `_bmad-output/work/issue-{n}-{slug}/.memlog.md`. Gate HTML pages and the evidence record go in the same folder. `SPEC.md` stays where `bmad-spec` writes it (`_bmad-output/specs/spec-{slug}/`) and is referenced from the memlog. |
+| Process memlog | `_bmad-output/work/issue-{n}-{slug}/.memlog.md`. Gate HTML pages, the evidence record, `define-notes.md`, the per-work `plan.md` and `bug-report.md` go in the same folder. `SPEC.md`, `stories.yaml` and the story specs stay where `bmad-spec` and `bmad-build` write them (`_bmad-output/specs/spec-{slug}/`) and are referenced from the memlog. |
+| Branch and slug | Branch `{type}/{n}-{slug}` (type = Conventional Commits type planned for the PR); slug derived from the issue title, kebab-case, at most 4 words, confirmed with the route (long G1, G3). |
 | Migration files after a release | Nothing is moved. "Deliver" keeps only the `docs/migrations/next/` files added or changed since the previous tag (`git diff --name-only <prev-tag>..HEAD`); all files when no tag exists. |
-| Review loop | Driven by `sdlc-work`. `bmad-code-review` has no loop (it offers "Re-run code review" to the human, `steps/step-04-present.md`); its override only defines the lenses and the verifier. |
-| `bmad-build` review | Disabled by override (empty `instruction` on its `review_layers`). The only review is the `bmad-code-review` loop. |
+| Review loop | Driven by `sdlc-work`. `bmad-code-review` has no loop (it offers "Re-run code review" to the human, `steps/step-04-present.md`); its override only defines the lenses and the verifier. Long route: 2 dry passes, at most 5 rounds. Bug route: 1 dry pass, at most 2 rounds. Short route: one pass, verified findings fixed, no second pass. Beyond the cap, `sdlc-work` proposes a way out and the human chooses (long G23, bug G4, short G2). |
+| Role of `bmad-build` | Used only during Plan, to write the story specs up to `ready-for-dev`. Test writers and builders are subagents launched by `sdlc-work` (long G17, G21). Its review layers are disabled by override. |
+| Hand-back | Every process skill gets an `on_complete` override that writes its result to the active process memlog and hands control back to `sdlc-work` (long G4). |
+| Setup | Run manually in a separate session with `bmad-architecture`. `sdlc-work` refuses Plan unless the architecture spine exists and names the stack (long G13). |
 
 Verified facts: `gh` token has the `project` scope; Project v2 #4 has the statuses Backlog, Triage, Define, In Progress, Review, Done; BMad is 6.12.4; `project_knowledge` points to `docs/`; `.memlog.md` files are no longer ignored (done).
 
@@ -39,12 +44,14 @@ Status: **ready** or **blocked (stack)**.
 
 - Create labels `route:short`, `route:bug`, `route:long`, `epic`.
 - Create a ruleset on `main`: no direct push, PR required, required status checks (`pr-title`, then the checks of U9 once they exist).
-- Acceptance: `gh label list` shows the four labels; a direct push to `main` is refused.
+- Enable the Project v2 built-in workflows "Item closed → Done" and "Pull request merged → Done" (long G24).
+- Acceptance: `gh label list` shows the four labels; a direct push to `main` is refused; closing a test issue moves it to Done.
 - Depends on: nothing. Required checks are extended after U9.
 
 ### U2. `docs/development-process.md` — ready
 
-- Full process, condensed from `decisions.md`, the three `sequence-*.md` and the decisions above: routes, gates and their aids, two-failure rule, frozen tests, testing without Scaleway (`@manual`), GitHub mapping, Project v2 statuses, migration files, release.
+- Full process, condensed from `decisions.md`, the three `sequence-*.md`, the three simulations and the decisions above: routes, gates and their aids, two-failure rule, frozen tests, testing without Scaleway (`@manual`), GitHub mapping, Project v2 statuses, migration files, release.
+- Includes the three sequence diagrams corrected with the simulations' "Resulting sequence" (the brainstorm files stay as history). In particular, bug tests are frozen before the builders (bug G1), which supersedes `decisions.md`.
 - Triage criteria marked open.
 - Only what a future reader needs; no history of the brainstorm.
 - Acceptance: `make lint-docs` green; every string constant (labels, statuses, paths, skill names, `Migration: no impact`) matches the code of the other units (coherence check at review).
@@ -62,7 +69,9 @@ Status: **ready** or **blocked (stack)**.
 ### U4. `_bmad/custom/` common overrides — ready
 
 - `persistent_facts = ["file:{project-root}/docs/development-process.md"]` for the process skills: `bmad-forge-idea`, `bmad-spec`, `bmad-review`, `bmad-architecture`, `bmad-create-epics-and-stories`, `bmad-build`, `bmad-code-review`, `bmad-walkthrough`.
-- Acceptance: each skill, when activated, states the process file among its loaded facts.
+- `on_complete` on the same skills: when a `sdlc-work` process memlog is active, write the result to it and hand control back to `sdlc-work` (long G4).
+- `bmad-forge-idea`: `activation_steps_append` to check the code before each question, and at the end have every recorded assumption validated by yes or no (long G5).
+- Acceptance: each skill, when activated, states the process file among its loaded facts; at its end with an active memlog, the memlog has a new entry and `sdlc-work` proposes the next step.
 - Depends on: U2.
 
 ### U5. `bmad-review` override: spec-lint lens — ready
@@ -72,13 +81,13 @@ Status: **ready** or **blocked (stack)**.
 - Acceptance: run on an existing `SPEC.md` with a criterion lacking its verification method; the lens reports it.
 - Depends on: U4.
 
-### U6. `bmad-build` override: rails and builders — ready
+### U6. `bmad-build` override: story specs for Plan — ready
 
-- `implementation_handoff`: (1) a test-writer subagent that receives the spec only, never the code; (2) `make freeze` records the fingerprints; (3) one fresh builder subagent per task, receiving only the ticket (sub-issue) and the frozen tests, in its own worktree started from the work branch; tasks merged one by one into the work branch, others rebase; (4) two-failure rule: improve the ticket, new builder; second failure → back to Plan.
+- `bmad-build` is used only during Plan: for each story of `stories.yaml`, it runs steps 01 and 02 and stops at status `ready-for-dev`, producing `{spec_folder}/stories/{id}-{slug}.md` (long G17). Check how to stop it there (override, or the way `sdlc-work` invokes it).
 - `review_layers` and `oneshot_review_layers`: empty `instruction`.
-- `.claude/settings.json`: `worktree.baseRef: "head"` (to confirm against the Claude Code docs at implementation).
-- Acceptance: on a toy spec, the test writer's prompt contains no code path; a builder that edits a frozen test makes `make check-frozen` fail.
-- Depends on: U4, U8.
+- No `implementation_handoff` override: test writers and builders are launched by `sdlc-work` (U20).
+- Acceptance: on a toy `stories.yaml`, one story spec per story exists in `ready-for-dev` and no code was written.
+- Depends on: U4.
 
 ### U7. `bmad-code-review` override: lenses and verifier — ready
 
@@ -152,8 +161,10 @@ Status: **ready** or **blocked (stack)**.
 
 ### U17. Skill `sdlc-work`: start and triage — ready
 
-- Without argument: questions, route proposal (risk × blast radius) and optional milestone proposal, human confirmation, issue creation with its route label (`epic` for long work), add to Project v2 with its status, work branch, memlog init.
-- With an external issue number not yet triaged: reads it and triages it.
+- Without argument: questions, route proposal (risk × blast radius) and optional milestone proposal, human confirmation, issue creation with its route label (`epic` for long work), add to Project v2 with its status, work branch `{type}/{n}-{slug}`, memlog init (long G1, G3).
+- A chosen milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in the description (long G2).
+- With an external issue number not yet triaged: reads it and triages it; for a bug, writes `bug-report.md` from it (bug G3).
+- Rerouting to the long route: same issue promoted (`route:long` + `epic`, status Define, comment "rerouted: reason"), branch and memlog kept, branch renamed if its type changes (short G4).
 - Python allowed for internal scripts (for example Project v2 status updates).
 - Acceptance: on a test idea, the issue, label, Project status, branch and memlog exist and agree.
 - Depends on: U3, U1, U2.
@@ -166,14 +177,25 @@ Status: **ready** or **blocked (stack)**.
 
 ### U19. Skill `sdlc-work`: short and bug routes — ready
 
-- Orchestrates `sequence-short-process.md` and `sequence-bug-process.md`: change or bug tests first, two-failure rule, one review pass (short) or lighter review (bug), bug tests frozen, migration file, `make evidence`, PR opened with evidence posted, status updates through Done.
+- Short route (`simulation-short.md`): change by the session; one review pass, verified findings fixed, `make` again, unfixed findings listed in the PR (short G2); behavior diff empty for a post-integration simplification, otherwise posted and accepted by the merge (short G3).
+- Bug route (`simulation-bug.md`): test writer reading the code, writing tests only (bug G5); failure shown next to the reported symptom and confirmed by the human (bug G2); `make freeze` before any builder (bug G1); builders with the two-failure rule, `bug-report.md` enriched (bug G3); review with 1 dry pass, at most 2 rounds (bug G4); bug only reproducible against real Scaleway: fake operator first, otherwise `@manual`, or move to `scaleway-operator` (bug G6).
+- Both: migration file, `make evidence`, PR opened with evidence posted, status Review; Done comes from the Project workflows (U1).
 - Behavior diff step skipped until U13 exists, and the skip is written in the evidence record.
-- Depends on: U17, U7, U8, U9, U10.
+- Depends on: U17, U1, U7, U8, U9, U10.
 
 ### U20. Skill `sdlc-work`: long route — ready
 
-- Orchestrates `sequence-long-process.md`: the ten Define steps, spec gate, the seven Plan steps, plan gate, sub-issue creation, rails and build (U6), review loop (2 dry passes with at least 3 lenses, at most 5 rounds, then alert the human; counts kept in the memlog), `/ce-compound`, migration file, evidence, PR.
-- Each gate: commit of the Markdown, comment "validated" or "invalidated: reason" on the epic with the commit link, status update.
+Follows the "Resulting sequence" of `simulation-long.md`:
+
+- Define: `bmad-forge-idea` → `sdlc-parallax` → pre-mortem → research if proposed and accepted (long G8) → answers in `define-notes.md` (long G7) → `bmad-spec` (inputs `forged-idea.md` and `define-notes.md`) → spec-lint loop, alert after 3 rounds (long G9) → `spec.html`.
+- Gates: `xdg-open` on the page (long G12); on validation, commit the work folder and the folders referenced by the memlog, push, comment with the commit link (long G11); on invalidation, propose a return step, the human chooses (long G10).
+- Setup guard before Plan (long G13).
+- Plan: reread the spine, `docs/solutions/`, previous specs and MemPalace (long G14); write `work/…/plan.md` (long G15); Story Breakdown of `bmad-spec` (long G16); story specs through U6; cold-start loop, alert after 3 rounds (long G18); `plan.html`; after the plan gate, one sub-issue per story spec.
+- Rails: one test-writer subagent per story (blind to the code), then a single `make freeze` and a commit, no human check (long G19, G20).
+- Build: one builder subagent per story in a worktree started from the work branch, leaves in parallel, merged one by one, two-failure rule (long G21). Worktree base setting to confirm against the Claude Code docs.
+- Review loop (2 dry passes, at least 3 lenses, at most 5 rounds, counts in the memlog); beyond, proposal and human choice (long G23).
+- Before the PR: `/ce-compound`, MemPalace update, after-integration issues "simplify after #n" and, when relevant, "distill lessons" (short G1), migration file, evidence.
+- PR body with `Closes` for the epic and every sub-issue; sub-issues follow the epic's status (long G22).
 - Depends on: U17, U18, U5, U6, U7, U21, U22, U23.
 
 ### U21. Skill `sdlc-parallax` — ready
@@ -215,4 +237,5 @@ Blocked (stack): U12, U13, U14, U16
 - Ambiguity threshold of the spec-lint gate (U5).
 - Paths covered by the docs lint (U8).
 - Default `bmad-code-review` layers kept or disabled (U7).
-- Exact `worktree.baseRef` setting (U6) and milestone title field (U15): to verify in the docs.
+- Worktree base for builders (U20) and milestone title field (U15): to verify in the docs.
+- How to stop `bmad-build` at `ready-for-dev` (U6).
