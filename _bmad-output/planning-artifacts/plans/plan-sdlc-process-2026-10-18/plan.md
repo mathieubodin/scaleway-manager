@@ -53,7 +53,7 @@ Status: **ready** or **blocked (stack)**.
 - Keep the existing classic branch protection on `main` (checked on 2026-10-18: PR required with 0 approvals, required status check `conventional-title`, the job of `.github/workflows/pr-title.yml`, `enforce_admins` on, force pushes and deletions refused). No ruleset is created. The checks of U11 are added to it once they exist.
 - Enable the Project v2 built-in workflows "Item closed → Done" and "Pull request merged → Done" (long G24).
 - Acceptance: `gh label list` shows the four labels; a direct push to `main` is refused; closing a test issue moves it to Done.
-- Depends on: nothing. Required checks are extended after U11.
+- Depends on: nothing. Required checks extended by U11 (done on 2026-10-18).
 - Verified on 2026-10-18: `gh label list` shows `epic`, `route:short`, `route:bug`, `route:long`; GraphQL lists "Item closed" and "Pull request merged" as enabled (switched on in the UI, the API cannot do it); a test issue (#36) added to the Project without status moved to `Done` about 10 s after being closed, then was deleted; a direct push of an empty commit to `main` was refused with `GH006` ("Changes must be made through a pull request", "Required status check \"conventional-title\" is expected") and the remote `main` stayed at `945c57b`.
 
 ### U2. `docs/development-process.md` — first version done, final pass pending
@@ -144,7 +144,7 @@ Status: **ready** or **blocked (stack)**.
 - Verified on 2026-10-18: two runs of `make evidence ISSUE=2` differ only by "Generated at", and so do a run through make and a direct run of the script; a broken Markdown file makes `lint-docs` recorded as failed with its output, the four other checks still run, exit non-zero; the record passes markdownlint; its cost summary equals `cost.json` (`Tokens` = sum of steps = sum of models). Independent review (security, correctness, coherence): 6 findings, fixed (duration pattern changing words such as `U12s`, make recursion level and thread counts, unreadable `cost.json`, `ISSUE` breaking out of quotes in three targets, wording).
 - Depends on: U8, U9, U31.
 
-### U11. PR CI checks — ready
+### U11. PR CI checks — done
 
 - Workflow `pr-checks.yml` on every PR: `make lint-docs`, `make lint-workflows`, `make test-workflows`, `make check-frozen`, `make check-migration`. Code tests added by U12.
 - The behavior diff stays local.
@@ -152,8 +152,9 @@ Status: **ready** or **blocked (stack)**.
 - Acceptance: a PR breaking each check fails on the right job.
 - `actions/checkout` with `fetch-depth: 0`: `make check-migration` needs the history down to the merge-base with `main` (a depth-1 clone exits 2).
 - Pin the Node version used by CI and run `npm ci` before the Node targets: `.nvmrc` holds `24` (decided with the author; the harness runs `node --test` with a glob, Node 21 or later; verified with Node 24.15.0), read by `actions/setup-node` (`node-version-file`).
-- Done so far: `.github/workflows/pr-checks.yml`, one job per check (`lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration`), actions pinned by commit SHA (`actions/checkout` v7.0.1, `actions/setup-node` v7.0.0, both at least two weeks old), PR values passed through `env`; `check-migration` reads the issue with `scripts/pr-issue.sh` and compares with `origin/<base branch>`. `markdownlint-cli2` pinned at 0.23.3 in `package.json` (decided with the author after comparing it with 0.22.0 on the repository and on deliberately broken files: same results; 0.22.0 had 11 `npm audit` advisories), with `overrides` forcing `smol-toml` 1.9.0 (tested the same way). Remaining: run on a real PR, the breaking PR, required status checks.
+- Done so far: `.github/workflows/pr-checks.yml`, one job per check (`lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration`), actions pinned by commit SHA (`actions/checkout` v7.0.1, `actions/setup-node` v7.0.0, both at least two weeks old), PR values passed through `env`; `check-migration` reads the issue with `scripts/pr-issue.sh` and compares with `origin/<base branch>`. `markdownlint-cli2` pinned at 0.23.3 in `package.json` (decided with the author after comparing it with 0.22.0 on the repository and on deliberately broken files: same results; 0.22.0 had 11 `npm audit` advisories), with `overrides` forcing `smol-toml` 1.9.0 (tested the same way).
 - Depends on: U8, U9, U1, U26.
+- Verified on 2026-10-18: on draft PR #33 (`process/sdlc` at `460b50f`) the five jobs and `conventional-title` passed, the logs showing Node v24.21.0, `OK: docs/migrations/next/2.md (no impact)`, 9 tests and 100 % coverage. A draft PR #37 from `test/999-break-checks` with one independent break per check failed on each job for its own reason (`MD018` in `lint-docs`, oxfmt format issue in `lint-workflows`, an assertion in `test-workflows`, `zz-frozen.txt: FAILED` in `check-frozen`, `the PR body has no 'Closes #<n>'` in `check-migration`) while `conventional-title` passed; PR closed, branch deleted. The five jobs are required status checks of `main` with `conventional-title`, bound to GitHub Actions (`app_id` 15368), `strict` unchanged (false); the rest of the protection unchanged.
 
 ### U12. `make`: code tests, coverage, mutation testing — blocked (stack)
 
