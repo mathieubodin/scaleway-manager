@@ -1,6 +1,6 @@
 ---
 topic: Local work workflow based on the SDLC, then mapping to GitHub items
-status: in-progress
+status: complete
 created: 2026-10-16
 updated: 2026-10-18
 ---
@@ -8,6 +8,8 @@ updated: 2026-10-18
 # SDLC-based local workflow: decisions
 
 Work order set by the author: 1) define the SDLC, 2) build the local workflow, 3) map each step to GitHub items, 4) define how the process materializes for agents. GitHub was not discussed before step 3.
+
+Closed on 2026-10-18. Later decisions, taken while planning, live in `_bmad-output/planning-artifacts/plans/plan-sdlc-process-2026-10-18/plan.md` (section "Decisions taken while planning") and in the simulations next to it; they supersede this file where they differ (for example `/work` became `sdlc-work`, bug tests are frozen before the builders, non-interactive stages run as dynamic workflows). The sequence diagrams in this folder are already up to date.
 
 ## Sources
 
@@ -282,6 +284,6 @@ The session updates the status at each step.
 
 ## Open
 
-- Triage criteria, to refine with use.
-- Names of the route labels (short, intermediate, long, epic), in English, to set at implementation.
-- Step 4: how the process materializes for agents. How it translates into `AGENTS.md`; whether agents must be created; a sequence diagram centered on the Claude session started by the human.
+- Triage criteria, to refine with use. Resolved in the plan: atomic questions with votes (`sdlc-triage`).
+- Names of the route labels (short, intermediate, long, epic), in English, to set at implementation. Resolved in the plan: `route:short`, `route:bug`, `route:long`, `epic`.
+- Step 4: how the process materializes for agents. How it translates into `AGENTS.md`; whether agents must be created; a sequence diagram centered on the Claude session started by the human. Resolved in the plan and the sequence diagrams.

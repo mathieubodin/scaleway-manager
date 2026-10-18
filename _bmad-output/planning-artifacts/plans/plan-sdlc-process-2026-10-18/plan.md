@@ -20,7 +20,7 @@ These supersede the brainstorm where they differ.
 | Topic | Decision |
 | --- | --- |
 | Stack-dependent `make` targets (coverage, mutation, code tests, behavior diff, manual kind cluster) | Separate units, marked "blocked by stack choice". Stack-independent targets are delivered now. |
-| Epic | Parent issue + `epic` label + native sub-issues. Verified: creating sub-issues works on this personal repository (epic #2, sub-issues #3 to #26, unit U*n* = issue #*n+2* for U1 to U24; U25 to U30 have no issue yet). |
+| Epic | Parent issue + `epic` label + native sub-issues. Verified: creating sub-issues works on this personal repository (epic #2, sub-issues #3 to #32, unit U*n* = issue #*n+2*). |
 | Route labels | `route:short`, `route:bug`, `route:long`; `epic` added on the parent issue of long work. Default labels stay. |
 | Custom BMad module | `mathieubodin-sdlc`, under `skills/` (`bmad_builder_output_folder`). |
 | Skill names | `sdlc-work` (replaces `/work` everywhere) and `sdlc-gate-page`. The `x:y` form exists only for Claude Code plugins; the BMad installer copies skills flat into `.claude/skills/`. |
@@ -47,11 +47,11 @@ Status: **ready** or **blocked (stack)**.
 
 ### U1. GitHub repository setup — ready
 
-- Create labels `route:short`, `route:bug`, `route:long`, `epic`.
-- Create a ruleset on `main`: no direct push, PR required, required status checks (`pr-title`, then the checks of U9 once they exist).
+- Create labels `route:short`, `route:bug`, `route:long` (`epic` already exists, created with this plan's epic).
+- Create a ruleset on `main`: no direct push, PR required, required status checks (`pr-title`, then the checks of U11 once they exist).
 - Enable the Project v2 built-in workflows "Item closed → Done" and "Pull request merged → Done" (long G24).
 - Acceptance: `gh label list` shows the four labels; a direct push to `main` is refused; closing a test issue moves it to Done.
-- Depends on: nothing. Required checks are extended after U9.
+- Depends on: nothing. Required checks are extended after U11.
 
 ### U2. `docs/development-process.md` — ready
 
