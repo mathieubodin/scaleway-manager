@@ -1,0 +1,11 @@
+# Process overrides (docs/development-process.md): process file as a fact, code checked
+# before each question, assumptions validated before distilling, hand-back to sdlc-work.
+[workflow]
+persistent_facts = ["file:{project-root}/docs/development-process.md"]
+activation_steps_append = [
+  '''Before each question to the user, look for the answer in the repository (code, docs, `_bmad-output/`) and ask only what it cannot answer; when the repository answers part of it, say what you found.''',
+  '''Before distilling `forged-idea.md`, list every entry of type `assumption` in the session memlog `{workspace}/.memlog.md` and have the user validate each one by yes or no, one at a time; record each answer in that memlog with type `decision`, so that the distilled file reflects them.''',
+]
+on_complete = [
+  '''If the current git branch has the form `<type>/<n>-<slug>` (n and slug taken from the branch name, not from any variable of this skill) and `{project-root}/_bmad-output/work/issue-<n>-<slug>/.memlog.md` exists, a `sdlc-work` process memlog is active: append one line stating what this session produced, with the paths of its output files, by running `uv run {project-root}/_bmad/scripts/memlog.py append --workspace {project-root}/_bmad-output/work/issue-<n>-<slug> --type result --by bmad-forge-idea --text '<that line>'`; the line is plain text in single quotes and contains no single quote, backtick or dollar sign. Then do not recommend a next step yourself: hand control back to `sdlc-work`, which proposes the next step (if `sdlc-work` is not running in this session and the run is interactive, tell the user to run `/sdlc-work <n>`). Otherwise do nothing.''',
+]

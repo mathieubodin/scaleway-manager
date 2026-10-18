@@ -14,7 +14,7 @@ The process skills load this file as a persistent fact: every line added here co
 | Subagent | An agent with a fresh context, started by a workflow (or by the session for the `@manual` test writer of the bug route); works alone and returns a report | No |
 | Command | A tool without AI: `make`, `git`, `gh` | No |
 
-`sdlc-work` keeps every interaction with the human and launches a workflow between two of them. Every BMad skill it calls writes its result to the process memlog and hands control back to `sdlc-work` (`on_complete` override). If the session drifted or stopped, `/sdlc-work <n>` resumes.
+`sdlc-work` keeps every interaction with the human and launches a workflow between two of them. The BMad skills it calls (`bmad-forge-idea`, `bmad-deep-recon`, `bmad-spec`, `bmad-review`, `bmad-architecture`, `bmad-build`, `bmad-code-review`, `bmad-walkthrough`) load this file as a fact and, at their end, write their result to the process memlog and hand control back to `sdlc-work` (overrides in `_bmad/custom/<skill>.toml`). A memlog is active when the current branch is `{type}/{n}-{slug}` and `_bmad-output/work/issue-{n}-{slug}/.memlog.md` exists, so a skill run by hand on a work branch hands back too. `bmad-advanced-elicitation` offers no such override, and `bmad-build`, run for its steps 01 and 02 only during Plan, never reaches its completion step: for both, `sdlc-work` records the result itself. If the session drifted or stopped, `/sdlc-work <n>` resumes.
 
 Workflows:
 
@@ -141,7 +141,7 @@ On another machine the memlog is available from the last gate commit; without it
 
 - `bmad-forge-idea` explores the problem, checks the code before each question, and has every recorded assumption validated by yes or no.
 - `sdlc-parallax`: 3 to 5 fresh agents each write the spec they would execute from `forged-idea.md`; every divergence becomes a question.
-- Pre-mortem with `bmad-advanced-elicitation`: "three months from now the project failed, write the postmortem"; every risk becomes a question.
+- Pre-mortem with `bmad-advanced-elicitation`: "three months from now the project failed, write the postmortem"; every risk becomes a question; `sdlc-work` writes the risks to `define-notes.md` itself.
 - Answers go to `define-notes.md`. When it holds an external factual question without answer, `sdlc-work` proposes research (`bmad-deep-recon`); the human decides, and a skipped research is recorded.
 - `bmad-spec` writes `SPEC.md` from `forged-idea.md` and `define-notes.md`, scope with non-goals and success signal included. Every acceptance criterion names its verification method.
 - Spec-lint loop: `sdlc-spec-lint` asks each atomic question of each acceptance criterion to 3 independent agents; a criterion fails when the proportion of "yes" votes is below a threshold set in code. Each failing criterion becomes a question to the human, the answer goes to `define-notes.md`, `bmad-spec` updates `SPEC.md`, and spec-lint runs again. No gate page while it is red; alert to the human after 3 rounds. A manual `bmad-review` with the `spec-lint` lens asks the same questions once.
