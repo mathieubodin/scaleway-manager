@@ -61,7 +61,7 @@ Status: **ready** or **blocked (stack)**.
 - Full process, condensed from `decisions.md`, the three `sequence-*.md`, the three simulations and the decisions above: routes, gates and their aids, two-failure rule, frozen tests, testing without Scaleway (`@manual`), GitHub mapping, Project v2 statuses, migration files, release.
 - Includes the three corrected sequence diagrams from the brainstorm folder (`sequence-*-process.md`, updated with the simulations). In particular, bug tests are frozen before the builders (bug G1), which supersedes `decisions.md`.
 - Triage and spec-lint questions (from U30 and U5) written in the document.
-- Token cost tracking: what is measured, where, when, and how to read `make cost-report`.
+- Token cost tracking: a short summary and a link to `docs/token-cost-tracking.md` (U31), not a copy.
 - Only what a future reader needs; no history of the brainstorm.
 - Acceptance: `make lint-docs` green; every string constant (labels, statuses, paths, skill names, `Migration: no impact`) matches the code of the other units (coherence check at review).
 - Depends on: nothing. Revisited at the end of the epic for consistency.
@@ -294,16 +294,19 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Acceptance: harness tests of the combination rule (unanimous, split, conflicting answers); a real run on three sample ideas yields the expected routes.
 - Depends on: U26.
 
-### U31. `make cost` and `make cost-report` — ready
+### U31. `make cost` and `make cost-report` — done
 
-- `make cost ISSUE=<n>`: reads the process memlog of the work (step windows with session ids, workflow run ids), the matching transcripts under `~/.claude/projects/<project>/` (main session, `subagents/`, `subagents/workflows/<runId>/`), and writes `_bmad-output/work/issue-{n}-{slug}/cost.json`: tokens per category (input, output, cache creation, cache read) and per model, per step, plus the pre-triage share and an unattributed total.
-- Entries keyed by session id and workflow run id; a recomputation updates only entries whose transcripts are present and keeps the others.
-- Prints the `Tokens` value (input + output + cache creation, all models) for `sdlc-work` to write to the Project field.
-- `make cost-report`: aggregates every `cost.json` per step and per route (route read from the memlog), as a Markdown table.
+- Reference: `docs/token-cost-tracking.md` (ledger format, step names, attribution rules, where `make cost` runs in each route and who runs it, example, limits).
+- `make cost ISSUE=<n>` (`scripts/cost.sh`): reads the `- (event) <keyword> key=value ...` lines of every process memlog (`route`, `step-start`, `step-end`, `workflow-run`, `session`), the transcripts of the sessions named by memlog `<n>` under `~/.claude/projects/<project>/` (main session, `subagents/`, `subagents/workflows/<runId>/`, one record per `message.id`), and writes `_bmad-output/work/issue-{n}-{slug}/cost.json`: tokens per category (input, output, cache creation, cache read) and per model, per step, plus an unattributed total. Pre-triage tokens are counted in the `triage` step, not as a separate share. The route is read from the memlog and stored in `cost.json`.
+- Steps: long `triage`, `define`, `plan`, `rails`, `build`, `review`, `deliver`; bug `triage`, `rails`, `build`, `review`, `deliver`; short `triage`, `change`, `review`, `deliver`; `bootstrap` for epic #2 only.
+- Entries keyed by session id and workflow run id; a recomputation updates only entries whose main session transcript is present, keeps the others, and drops sessions no longer named by the memlog.
+- Prints the `Tokens` value (input + output + cache creation, all models, attributed steps only) for `sdlc-work` to write to the Project field.
+- `make cost-report` (`scripts/cost-report.sh`): aggregates every `cost.json` as two Markdown tables, per work and per route and step.
 - Shell and jq only.
-- Bootstrap: create `work/issue-2-sdlc-process/` with a minimal memlog listing epic #2's sessions under a single "bootstrap" step, and compute its `cost.json`. Must happen before those transcripts are purged (30 days by default, first session on 2026-10-17).
+- Bootstrap: `work/issue-2-sdlc-process/` with a memlog listing epic #2's sessions under the `bootstrap` step (`b8e09581`, `6b67a654`, `b0833aac`, `5ee1d1dd`, chosen by the author; `45a99285`, `4a876ab8`, `85d508f7` left out) and its `cost.json`. Must happen before those transcripts are purged (30 days by default, first session on 2026-10-16).
 - Acceptance: on this session's transcript, the totals match a direct jq sum over the same files; a second run without the transcripts keeps the entries; `make cost-report` lists epic #2.
 - Depends on: U8.
+- Verified on 2026-10-18: `cost.json` of issue 2 equals, per model and category, a direct jq sum of the same files grouped by `message.id`; a run with `COST_TRANSCRIPTS_DIR` set to an empty folder leaves `cost.json` identical; `make cost-report` lists issue 2. Synthetic fixtures (two memlogs sharing one session) check: pre-triage, windows, declared and undeclared runs, subagents, duplicated lines, an open window closed by another work's triage, a `session` line overriding another memlog's window, a session removed from the memlog, fractional seconds, a non-UTC `at` rejected with its line, unknown keys ignored, a non-numeric issue rejected. Independent review (security, correctness, coherence) found these cases; all fixed. Found on the way: the global `claude-token-tracking` Stop hook counts every transcript line without grouping by `message.id` (about 2.2 times the real total for this session).
 
 ## Order
 

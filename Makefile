@@ -12,7 +12,7 @@ $(error MUTATION must be 0 or 1, got '$(MUTATION)')
 endif
 export MUTATION
 
-.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint
+.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -45,3 +45,10 @@ check-frozen: ## Fail if a frozen test file changed or disappeared
 	@if [ -s $(FROZEN_MANIFEST) ]; then \
 		sha256sum --check --strict --quiet $(FROZEN_MANIFEST) && echo "Frozen tests unchanged"; \
 	else echo "No frozen tests"; fi
+
+cost: ## Token cost of ISSUE=<n> into its work folder cost.json; prints Tokens
+	@[ -n "$(ISSUE)" ] || { echo "Error: ISSUE is empty. Usage: make cost ISSUE=<n>"; exit 1; }
+	@scripts/cost.sh $(ISSUE)
+
+cost-report: ## Token cost of every work, per route and step (Markdown)
+	@scripts/cost-report.sh

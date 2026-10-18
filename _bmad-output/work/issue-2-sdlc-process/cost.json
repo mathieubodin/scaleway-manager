@@ -1,0 +1,124 @@
+{
+  "issue": 2,
+  "route": null,
+  "tokens": 3234935,
+  "totals": {
+    "steps": {
+      "bootstrap": {
+        "claude-opus-5-5": {
+          "input": 1276,
+          "output": 496775,
+          "cacheCreation": 2352553,
+          "cacheRead": 126371162
+        },
+        "claude-sonnet-5-5": {
+          "input": 348,
+          "output": 77508,
+          "cacheCreation": 306475,
+          "cacheRead": 18483369
+        }
+      }
+    },
+    "models": {
+      "claude-opus-5-5": {
+        "input": 1276,
+        "output": 496775,
+        "cacheCreation": 2352553,
+        "cacheRead": 126371162
+      },
+      "claude-sonnet-5-5": {
+        "input": 348,
+        "output": 77508,
+        "cacheCreation": 306475,
+        "cacheRead": 18483369
+      }
+    },
+    "unattributed": {}
+  },
+  "sessions": {
+    "5ee1d1dd-14f0-4d12-8349-cdc97d874fd3": {
+      "computedAt": "2026-10-18T15:47:07Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 260,
+            "output": 87583,
+            "cacheCreation": 261867,
+            "cacheRead": 15398309
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "6b67a654-2772-431e-a6a9-11b9d78a40b8": {
+      "computedAt": "2026-10-18T15:47:07Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 546,
+            "output": 197570,
+            "cacheCreation": 1195809,
+            "cacheRead": 58896387
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "b0833aac-c349-441a-a5af-d45da80e4a58": {
+      "computedAt": "2026-10-18T15:47:07Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 462,
+            "output": 210818,
+            "cacheCreation": 820564,
+            "cacheRead": 52005126
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "b8e09581-02a3-41cc-8e58-08b0c08f057a": {
+      "computedAt": "2026-10-18T15:47:07Z",
+      "steps": {
+        "bootstrap": {
+          "claude-sonnet-5-5": {
+            "input": 348,
+            "output": 77508,
+            "cacheCreation": 306475,
+            "cacheRead": 18483369
+          }
+        }
+      },
+      "unattributed": {}
+    }
+  },
+  "runs": {
+    "wf_46d6a333-5ba": {
+      "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
+      "step": "bootstrap",
+      "computedAt": "2026-10-18T15:47:07Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 4,
+          "output": 409,
+          "cacheCreation": 37204,
+          "cacheRead": 35710
+        }
+      }
+    },
+    "wf_6e426de3-937": {
+      "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
+      "step": "bootstrap",
+      "computedAt": "2026-10-18T15:47:07Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 4,
+          "output": 395,
+          "cacheCreation": 37109,
+          "cacheRead": 35630
+        }
+      }
+    }
+  }
+}
