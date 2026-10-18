@@ -9,14 +9,14 @@ updated: 2026-10-18
 
 No spec, no plan. Bug tests are frozen before any builder (bug G1), which supersedes `decisions.md`. The building blocks and the start and resume sequence are described in `sequence-long-process.md`.
 
-Corrected on 2026-10-18 with the simulation [`simulation-bug.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-bug.md) (gap IDs G*n*). The version simulated is in commit `081611a`.
+Corrected on 2026-10-18 with the simulation [`simulation-bug.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-bug.md) (gap IDs G*n*). The version simulated is in commit `081611a`. Stages without human interaction then moved to saved dynamic workflows (participant "Workflows"; see the plan decisions).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor H as Human
     participant W as Session running sdlc-work
-    participant K as Skills (BMad + new)
+    participant F as Workflows
     participant A as Subagents (fresh)
     participant T as make
     participant G as GitHub (gh)
@@ -26,9 +26,11 @@ sequenceDiagram
     W->>H: Proposed tests: Gherkin if visible, plus a code test if relevant
     H->>W: Confirms
     alt Reproducible with the fake operator
-        W->>A: Test writer: bug report, reads the code, writes tests only (G5)
-        A-->>W: Failing tests
-        W->>T: make: run the new tests
+        W->>F: sdlc-rails, mode bug (bug-report.md)
+        F->>A: Test writer: reads the code, writes tests only (G5)
+        A-->>F: Tests
+        F->>A: Run the new tests, no freeze
+        F-->>W: Test files and failure messages
         W->>H: Failure message next to the reported symptom (G2)
         H->>W: Right reason: yes or no
     else Only against real Scaleway (G6)
@@ -39,21 +41,27 @@ sequenceDiagram
         end
     end
     W->>T: make freeze, before any builder (G1)
-    loop Until the bug tests pass, frozen tests intact
-        W->>A: Builder: bug-report.md + frozen tests
-        A-->>W: Fix, or failure
-    end
-    Note over W,A: Two failures: enrich bug-report.md, new builder
-    opt New builder fails too
+    W->>F: sdlc-build, mode bug (bug-report.md, work branch SHA)
+    F->>A: Builder, own worktree: bug-report.md + frozen tests
+    A-->>F: Branch, or failure
+    Note over F,A: Two failures in script: enrich bug-report.md, new builder
+    F-->>W: Branch, or ask the human
+    W->>T: Merge, make check-frozen
+    opt New builder failed too
         W->>H: Switch to the long route?
         H->>W: Decides
     end
     W->>T: make: checks, coverage, mutation, fingerprints, behavior diff
-    loop One dry pass, at most 2 rounds (G4)
-        W->>K: bmad-code-review (lenses + verifier)
-        K->>A: Security, correctness, coherence, verifier
-        A-->>K: Verified findings
-        W->>W: Fix findings
+    W->>F: sdlc-review (dryPasses 1, maxRounds 2)
+    loop In script: one dry pass, at most 2 rounds (G4)
+        F->>A: Security, correctness, coherence, verifier
+        A-->>F: Verified findings
+        F->>A: Fixer: apply verified findings, run make
+    end
+    F-->>W: Converged, or recurring findings at the cap
+    opt Not converged
+        W->>H: Proposed way out
+        H->>W: Chooses
     end
     W->>G: Comment on the issue: what was learned
     W->>W: Write docs/migrations/next/n.md

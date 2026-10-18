@@ -9,14 +9,14 @@ updated: 2026-10-18
 
 For example a typo, or a code simplification after integration. The building blocks and the start and resume sequence are described in `sequence-long-process.md`.
 
-Corrected on 2026-10-18 with the simulation [`simulation-short.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-short.md) (gap IDs G*n*). The version simulated is in commit `081611a`.
+Corrected on 2026-10-18 with the simulation [`simulation-short.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-short.md) (gap IDs G*n*). The version simulated is in commit `081611a`. Stages without human interaction then moved to saved dynamic workflows (participant "Workflows"; see the plan decisions).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor H as Human
     participant W as Session running sdlc-work
-    participant K as Skills (BMad + new)
+    participant F as Workflows
     participant A as Subagents (fresh)
     participant T as make
     participant G as GitHub (gh)
@@ -34,11 +34,11 @@ sequenceDiagram
         H->>W: Decides
         W->>T: make freeze
     end
-    W->>K: bmad-code-review, one pass
-    K->>A: Reviewers + verifier
-    A-->>K: Verified findings
-    W->>W: Fix verified findings (G2)
-    W->>T: make again, no second review
+    W->>F: sdlc-review (singlePass)
+    F->>A: Security, correctness, coherence, verifier
+    A-->>F: Verified findings
+    F->>A: Fixer: apply verified findings, run make, no second review (G2)
+    F-->>W: Fixed and unfixed findings
     opt Bigger than expected (G4)
         W->>H: Reroute to the long route?
         H->>W: Confirms

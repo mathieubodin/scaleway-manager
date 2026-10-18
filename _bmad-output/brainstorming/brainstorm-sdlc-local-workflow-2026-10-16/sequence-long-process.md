@@ -7,9 +7,9 @@ updated: 2026-10-18
 
 # Long process: sequence diagram
 
-The human's Claude session runs the `sdlc-work` orchestrator. `sdlc-work` calls existing BMad skills (some with overrides in `_bmad/custom/`) and new skills of the custom module; skills and `sdlc-work` start fresh subagents; `make` runs the deterministic checks; `gh` writes to GitHub.
+The human's Claude session runs the `sdlc-work` orchestrator. `sdlc-work` calls existing BMad skills (some with overrides in `_bmad/custom/`) and the skills of the custom module for every step that talks with the human; between two such steps it launches saved dynamic workflows (`.claude/workflows/`), whose scripts start fresh subagents and return one result; `make` runs the deterministic checks; `gh` writes to GitHub.
 
-Corrected on 2026-10-18 with the simulation [`simulation-long.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-long.md) (gap IDs long G*n*) and [`simulation-short.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-short.md) (short G*n*). The version simulated is in commit `081611a`. Every skill called by `sdlc-work` writes its result to the process memlog and hands control back through its `on_complete` override (long G4).
+Corrected on 2026-10-18 with the simulation [`simulation-long.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-long.md) (gap IDs long G*n*) and [`simulation-short.md`](../../planning-artifacts/plans/plan-sdlc-process-2026-10-18/simulation-short.md) (short G*n*). The version simulated is in commit `081611a`. Stages without human interaction then moved to saved dynamic workflows (participant "Workflows"; see the plan decisions). Every skill called by `sdlc-work` writes its result to the process memlog and hands control back through its `on_complete` override (long G4).
 
 ## Building blocks
 
@@ -17,7 +17,8 @@ Corrected on 2026-10-18 with the simulation [`simulation-long.md`](../../plannin
 | --- | --- | --- |
 | Session | The Claude conversation the human starts | Yes |
 | Skill | Instructions loaded by the session, which then plays that role | Yes (it is the session) |
-| Subagent | An agent started with a fresh context; works alone and returns a report | No |
+| Workflow | A saved script (`agent()`, `parallel()`, `pipeline()`) run in the background; its loops and counters are code; returns one result | No (no input mid-run) |
+| Subagent | An agent started with a fresh context, here by a workflow; works alone and returns a report | No |
 | Command | A tool without AI: `make`, `git`, `gh` | No |
 
 ## Start and resume
@@ -59,6 +60,7 @@ sequenceDiagram
     actor H as Human
     participant W as Session running sdlc-work
     participant K as Skills (BMad + new)
+    participant F as Workflows
     participant A as Subagents (fresh)
     participant G as GitHub (gh)
 
@@ -69,9 +71,10 @@ sequenceDiagram
     H->>K: Answers
     K->>H: Each recorded assumption: yes or no?
     H->>K: Validates
-    W->>K: sdlc-parallax on forged-idea.md
-    K->>A: 3 to 5 agents write the spec they would execute
-    A-->>K: Divergences
+    W->>F: sdlc-parallax (forged-idea.md)
+    F->>A: 3 to 5 agents write the spec they would execute
+    A-->>F: Specs
+    F-->>W: Divergences as questions
     W->>K: bmad-advanced-elicitation, pre-mortem
     W->>H: Questions from divergences and risks
     H->>W: Answers, written to define-notes.md (G7)
@@ -114,6 +117,7 @@ sequenceDiagram
     actor H as Human
     participant W as Session running sdlc-work
     participant K as Skills (BMad + new)
+    participant F as Workflows
     participant A as Subagents (fresh)
     participant G as GitHub (gh)
 
@@ -121,8 +125,10 @@ sequenceDiagram
     rect rgba(120, 160, 255, 0.15)
     Note over H,G: Plan (status In Progress)
     W->>W: Reread spine, docs/solutions, previous specs, MemPalace (G14)
-    W->>A: Explorations: code, practices, frameworks
-    A-->>W: Findings
+    W->>F: sdlc-explore (spec)
+    F->>A: Readers: code, practices, frameworks
+    A-->>F: Findings
+    F-->>W: Structured map
     W->>H: 2 or 3 approaches with trade-offs
     H->>W: Chooses
     opt The choice changes the spine
@@ -136,9 +142,11 @@ sequenceDiagram
         K-->>W: stories/id-slug.md, status ready-for-dev
     end
     loop Until cold-start is green, alert after 3 rounds (G18)
-        W->>K: sdlc-cold-start
-        K->>A: One fresh agent per story spec
-        A-->>K: Missing items
+        W->>F: sdlc-cold-start (story specs)
+        F->>A: One fresh agent per story spec
+        A-->>F: Missing items
+        F-->>W: Missing items per story
+        W->>H: Questions when a fix needs a decision
         W->>W: Fix plan.md, stories.yaml or story specs
     end
     W->>K: sdlc-gate-page: plan.html
@@ -168,31 +176,36 @@ sequenceDiagram
     actor H as Human
     participant W as Session running sdlc-work
     participant K as Skills (BMad + new)
+    participant F as Workflows
     participant A as Subagents (fresh)
     participant T as make
     participant G as GitHub (gh)
 
     rect rgba(120, 200, 140, 0.15)
     Note over H,G: Rails, build, verification, review
-    loop For each story (G20)
-        W->>A: Test writer: story spec only, no code
-        A-->>W: Gherkin features, code tests
-    end
-    W->>T: make freeze, no human check (G19)
+    W->>F: sdlc-rails, mode long (story specs)
+    F->>A: One test writer per story: story spec only, no code (G20)
+    A-->>F: Gherkin features, code tests
+    F->>A: Run make freeze, no human check (G19)
+    F-->>W: Test files written
     W->>W: Commit tests and fingerprint manifest
     W->>G: Sub-issues In Progress
-    par Leaves in parallel, one worktree each (G21)
-        W->>A: Builder: story spec + frozen tests
-        A-->>W: Code, or failure
+    loop Trunk run, then leaves run (G21)
+        W->>F: sdlc-build, mode long (story specs, work branch SHA)
+        F->>A: One builder per story, own worktree: story spec + frozen tests
+        A-->>F: Branch, or failure
+        Note over F,A: Two failures in script: improve the story spec, new builder. Fails again: back to Plan
+        F-->>W: Finished branches, failed stories
+        W->>T: Merge one by one, make check-frozen after each
     end
-    Note over W,A: Merged one by one into the work branch. Two failures: improve the story spec, new builder. Fails again: back to Plan
     W->>T: make: checks, coverage, mutation, fingerprints
-    loop Until two dry passes with 3 lenses, at most 5 rounds
-        W->>K: bmad-code-review (override: lenses + verifier)
-        K->>A: Security, correctness, coherence, verifier
-        A-->>K: Verified findings
-        W->>W: Fix findings
+    W->>F: sdlc-review (dryPasses 2, maxRounds 5)
+    loop In script: until two dry passes with 3 lenses, at most 5 rounds
+        F->>A: Security, correctness, coherence, verifier
+        A-->>F: Verified findings
+        F->>A: Fixer: apply verified findings, run make
     end
+    F-->>W: Converged, or recurring findings at the cap
     opt Not converged after 5 rounds (G23)
         W->>H: Recurring findings: back to Plan, back to Define, or accept and list in PR
         H->>W: Chooses
