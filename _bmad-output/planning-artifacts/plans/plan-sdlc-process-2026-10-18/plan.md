@@ -236,11 +236,13 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Acceptance: the file grows by at most the section; no rule duplicated from `docs/development-process.md` beyond the hard rules.
 - Depends on: U2, U8, U17.
 
-### U25. Spike: base of `isolation: 'worktree'` — ready
+### U25. Spike: base of `isolation: 'worktree'` — done
 
-- Check from which ref a workflow agent's worktree starts (`main` or the session's HEAD).
-- If not HEAD: `sdlc-build` receives the work branch SHA in `args` and each builder starts with `git reset --hard <sha>` in its worktree.
-- Acceptance: the observed base is written in `docs/development-process.md` with the chosen approach.
+- Checked on 2026-10-18 with Claude Code 2.1.302, one-agent workflow run twice from `process/sdlc` at `d0074c9`:
+  - default setting: the worktree started from `main` (`945c57b`), without the work branch files;
+  - with `"worktree": {"baseRef": "head"}` in `.claude/settings.json`: it started from `d0074c9`, with the work branch files. Worktree and branch removed automatically after each run.
+- Chosen approach: keep `worktree.baseRef: "head"` in the versioned `.claude/settings.json`; `.claude/worktrees/` added to `.gitignore`; no `git reset` in builders, but each builder checks that its `HEAD` equals the SHA passed in `args` and fails otherwise (U29).
+- Remaining: write the result in `docs/development-process.md` (U2).
 - Depends on: nothing.
 
 ### U26. Workflow tooling — ready
@@ -269,7 +271,7 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 ### U29. Workflow `sdlc-build` — ready
 
 - `.claude/workflows/sdlc-build.js`. `args`: mode (`long` or `bug`), story spec paths or `bug-report.md`, work branch SHA (U25), the resolved `sdlc_builder_prompt` (U6).
-- One builder per item with `isolation: 'worktree'` and `sdlc_builder_prompt`, given the story spec (or `bug-report.md`) and the frozen tests. Two-failure rule in script: after a failure, an agent improves the ticket (or enriches `bug-report.md`) and a new builder starts; after a second failure, the item is returned as "back to Plan" (long) or "ask the human" (bug).
+- One builder per item with `isolation: 'worktree'` and `sdlc_builder_prompt`, given the story spec (or `bug-report.md`) and the frozen tests. Each builder first checks that its `HEAD` equals the work branch SHA from `args` (worktrees start from HEAD through `worktree.baseRef: "head"`, U25) and fails otherwise. Two-failure rule in script: after a failure, an agent improves the ticket (or enriches `bug-report.md`) and a new builder starts; after a second failure, the item is returned as "back to Plan" (long) or "ask the human" (bug).
 - Returns the finished branches and the failed items; merging is done by `sdlc-work`.
 - Acceptance: harness tests for success, one failure then success, two failures; a builder that edits a frozen test fails `make check-frozen`.
 - Depends on: U25, U26, U8, U6.
@@ -296,5 +298,5 @@ Blocked (stack): U12, U13, U14, U16
 ## Open in this plan
 
 - Paths covered by the docs lint (U8).
-- Worktree base for builders (U25) and milestone title field (U15): to verify.
+- Milestone title field (U15): to verify.
 - How to stop `bmad-build` at `ready-for-dev` (U6).

@@ -2,3 +2,6 @@
 # Team overrides (_bmad/custom/config.toml, {skill}.toml) stay versioned.
 _bmad/config.user.toml
 *.user.toml
+
+# Claude Code worktrees (sessions and workflow agents).
+.claude/worktrees/
