@@ -12,7 +12,10 @@ $(error MUTATION must be 0 or 1, got '$(MUTATION)')
 endif
 export MUTATION
 
-.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows
+# Reference branch for check-migration.
+BASE ?= origin/main
+
+.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -77,3 +80,7 @@ fix-workflows: check-node ## Fix lint and format in place, then lint
 
 test-workflows: check-node ## Run the workflow tests under the harness, with coverage (c8)
 	$(NODE_BIN)/c8 node --test 'tests/workflows/**/*.test.js'
+
+check-migration: ## Check docs/migrations/next/ISSUE.md: changed by the branch since BASE (origin/main), valid format
+	@[ -n '$(ISSUE)' ] || { echo "Error: ISSUE is empty. Usage: make check-migration ISSUE=<n> [BASE=origin/main]"; exit 2; }
+	@scripts/check-migration.sh '$(ISSUE)' '$(BASE)'

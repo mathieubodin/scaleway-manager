@@ -126,12 +126,13 @@ Status: **ready** or **blocked (stack)**.
 - Depends on: nothing.
 - Verified on 2026-10-18 (markdownlint-cli2 v0.22.0, prek 0.3.11): `make lint-docs` green after `make fix-docs` (blank lines around headings, lists and tables in two `_bmad-output/` files) and one table delimiter row fixed by hand; `make check-frozen` exit 0 without manifest, 0 after `freeze` of two files, 2 after editing one, 0 after refreezing only that one (the other entry kept), 2 after deleting the other; `make freeze` without `FILES` or with a missing file exits 2; `make help MUTATION=2` exits 2; `prek validate-config` valid and `prek run --all-files` all passed. Note for U11: pin the `markdownlint-cli2` version in CI.
 
-### U9. `docs/migrations/next/` and its checks — ready
+### U9. `docs/migrations/next/` and its checks — done
 
-- Folder `docs/migrations/next/`, format of an entry, exact no-impact content `Migration: no impact`.
-- `make check-migration ISSUE=<n>`: fails unless `docs/migrations/next/<n>.md` is added or changed on the branch.
-- Every PR must reference its issue (`Closes #<n>`); CI derives `<n>` from the PR body and fails when absent.
+- Folder `docs/migrations/next/`, nothing else in it. Entry format, decided with the author: exactly `Migration: no impact`, or `## Upgrade` and `## Rollback` sections, each with text (documented in `docs/development-process.md`, "Migration files").
+- `make check-migration ISSUE=<n> [BASE=origin/main]` (`scripts/check-migration.sh`): fails unless `docs/migrations/next/<n>.md` is added or changed by the commits of the branch since `git merge-base BASE HEAD` (decided with the author: a file inherited from an earlier PR of the same issue, or changed on `main` by another PR, does not count; uncommitted changes are not seen), or when its content in `HEAD` has another format.
+- Every PR must reference its issue (`Closes #<n>`, the epic first for long work); `scripts/pr-issue.sh` reads `<n>` from the first `Closes #<n>` of the PR body outside HTML comments and fails when absent; CI (U11) uses it.
 - Acceptance: a branch without the file fails; with it, passes.
+- Verified on 2026-10-18 in throwaway git repositories: no file, a file inherited from an earlier PR, a file changed on `main` after the branch left it, an uncommitted change, an empty, missing or repeated section, a section holding only an HTML comment or an empty code fence, a `## Rollback` only inside a code fence, a level-1 heading cutting a section, extra text after `Migration: no impact`: exit 1. Both formats, `###` subheadings, code-only sections, trailing spaces, no final newline: exit 0. Issue `05`, `4x`, a `BASE` starting with `-` or not a commit: exit 2; an `ISSUE` holding a command substitution runs nothing. `pr-issue.sh`: first `Closes` taken, CRLF bodies, HTML comments (one or several lines) skipped, `#8x` and `#0` refused. Epic #2 carries `docs/migrations/next/2.md` (no impact: tooling only); `make check-migration ISSUE=2` passes once it is committed. Independent review (security, correctness, coherence): 11 findings, all fixed.
 - Depends on: U8. From the merge of this unit on, every PR of the epic carries its migration file.
 
 ### U10. `make evidence` — ready
@@ -147,6 +148,7 @@ Status: **ready** or **blocked (stack)**.
 - The behavior diff stays local.
 - Add the jobs to the required status checks of the `main` branch protection (U1).
 - Acceptance: a PR breaking each check fails on the right job.
+- `actions/checkout` with `fetch-depth: 0`: `make check-migration` needs the history down to the merge-base with `main` (a depth-1 clone exits 2).
 - Pin the Node version used by CI (the harness runs `node --test` with a glob, Node 21 or later; verified with Node 24.15.0) and run `npm ci` before the Node targets.
 - Depends on: U8, U9, U1, U26.
 
@@ -220,7 +222,7 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Build: workflow `sdlc-build` for the trunk, merge by `sdlc-work`, then `sdlc-build` for the leaves, merge one by one with `make check-frozen` after each (long G21). A "back to Plan" return value sends the work back to Plan and its gate.
 - Review: workflow `sdlc-review` (2 dry passes, at most 5 rounds, result in the memlog); on return at the cap, proposal and human choice (long G23).
 - Before the PR: `/ce-compound`, MemPalace update, after-integration issues "simplify after #n" and, when relevant, "distill lessons" (short G1), migration file, evidence.
-- PR body with `Closes` for the epic and every sub-issue, and the cost summary; sub-issues follow the epic's status (long G22). The epic carries the `Tokens` total; sub-issues have none.
+- PR body with `Closes` for the epic first, then every sub-issue, and the cost summary; sub-issues follow the epic's status (long G22). The epic carries the `Tokens` total; sub-issues have none.
 - Depends on: U17, U18, U5, U6, U7, U21, U22, U23, U27, U28, U29.
 
 ### U21. Workflow `sdlc-parallax` — ready

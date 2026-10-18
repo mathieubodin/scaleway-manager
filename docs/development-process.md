@@ -68,7 +68,7 @@ Work that turns out bigger than expected goes to the long route, on the human's 
 
 - One branch per work: `{type}/{n}-{slug}`, `type` the Conventional Commits type planned for the PR, `slug` derived from the issue title, kebab-case, at most 4 words. Example: `feat/27-yaml-export`.
 - One PR per work, to `main`. No direct push to `main` (branch protection).
-- The PR references every issue it closes: `Closes #<n>`, and for long work the epic and every sub-issue.
+- The PR references every issue it closes: `Closes #<n>`, and for long work the epic first, then every sub-issue (CI reads the issue of the work from the first `Closes`).
 - An issue opened by an external user is triaged with `/sdlc-work <n>`.
 
 Project v2 (<https://github.com/users/mathieubodin/projects/4>) statuses:
@@ -521,13 +521,27 @@ It covers the rendered UI, not the backend API. Gherkin scenarios are replayed i
 
 ## Migration files
 
-Every PR adds or changes `docs/migrations/next/<n>.md`, `<n>` being the issue number, one file per issue so that parallel PRs do not conflict. A change without impact contains exactly:
+Every PR adds or changes `docs/migrations/next/<n>.md`, `<n>` being the issue number (the epic for long work), one file per issue so that parallel PRs do not conflict. The folder holds nothing else: "Deliver" reads its files. A change without impact contains exactly:
 
 ```text
 Migration: no impact
 ```
 
-`make check-migration ISSUE=<n>` fails when the file is not added or changed on the branch. Files are never moved after a release: "Deliver" reads only those changed since the previous tag.
+Otherwise the file describes both directions, each section with text:
+
+```markdown
+# Migration for #42
+
+## Upgrade
+
+Steps to go from the previous version to this one.
+
+## Rollback
+
+Steps to go back to the previous version.
+```
+
+`make check-migration ISSUE=<n>` (`scripts/check-migration.sh`) fails when the file has another content, or when it is not added or changed by the commits of the branch since it left `main` (`git merge-base origin/main HEAD`; `BASE=<ref>` replaces `origin/main`). So a file inherited from an earlier PR of the same issue, or changed on `main` by another PR, does not count, and uncommitted changes are not seen, as in CI. In CI, `<n>` comes from the first `Closes #<n>` of the PR body outside HTML comments (`scripts/pr-issue.sh`), and the checkout needs the history down to the merge-base (`fetch-depth: 0`). Files are never moved after a release: "Deliver" reads only those changed since the previous tag.
 
 ## Workflow tooling
 
