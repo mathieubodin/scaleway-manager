@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
 
-MARKDOWNLINT ?= markdownlint-cli2
+MARKDOWNLINT ?= node_modules/.bin/markdownlint-cli2
 FROZEN_MANIFEST := frozen-tests.sha256
 
 # Mutation testing on the code changed by the task: 1 (default) or 0.
@@ -27,7 +27,7 @@ help: ## List the targets
 
 check-markdownlint:
 	@command -v $(MARKDOWNLINT) >/dev/null || { \
-		echo "Error: $(MARKDOWNLINT) not found. Install with: npm install -g markdownlint-cli2"; \
+		echo "Error: $(MARKDOWNLINT) not found. Install with: npm ci"; \
 		exit 1; }
 
 lint-docs: check-markdownlint ## Lint Markdown (.markdownlint-cli2.yaml)

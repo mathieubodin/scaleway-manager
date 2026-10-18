@@ -553,7 +553,7 @@ Steps to go back to the previous version.
 
 ## Workflow tooling
 
-Node tooling is pinned in `package.json` and `package-lock.json`; install it once per clone with `npm ci`.
+Node tooling (Biome, oxlint, oxfmt, c8, markdownlint-cli2) is pinned in `package.json` and `package-lock.json`; install it once per clone with `npm ci`. `overrides` forces `smol-toml` 1.9.0: `markdownlint-cli2` 0.23.3 pins 1.8.0, which `npm audit` reports (denial of service on a crafted TOML file; markdownlint-cli2 only parses TOML for a `.toml` configuration, which this project does not have). Remove the override once a `markdownlint-cli2` release depends on a fixed `smol-toml`. The other advisories `npm audit` reports (`braces` and its chain, `katex`) have no fixed version; they are denials of service on crafted input, and the tools only read this repository.
 
 | Files | Tool | Configuration |
 | --- | --- | --- |

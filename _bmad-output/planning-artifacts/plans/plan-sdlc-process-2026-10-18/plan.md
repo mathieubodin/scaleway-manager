@@ -116,7 +116,7 @@ Status: **ready** or **blocked (stack)**.
 
 ### U8. `make`: skeleton, docs lint, frozen tests, Git hooks — done
 
-- `Makefile` with `help`; `lint-docs` (`markdownlint-cli2`, `.markdownlint-cli2.yaml`, checks only) and `fix-docs` (same with `--fix`). Paths: every `**/*.md` except `.claude/skills/bmad-*/**` and `_bmad/**` (installed by BMad, overwritten on each install); `_bmad-output/**` and our own skills in `.claude/skills/` are linted. Rules: markdownlint defaults, MD013 off (one paragraph per line, as BMad skills write), MD041 off (`.memlog.md` starts with front matter then a list), MD001, MD024, MD025 as in `scaleway-operator`.
+- `Makefile` with `help`; `lint-docs` (`markdownlint-cli2`, pinned in `package.json` since U11, `.markdownlint-cli2.yaml`, checks only) and `fix-docs` (same with `--fix`). Paths: every `**/*.md` except `.claude/skills/bmad-*/**` and `_bmad/**` (installed by BMad, overwritten on each install); `_bmad-output/**` and our own skills in `.claude/skills/` are linted. Rules: markdownlint defaults, MD013 off (one paragraph per line, as BMad skills write), MD041 off (`.memlog.md` starts with front matter then a list), MD001, MD024, MD025 as in `scaleway-operator`.
 - `freeze`: `make freeze FILES="..."` records the sha256 of the given test files (code tests and Gherkin features) in the committed manifest `frozen-tests.sha256` (`sha256sum` format), replacing the entries of those files and keeping the others; run on new tests, or after a human decision to change a frozen test.
 - `check-frozen`: recomputes and fails on any changed or missing frozen file; passes when the manifest is absent or empty.
 - Variable `MUTATION` (on by default, `MUTATION=0` switches it off, any other value is an error), used by U12.
@@ -124,7 +124,7 @@ Status: **ready** or **blocked (stack)**.
 - Shell only, no Python.
 - Acceptance: editing a frozen file makes `make check-frozen` fail; `make freeze` then makes it pass.
 - Depends on: nothing.
-- Verified on 2026-10-18 (markdownlint-cli2 v0.22.0, prek 0.3.11): `make lint-docs` green after `make fix-docs` (blank lines around headings, lists and tables in two `_bmad-output/` files) and one table delimiter row fixed by hand; `make check-frozen` exit 0 without manifest, 0 after `freeze` of two files, 2 after editing one, 0 after refreezing only that one (the other entry kept), 2 after deleting the other; `make freeze` without `FILES` or with a missing file exits 2; `make help MUTATION=2` exits 2; `prek validate-config` valid and `prek run --all-files` all passed. Note for U11: pin the `markdownlint-cli2` version in CI.
+- Verified on 2026-10-18 (markdownlint-cli2 v0.22.0, prek 0.3.11): `make lint-docs` green after `make fix-docs` (blank lines around headings, lists and tables in two `_bmad-output/` files) and one table delimiter row fixed by hand; `make check-frozen` exit 0 without manifest, 0 after `freeze` of two files, 2 after editing one, 0 after refreezing only that one (the other entry kept), 2 after deleting the other; `make freeze` without `FILES` or with a missing file exits 2; `make help MUTATION=2` exits 2; `prek validate-config` valid and `prek run --all-files` all passed. Since U11, `markdownlint-cli2` is pinned in `package.json` (0.23.3) and run from `node_modules/.bin` (`npm ci`).
 
 ### U9. `docs/migrations/next/` and its checks — done
 
@@ -151,7 +151,8 @@ Status: **ready** or **blocked (stack)**.
 - Add the jobs to the required status checks of the `main` branch protection (U1).
 - Acceptance: a PR breaking each check fails on the right job.
 - `actions/checkout` with `fetch-depth: 0`: `make check-migration` needs the history down to the merge-base with `main` (a depth-1 clone exits 2).
-- Pin the Node version used by CI (the harness runs `node --test` with a glob, Node 21 or later; verified with Node 24.15.0) and run `npm ci` before the Node targets.
+- Pin the Node version used by CI and run `npm ci` before the Node targets: `.nvmrc` holds `24` (decided with the author; the harness runs `node --test` with a glob, Node 21 or later; verified with Node 24.15.0), read by `actions/setup-node` (`node-version-file`).
+- Done so far: `.github/workflows/pr-checks.yml`, one job per check (`lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration`), actions pinned by commit SHA (`actions/checkout` v7.0.1, `actions/setup-node` v7.0.0, both at least two weeks old), PR values passed through `env`; `check-migration` reads the issue with `scripts/pr-issue.sh` and compares with `origin/<base branch>`. `markdownlint-cli2` pinned at 0.23.3 in `package.json` (decided with the author after comparing it with 0.22.0 on the repository and on deliberately broken files: same results; 0.22.0 had 11 `npm audit` advisories), with `overrides` forcing `smol-toml` 1.9.0 (tested the same way). Remaining: run on a real PR, the breaking PR, required status checks.
 - Depends on: U8, U9, U1, U26.
 
 ### U12. `make`: code tests, coverage, mutation testing — blocked (stack)
