@@ -31,7 +31,7 @@ lint-docs: check-markdownlint ## Lint Markdown (.markdownlint-cli2.yaml)
 fix-docs: check-markdownlint ## Fix Markdown in place, then lint
 	$(MARKDOWNLINT) --fix
 
-freeze: ## Record the sha256 of FILES="..." in frozen-tests.sha256 (human decision only)
+freeze: ## Record the sha256 of FILES="..." in frozen-tests.sha256 (new tests, or a change decided by the human)
 	@[ -n "$(strip $(FILES))" ] || { echo "Error: FILES is empty. Usage: make freeze FILES=\"path ...\""; exit 1; }
 	@for f in $(FILES); do [ -f "$$f" ] || { echo "Error: $$f is not a file"; exit 1; }; done
 	@touch $(FROZEN_MANIFEST)
