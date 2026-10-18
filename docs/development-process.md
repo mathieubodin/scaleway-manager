@@ -543,6 +543,14 @@ Steps to go back to the previous version.
 
 `make check-migration ISSUE=<n>` (`scripts/check-migration.sh`) fails when the file has another content, or when it is not added or changed by the commits of the branch since it left `main` (`git merge-base origin/main HEAD`; `BASE=<ref>` replaces `origin/main`). So a file inherited from an earlier PR of the same issue, or changed on `main` by another PR, does not count, and uncommitted changes are not seen, as in CI. In CI, `<n>` comes from the first `Closes #<n>` of the PR body outside HTML comments (`scripts/pr-issue.sh`), and the checkout needs the history down to the merge-base (`fetch-depth: 0`). Files are never moved after a release: "Deliver" reads only those changed since the previous tag.
 
+## Evidence record
+
+`make evidence ISSUE=<n>` (`scripts/evidence.sh`) replays the checks and rewrites the whole `evidence.md` of the work folder, whoever runs it: `lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration ISSUE=<n>`, plus the checks of U12 to U14 once they exist (the record lists what was not run). Every check runs even after a failure, and the target fails at the end if one did.
+
+- Each check's full output is kept, colors removed and durations replaced by `<t>`: two runs on an unchanged tree differ only by the "Generated at" line.
+- The record names the branch, the commit and whether the working tree had uncommitted changes; the exit code shown for a check is that of `make`.
+- It ends with the summary of `cost.json`: `Tokens`, then the four categories per step and per model, and the unattributed share. It does not run `make cost`.
+
 ## Workflow tooling
 
 Node tooling is pinned in `package.json` and `package-lock.json`; install it once per clone with `npm ci`.

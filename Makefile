@@ -12,10 +12,12 @@ $(error MUTATION must be 0 or 1, got '$(MUTATION)')
 endif
 export MUTATION
 
-# Reference branch for check-migration.
+# Reference branch for check-migration. ISSUE and BASE reach the scripts through the
+# environment (make exports command-line variables), never pasted into the shell.
 BASE ?= origin/main
+export BASE
 
-.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration
+.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -50,8 +52,7 @@ check-frozen: ## Fail if a frozen test file changed or disappeared
 	else echo "No frozen tests"; fi
 
 cost: ## Token cost of ISSUE=<n> into its work folder cost.json; prints Tokens
-	@[ -n "$(ISSUE)" ] || { echo "Error: ISSUE is empty. Usage: make cost ISSUE=<n>"; exit 1; }
-	@scripts/cost.sh $(ISSUE)
+	@scripts/cost.sh "$${ISSUE:-}"
 
 cost-report: ## Token cost of every work, per route and step (Markdown)
 	@scripts/cost-report.sh
@@ -82,5 +83,7 @@ test-workflows: check-node ## Run the workflow tests under the harness, with cov
 	$(NODE_BIN)/c8 node --test 'tests/workflows/**/*.test.js'
 
 check-migration: ## Check docs/migrations/next/ISSUE.md: changed by the branch since BASE (origin/main), valid format
-	@[ -n '$(ISSUE)' ] || { echo "Error: ISSUE is empty. Usage: make check-migration ISSUE=<n> [BASE=origin/main]"; exit 2; }
-	@scripts/check-migration.sh '$(ISSUE)' '$(BASE)'
+	@scripts/check-migration.sh "$${ISSUE:-}" "$$BASE"
+
+evidence: ## Replay the checks, rewrite the evidence record of ISSUE=<n> (work folder evidence.md)
+	@scripts/evidence.sh "$${ISSUE:-}"

@@ -135,11 +135,13 @@ Status: **ready** or **blocked (stack)**.
 - Verified on 2026-10-18 in throwaway git repositories: no file, a file inherited from an earlier PR, a file changed on `main` after the branch left it, an uncommitted change, an empty, missing or repeated section, a section holding only an HTML comment or an empty code fence, a `## Rollback` only inside a code fence, a level-1 heading cutting a section, extra text after `Migration: no impact`: exit 1. Both formats, `###` subheadings, code-only sections, trailing spaces, no final newline: exit 0. Issue `05`, `4x`, a `BASE` starting with `-` or not a commit: exit 2; an `ISSUE` holding a command substitution runs nothing. `pr-issue.sh`: first `Closes` taken, CRLF bodies, HTML comments (one or several lines) skipped, `#8x` and `#0` refused. Epic #2 carries `docs/migrations/next/2.md` (no impact: tooling only); `make check-migration ISSUE=2` passes once it is committed. Independent review (security, correctness, coherence): 11 findings, all fixed.
 - Depends on: U8. From the merge of this unit on, every PR of the epic carries its migration file.
 
-### U10. `make evidence` — ready
+### U10. `make evidence` — done
 
-- Replays the checks available (`lint-docs`, `check-frozen`, `check-migration`, and the U12 to U14 targets once they exist) and rewrites the whole record in `_bmad-output/work/issue-{n}-{slug}/evidence.md`, whoever runs it.
+- Replays the checks available (`lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration`, and the U12 to U14 targets once they exist; decided with the author to keep the two workflow checks: about 1.3 s together, measured) and rewrites the whole record in `_bmad-output/work/issue-{n}-{slug}/evidence.md`, whoever runs it.
 - Includes the cost summary from `cost.json` (U31): totals per step, per model, unattributed.
 - Acceptance: two consecutive runs on an unchanged tree give the same record, except timestamps.
+- Decided with the author: a failing check is recorded and the others still run, the target fails at the end; each check's full output is kept, colors removed and durations replaced by `<t>`. `scripts/evidence.sh`; `ISSUE` and `BASE` reach the scripts of `cost`, `check-migration` and `evidence` through the environment.
+- Verified on 2026-10-18: two runs of `make evidence ISSUE=2` differ only by "Generated at", and so do a run through make and a direct run of the script; a broken Markdown file makes `lint-docs` recorded as failed with its output, the four other checks still run, exit non-zero; the record passes markdownlint; its cost summary equals `cost.json` (`Tokens` = sum of steps = sum of models). Independent review (security, correctness, coherence): 6 findings, fixed (duration pattern changing words such as `U12s`, make recursion level and thread counts, unreadable `cost.json`, `ISSUE` breaking out of quotes in three targets, wording).
 - Depends on: U8, U9, U31.
 
 ### U11. PR CI checks — ready
