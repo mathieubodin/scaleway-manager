@@ -30,7 +30,8 @@ These supersede the brainstorm where they differ.
 | Build merges | `sdlc-build` returns the finished builder branches and the failed stories; `sdlc-work` merges them into the work branch one by one with `make check-frozen` after each. Trunk and leaves are two runs: trunk, merge, then leaves, merge. |
 | Triage | Method inspired by TypeSafe's System One model (docs.typesafe.ai), without using Jev itself: atomic questions written in `docs/development-process.md`, each answered by 3 independent Claude agents with structured output; the workflow `sdlc-triage` combines the answers in code into a proposed route and reports the vote agreement as the uncertainty signal; the human confirms; answers and the human's decision are recorded in the memlog to build a history. The initial questions and combination rule are proposed and validated in U30, then adjusted with the history. Jev was not adopted: low volume, no history to calibrate thresholds, blast radius needs multi-hop reasoning on code (a documented weakness), external hosted dependency. To revisit with the history. |
 | Spec-lint | Same method: workflow `sdlc-spec-lint`, atomic questions per acceptance criterion (names a verification method, is unambiguous), 3 votes, threshold as a vote proportion set in code. The questions live in a `spec-lint` lens of the `bmad-review` override, so a manual `bmad-review` asks the same questions once. |
-| Documentation lint | `markdownlint-cli2`, configured in `.markdownlint-cli2.yaml`, run by `make lint-docs` locally and in CI. |
+| Documentation lint | `markdownlint-cli2`, configured in `.markdownlint-cli2.yaml`, run by `make lint-docs` locally and in CI (paths and rules in U8). |
+| Git hooks | prek (`prek.toml`), as in `scaleway-operator`. prek only runs things: one tool per file type (markdownlint for Markdown, Biome for JS and JSON, prek builtins for YAML, TOML, line endings and shebangs), local hooks call the same `make` targets as CI. |
 | Process memlog | `_bmad-output/work/issue-{n}-{slug}/.memlog.md`. Gate HTML pages, the evidence record, `define-notes.md`, the per-work `plan.md` and `bug-report.md` go in the same folder. `SPEC.md`, `stories.yaml` and the story specs stay where `bmad-spec` and `bmad-build` write them (`_bmad-output/specs/spec-{slug}/`) and are referenced from the memlog. |
 | Branch and slug | Branch `{type}/{n}-{slug}` (type = Conventional Commits type planned for the PR); slug derived from the issue title, kebab-case, at most 4 words, confirmed with the route (long G1, G3). |
 | Migration files after a release | Nothing is moved. "Deliver" keeps only the `docs/migrations/next/` files added or changed since the previous tag (`git diff --name-only <prev-tag>..HEAD`); all files when no tag exists. |
@@ -110,15 +111,17 @@ Status: **ready** or **blocked (stack)**.
 - Acceptance: harness tests (U26) for stop after 2 dry passes, return at round 5, single pass; a real run on a diff with a deliberate label mismatch between code and docs reports it and the verifier keeps it; a manual `bmad-code-review` on the same diff reports it too.
 - Depends on: U26, U8, U4.
 
-### U8. `make`: skeleton, docs lint, frozen tests — ready
+### U8. `make`: skeleton, docs lint, frozen tests, Git hooks — done
 
-- `Makefile` with `help`; `lint-docs` (`markdownlint-cli2`, `.markdownlint-cli2.yaml`). Paths covered by the lint (in particular `_bmad-output/`): **open**, to decide in this unit.
-- `freeze`: records the sha256 of the given test files (code tests and Gherkin features) in a committed manifest; run only after a human decision.
-- `check-frozen`: recomputes and fails on any difference.
-- Variable `MUTATION` (on by default, `MUTATION=0` switches it off), used by U12.
+- `Makefile` with `help`; `lint-docs` (`markdownlint-cli2`, `.markdownlint-cli2.yaml`, checks only) and `fix-docs` (same with `--fix`). Paths: every `**/*.md` except `.claude/skills/bmad-*/**` and `_bmad/**` (installed by BMad, overwritten on each install); `_bmad-output/**` and our own skills in `.claude/skills/` are linted. Rules: markdownlint defaults, MD013 off (one paragraph per line, as BMad skills write), MD041 off (`.memlog.md` starts with front matter then a list), MD001, MD024, MD025 as in `scaleway-operator`.
+- `freeze`: `make freeze FILES="..."` records the sha256 of the given test files (code tests and Gherkin features) in the committed manifest `frozen-tests.sha256` (`sha256sum` format), replacing the entries of those files and keeping the others; run only after a human decision.
+- `check-frozen`: recomputes and fails on any changed or missing frozen file; passes when the manifest is absent or empty.
+- Variable `MUTATION` (on by default, `MUTATION=0` switches it off, any other value is an error), used by U12.
+- `prek.toml` (as in `scaleway-operator`): prek only runs things, one tool per file type. Builtin hooks `check-yaml`, `check-toml`, `mixed-line-ending`, shebang checks; local hooks `make fix-docs` and `make check-frozen`. JSON and trailing whitespace are left to Biome (U26) and markdownlint. Install once per clone with `prek install`. `make lint-workflows` is added as a local hook in U26.
 - Shell only, no Python.
 - Acceptance: editing a frozen file makes `make check-frozen` fail; `make freeze` then makes it pass.
 - Depends on: nothing.
+- Verified on 2026-10-18 (markdownlint-cli2 v0.22.0, prek 0.3.11): `make lint-docs` green after `make fix-docs` (blank lines around headings, lists and tables in two `_bmad-output/` files) and one table delimiter row fixed by hand; `make check-frozen` exit 0 without manifest, 0 after `freeze` of two files, 2 after editing one, 0 after refreezing only that one (the other entry kept), 2 after deleting the other; `make freeze` without `FILES` or with a missing file exits 2; `make help MUTATION=2` exits 2; `prek validate-config` valid and `prek run --all-files` all passed. Note for U11: pin the `markdownlint-cli2` version in CI.
 
 ### U9. `docs/migrations/next/` and its checks — ready
 
@@ -255,6 +258,7 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 
 - Biome (`biome.json`), `make lint-workflows` (lint and format check of `.claude/workflows/`).
 - `node:test` harness that loads a workflow script and provides fake `agent`, `parallel`, `pipeline`, `phase`, `log` and `args` with scripted answers; `make test-workflows` with coverage by `c8`.
+- Biome also formats and lints the project JSON files (`prek.toml` leaves JSON to it); `make lint-workflows` is added as a local hook in `prek.toml` (U8).
 - Acceptance: a deliberately broken script fails `make lint-workflows`; a sample script reaches 100 % branch coverage under the harness.
 - Depends on: U8.
 
@@ -315,6 +319,5 @@ Blocked (stack): U12, U13, U14, U16
 
 ## Open in this plan
 
-- Paths covered by the docs lint (U8).
 - Milestone title field (U15): to verify.
 - How to stop `bmad-build` at `ready-for-dev` (U6).
