@@ -9,7 +9,7 @@ updated: 2026-10-18
 
 Work order set by the author: 1) define the SDLC, 2) build the local workflow, 3) map each step to GitHub items, 4) define how the process materializes for agents. GitHub was not discussed before step 3.
 
-Closed on 2026-10-18. Later decisions, taken while planning, live in `_bmad-output/planning-artifacts/plans/plan-sdlc-process-2026-10-18/plan.md` (section "Decisions taken while planning") and in the simulations next to it; they supersede this file where they differ (for example `/work` became `sdlc-work`, bug tests are frozen before the builders, non-interactive stages run as dynamic workflows). The sequence diagrams in this folder are already up to date.
+Closed on 2026-10-18 (reopened the same day for "Token cost tracking", then closed again). Later decisions, taken while planning, live in `_bmad-output/planning-artifacts/plans/plan-sdlc-process-2026-10-18/plan.md` (section "Decisions taken while planning") and in the simulations next to it; they supersede this file where they differ (for example `/work` became `sdlc-work`, bug tests are frozen before the builders, non-interactive stages run as dynamic workflows). The sequence diagrams in this folder are already up to date.
 
 ## Sources
 
@@ -272,6 +272,31 @@ The session updates the status at each step.
   - Create new skills only for the gaps (triage, parallax, spec-lint, cold-start, gate pages, GitHub updates, and an orchestrator that keeps one process memlog per piece of work).
   - Python is allowed for the internal scripts of the skills we add.
   - Register the process in the `bmad-help` catalog through a custom BMad module, versioned in the repository under `skills/`, carrying our skills and their `module-help.csv` rows, installed with `npx bmad-method install --custom-source <path>`. The catalog `_bmad/_config/bmad-help.csv` is the installer's assembly of every module's `module-help.csv` and is never edited by hand. The bmb setup scripts are not used (out of step with BMad 6.12.4). A module change takes effect after reinstall. Known risk: issue #2869 (quick-update fails for local custom modules, reported on 6.12.0; status on 6.12.4 not verified).
+
+## Token cost tracking
+
+Reopened on 2026-10-18, after the plan, to close this topic before implementation.
+
+Facts checked first:
+
+- The author's global `claude-token-tracking` hooks are active in this repository: each commit gets `Claude-Session`, `Claude-Tokens-Delta` and `Claude-Tokens-Total` trailers. The Stop hook sums input, output and cache creation tokens of the main session transcript only; cache reads are excluded.
+- Subagents and workflow agents have their own transcripts (`<session>/subagents/…`, `<session>/subagents/workflows/<runId>/agent-*.jsonl`), each message carrying its model and full usage. The global hook does not read them, so the cost of workflows is missing from the trailers.
+- `main` accepts squash merges only, with the PR body as message: branch commit trailers do not reach `main`.
+- Project v2 #4 has a `Tokens` field of type `NUMBER`.
+- Claude Code deletes transcripts after `cleanupPeriodDays` (30 days by default); transcripts are local to each machine.
+
+Decisions:
+
+- Questions the tracking answers: cost per piece of work (issue or epic), per process step, per route. No a priori budget.
+- Measure: raw tokens per category (input, output, cache creation, cache read) and per model; indicators are computed when reading.
+- Attribution: the process memlog is the ledger. `sdlc-work` records each step's start and end (session id, timestamps) and the id of each workflow run it launches. A script reads the transcripts (main, subagents, workflows) and splits usage by time window and by run.
+- Outside a recorded step: what precedes triage in the same session is attributed to the issue created (step "triage"); the rest goes to an "unattributed" total, published with the other figures to show the measurement coverage. No blocking rule.
+- Storage: `_bmad-output/work/issue-{n}-{slug}/cost.json`, committed with the work, so it survives the squash. Entries keyed by session and workflow run: a recomputation updates only the entries whose transcripts are present and keeps the others, so it is safe from any machine.
+- Publication: summary in the evidence record and the PR; Project `Tokens` field = input + output + cache creation, all models (same definition as the trailers). Aggregates per step and per route: `make cost-report` reads every `cost.json`.
+- Timing: `make cost ISSUE=<n>` at every commit made by `sdlc-work` (gates, builder merges, before the PR) and at resume, with the PR and the `Tokens` field updated at the same time.
+- Global trailers: kept; `cost.json` is the source for this repository. An issue is opened on `claude-token-tracking` to count subagent and workflow transcripts.
+- Implementation: shell and jq, like the existing hooks; no Python.
+- Epic #2 (bootstrap): measured per session once `make cost` exists, with a minimal memlog in `work/issue-2-sdlc-process/` listing the epic's sessions under a single "bootstrap" step. Risk: transcripts purged after 30 days; covered by delivering `make cost` early in the trunk, not by changing the retention setting.
 
 ## Rejected
 

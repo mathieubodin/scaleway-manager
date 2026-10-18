@@ -36,6 +36,7 @@ These supersede the brainstorm where they differ.
 | Migration files after a release | Nothing is moved. "Deliver" keeps only the `docs/migrations/next/` files added or changed since the previous tag (`git diff --name-only <prev-tag>..HEAD`); all files when no tag exists. |
 | Review loop | Workflow `sdlc-review`, parameterized by `args`: long route 2 dry passes, at most 5 rounds; bug route 1 dry pass, at most 2 rounds; short route one pass, verified findings fixed, no second pass. Lenses (security, correctness, coherence) and the verifier are defined in the `bmad-code-review` override, whose 4 default layers are disabled; the workflow adds the loop (`bmad-code-review` has none). Beyond the cap, the workflow returns the recurring findings; `sdlc-work` proposes a way out and the human chooses (long G23, bug G4, short G2). |
 | Role of `bmad-build` | Used only during Plan, to write the story specs up to `ready-for-dev`. Test writers and builders run in the workflows `sdlc-rails` and `sdlc-build` (long G17, G21), with prompts defined in its override and shared with a manual run. Its review layers are disabled by override. |
+| Token cost | Decided in the brainstorm section "Token cost tracking". Raw tokens per category and model in `work/issue-{n}-{slug}/cost.json`, keyed by session and workflow run, attributed through the process memlog (step windows and workflow run ids), pre-triage tokens attributed to the issue, the rest reported as unattributed. `make cost ISSUE=<n>` at every `sdlc-work` commit and at resume; summary in the evidence record and the PR; Project `Tokens` = input + output + cache creation; `make cost-report` for aggregates per step and route. Shell and jq. Global trailers kept. Delivered early (U31) so that epic #2's sessions are measured before their transcripts are purged. |
 | Hand-back | Every process skill gets an `on_complete` override that writes its result to the active process memlog and hands control back to `sdlc-work` (long G4). |
 | Setup | Run manually in a separate session with `bmad-architecture`, directly from the brief, its addendum, the forge session and `AGENTS.md` (no global product spec: each feature gets its own spec through the long route). `sdlc-work` refuses Plan unless the architecture spine exists and names the stack (long G13). |
 
@@ -58,6 +59,7 @@ Status: **ready** or **blocked (stack)**.
 - Full process, condensed from `decisions.md`, the three `sequence-*.md`, the three simulations and the decisions above: routes, gates and their aids, two-failure rule, frozen tests, testing without Scaleway (`@manual`), GitHub mapping, Project v2 statuses, migration files, release.
 - Includes the three corrected sequence diagrams from the brainstorm folder (`sequence-*-process.md`, updated with the simulations). In particular, bug tests are frozen before the builders (bug G1), which supersedes `decisions.md`.
 - Triage and spec-lint questions (from U30 and U5) written in the document.
+- Token cost tracking: what is measured, where, when, and how to read `make cost-report`.
 - Only what a future reader needs; no history of the brainstorm.
 - Acceptance: `make lint-docs` green; every string constant (labels, statuses, paths, skill names, `Migration: no impact`) matches the code of the other units (coherence check at review).
 - Depends on: nothing. Revisited at the end of the epic for consistency.
@@ -128,8 +130,9 @@ Status: **ready** or **blocked (stack)**.
 ### U10. `make evidence` — ready
 
 - Replays the checks available (`lint-docs`, `check-frozen`, `check-migration`, and the U12 to U14 targets once they exist) and rewrites the whole record in `_bmad-output/work/issue-{n}-{slug}/evidence.md`, whoever runs it.
+- Includes the cost summary from `cost.json` (U31): totals per step, per model, unattributed.
 - Acceptance: two consecutive runs on an unchanged tree give the same record, except timestamps.
-- Depends on: U8, U9.
+- Depends on: U8, U9, U31.
 
 ### U11. PR CI checks — ready
 
@@ -178,12 +181,14 @@ Status: **ready** or **blocked (stack)**.
 - Rerouting to the long route: same issue promoted (`route:long` + `epic`, status Define, comment "rerouted: reason"), branch and memlog kept, branch renamed if its type changes (short G4).
 - Python allowed for internal scripts (for example Project v2 status updates).
 - The memlog records the triage answers, the proposed route and the human's decision.
+- Cost ledger (U31): the memlog records each step's start and end (session id, timestamps) and the id of every workflow run launched; tokens of the same session before triage are attributed to the created issue (step "triage"). Every commit made by `sdlc-work` runs `make cost ISSUE=<n>` first and updates the Project `Tokens` field; this applies to U18, U19 and U20 as well.
 - Acceptance: on a test idea, the issue, label, Project status, branch and memlog exist and agree.
-- Depends on: U3, U1, U2, U30.
+- Depends on: U3, U1, U2, U30, U31.
 
 ### U18. Skill `sdlc-work`: resume — ready
 
 - `/sdlc-work <n>`: reads the local memlog, the Project v2 status, the gate comments on the epic and its sub-issues; states the step reached and proposes the next one. Without a local memlog, resumes from the last gate recorded on GitHub.
+- Runs `make cost ISSUE=<n>` at resume (U31).
 - Acceptance: resume on the same machine and from a fresh clone gives the same step for an issue past its spec gate.
 - Depends on: U17.
 
@@ -207,7 +212,7 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Build: workflow `sdlc-build` for the trunk, merge by `sdlc-work`, then `sdlc-build` for the leaves, merge one by one with `make check-frozen` after each (long G21). A "back to Plan" return value sends the work back to Plan and its gate.
 - Review: workflow `sdlc-review` (2 dry passes, at most 5 rounds, result in the memlog); on return at the cap, proposal and human choice (long G23).
 - Before the PR: `/ce-compound`, MemPalace update, after-integration issues "simplify after #n" and, when relevant, "distill lessons" (short G1), migration file, evidence.
-- PR body with `Closes` for the epic and every sub-issue; sub-issues follow the epic's status (long G22).
+- PR body with `Closes` for the epic and every sub-issue, and the cost summary; sub-issues follow the epic's status (long G22). The epic carries the `Tokens` total; sub-issues have none.
 - Depends on: U17, U18, U5, U6, U7, U21, U22, U23, U27, U28, U29.
 
 ### U21. Workflow `sdlc-parallax` — ready
@@ -284,10 +289,22 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Acceptance: harness tests of the combination rule (unanimous, split, conflicting answers); a real run on three sample ideas yields the expected routes.
 - Depends on: U26.
 
+### U31. `make cost` and `make cost-report` — ready
+
+- `make cost ISSUE=<n>`: reads the process memlog of the work (step windows with session ids, workflow run ids), the matching transcripts under `~/.claude/projects/<project>/` (main session, `subagents/`, `subagents/workflows/<runId>/`), and writes `_bmad-output/work/issue-{n}-{slug}/cost.json`: tokens per category (input, output, cache creation, cache read) and per model, per step, plus the pre-triage share and an unattributed total.
+- Entries keyed by session id and workflow run id; a recomputation updates only entries whose transcripts are present and keeps the others.
+- Prints the `Tokens` value (input + output + cache creation, all models) for `sdlc-work` to write to the Project field.
+- `make cost-report`: aggregates every `cost.json` per step and per route (route read from the memlog), as a Markdown table.
+- Shell and jq only.
+- Bootstrap: create `work/issue-2-sdlc-process/` with a minimal memlog listing epic #2's sessions under a single "bootstrap" step, and compute its `cost.json`. Must happen before those transcripts are purged (30 days by default, first session on 2026-10-17).
+- Acceptance: on this session's transcript, the totals match a direct jq sum over the same files; a second run without the transcripts keeps the entries; `make cost-report` lists epic #2.
+- Depends on: U8.
+
 ## Order
 
 ```text
 Trunk:  U1, U2, U3, U8, U25  (independent, can start in parallel)
+        → U31 (early: epic #2 transcripts expire)
         → U4, U9, U26 → U10, U11, U15
         → U5, U6, U7, U21, U22, U23, U27, U28, U29, U30  (leaves, parallel)
         → U17 → U18 → U19 → U20
