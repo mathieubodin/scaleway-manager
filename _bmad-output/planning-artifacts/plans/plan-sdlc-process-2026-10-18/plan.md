@@ -51,7 +51,7 @@ Status: **ready** or **blocked (stack)**.
 ### U2. `docs/development-process.md` — ready
 
 - Full process, condensed from `decisions.md`, the three `sequence-*.md`, the three simulations and the decisions above: routes, gates and their aids, two-failure rule, frozen tests, testing without Scaleway (`@manual`), GitHub mapping, Project v2 statuses, migration files, release.
-- Includes the three sequence diagrams corrected with the simulations' "Resulting sequence" (the brainstorm files stay as history). In particular, bug tests are frozen before the builders (bug G1), which supersedes `decisions.md`.
+- Includes the three corrected sequence diagrams from the brainstorm folder (`sequence-*-process.md`, updated with the simulations). In particular, bug tests are frozen before the builders (bug G1), which supersedes `decisions.md`.
 - Triage criteria marked open.
 - Only what a future reader needs; no history of the brainstorm.
 - Acceptance: `make lint-docs` green; every string constant (labels, statuses, paths, skill names, `Migration: no impact`) matches the code of the other units (coherence check at review).

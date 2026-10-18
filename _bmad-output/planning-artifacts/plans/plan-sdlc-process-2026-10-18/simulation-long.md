@@ -10,7 +10,7 @@ inputs:
 
 # Simulation of the long route
 
-This file walks `sequence-long-process.md` step by step on the case above, as written in the diagram, and marks where a step could not be executed (`G1`, `G2`…). The gaps and the decisions taken with the author follow. Nothing here has been carried into the sequence diagrams, `plan.md` or the GitHub issues yet; that happens after the author reviews the three simulation files (`simulation-long.md`, `simulation-short.md`, `simulation-bug.md`).
+This file walks `sequence-long-process.md` step by step on the case above, as written in the diagram at commit `081611a`, and marks where a step could not be executed (`G1`, `G2`…). The gaps and the decisions taken with the author follow. The decisions are carried into the sequence diagram and `plan.md`; not yet into the GitHub issues.
 
 ## Walk-through
 
@@ -136,4 +136,4 @@ Every called skill hands control back to `sdlc-work` through `on_complete` (G4).
 - U6: rewrite; `bmad-build` serves Plan (story specs up to `ready-for-dev`), not the build. Disabling its review layers may become moot.
 - U17: branch name, slug rule, milestone creation.
 - U20: rewrite Define, gates, Plan, rails and build as above; Setup guard.
-- `sequence-long-process.md`: update the diagram.
+- `sequence-long-process.md`: diagram updated (done).

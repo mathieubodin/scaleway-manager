@@ -10,7 +10,7 @@ inputs:
 
 # Simulation of the short route
 
-This file walks `sequence-short-process.md` step by step on the case above, as written in the diagram, and marks where a step could not be executed (`G1`, `G2`…). The gaps and the decisions taken with the author follow. Nothing here has been carried into the sequence diagrams, `plan.md` or the GitHub issues yet; that happens after the author reviews the three simulation files (`simulation-long.md`, `simulation-short.md`, `simulation-bug.md`).
+This file walks `sequence-short-process.md` step by step on the case above, as written in the diagram at commit `081611a`, and marks where a step could not be executed (`G1`, `G2`…). The gaps and the decisions taken with the author follow. The decisions are carried into the sequence diagram and `plan.md`; not yet into the GitHub issues.
 
 The case is the post-integration simplification named in `decisions.md`: the frozen tests must stay green and the behavior diff must be empty.
 
@@ -57,4 +57,4 @@ Variants considered:
 - U19: short route as above.
 - U20: after-integration issues created before the PR of a long piece of work.
 - U17, U19, U20: rerouting to the long route.
-- `sequence-short-process.md`: update the diagram.
+- `sequence-short-process.md`: diagram updated (done).
