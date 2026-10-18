@@ -1,15 +1,15 @@
 {
   "issue": 2,
   "route": null,
-  "tokens": 3234935,
+  "tokens": 3251751,
   "totals": {
     "steps": {
       "bootstrap": {
         "claude-opus-5-5": {
-          "input": 1276,
-          "output": 496775,
-          "cacheCreation": 2352553,
-          "cacheRead": 126371162
+          "input": 1294,
+          "output": 504622,
+          "cacheCreation": 2361504,
+          "cacheRead": 128379212
         },
         "claude-sonnet-5-5": {
           "input": 348,
@@ -21,10 +21,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 1276,
-        "output": 496775,
-        "cacheCreation": 2352553,
-        "cacheRead": 126371162
+        "input": 1294,
+        "output": 504622,
+        "cacheCreation": 2361504,
+        "cacheRead": 128379212
       },
       "claude-sonnet-5-5": {
         "input": 348,
@@ -37,21 +37,21 @@
   },
   "sessions": {
     "5ee1d1dd-14f0-4d12-8349-cdc97d874fd3": {
-      "computedAt": "2026-10-18T15:47:07Z",
+      "computedAt": "2026-10-18T16:50:59Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
-            "input": 260,
-            "output": 87583,
-            "cacheCreation": 261867,
-            "cacheRead": 15398309
+            "input": 278,
+            "output": 95430,
+            "cacheCreation": 270818,
+            "cacheRead": 17406359
           }
         }
       },
       "unattributed": {}
     },
     "6b67a654-2772-431e-a6a9-11b9d78a40b8": {
-      "computedAt": "2026-10-18T15:47:07Z",
+      "computedAt": "2026-10-18T16:50:59Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
@@ -65,7 +65,7 @@
       "unattributed": {}
     },
     "b0833aac-c349-441a-a5af-d45da80e4a58": {
-      "computedAt": "2026-10-18T15:47:07Z",
+      "computedAt": "2026-10-18T16:50:59Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
@@ -79,7 +79,7 @@
       "unattributed": {}
     },
     "b8e09581-02a3-41cc-8e58-08b0c08f057a": {
-      "computedAt": "2026-10-18T15:47:07Z",
+      "computedAt": "2026-10-18T16:50:59Z",
       "steps": {
         "bootstrap": {
           "claude-sonnet-5-5": {
@@ -97,7 +97,7 @@
     "wf_46d6a333-5ba": {
       "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
       "step": "bootstrap",
-      "computedAt": "2026-10-18T15:47:07Z",
+      "computedAt": "2026-10-18T16:50:59Z",
       "models": {
         "claude-opus-5-5": {
           "input": 4,
@@ -110,7 +110,7 @@
     "wf_6e426de3-937": {
       "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
       "step": "bootstrap",
-      "computedAt": "2026-10-18T15:47:07Z",
+      "computedAt": "2026-10-18T16:50:59Z",
       "models": {
         "claude-opus-5-5": {
           "input": 4,
