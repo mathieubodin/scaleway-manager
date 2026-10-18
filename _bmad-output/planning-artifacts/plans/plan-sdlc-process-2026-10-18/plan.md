@@ -20,14 +20,15 @@ These supersede the brainstorm where they differ.
 | Topic | Decision |
 | --- | --- |
 | Stack-dependent `make` targets (coverage, mutation, code tests, behavior diff, manual kind cluster) | Separate units, marked "blocked by stack choice". Stack-independent targets are delivered now. |
-| Epic | Parent issue + `epic` label + native sub-issues. Verified: creating sub-issues works on this personal repository (epic #2, sub-issues #3 to #26, unit U*n* = issue #*n+2* for U1 to U24; U25 to U29 have no issue yet). |
+| Epic | Parent issue + `epic` label + native sub-issues. Verified: creating sub-issues works on this personal repository (epic #2, sub-issues #3 to #26, unit U*n* = issue #*n+2* for U1 to U24; U25 to U30 have no issue yet). |
 | Route labels | `route:short`, `route:bug`, `route:long`; `epic` added on the parent issue of long work. Default labels stay. |
 | Custom BMad module | `mathieubodin-sdlc`, under `skills/` (`bmad_builder_output_folder`). |
 | Skill names | `sdlc-work` (replaces `/work` everywhere) and `sdlc-gate-page`. The `x:y` form exists only for Claude Code plugins; the BMad installer copies skills flat into `.claude/skills/`. |
-| Dynamic workflows | Stages without human interaction run as saved Claude Code workflows in `.claude/workflows/` (versioned, outside the BMad module and the `bmad-help` catalog): `sdlc-parallax`, `sdlc-explore`, `sdlc-cold-start`, `sdlc-rails`, `sdlc-build`, `sdlc-review`. A workflow accepts no input mid-run, so `sdlc-work` (skill) keeps every interaction and launches a workflow between two of them; alerts become return values. Reason: counters and caps enforced by script, intermediate results kept out of the session context, per-agent audit in `/workflows`. |
+| Dynamic workflows | Stages without human interaction run as saved Claude Code workflows in `.claude/workflows/` (versioned, outside the BMad module and the `bmad-help` catalog): `sdlc-triage`, `sdlc-parallax`, `sdlc-spec-lint`, `sdlc-explore`, `sdlc-cold-start`, `sdlc-rails`, `sdlc-build`, `sdlc-review`. A workflow accepts no input mid-run, so `sdlc-work` (skill) keeps every interaction and launches a workflow between two of them; alerts become return values. Reason: counters and caps enforced by script, intermediate results kept out of the session context, per-agent audit in `/workflows`. |
 | Workflow tooling | Lint and format with Biome (`biome.json`, `make lint-workflows`). Control flow tested with a `node:test` harness that fakes `agent`, `parallel`, `pipeline` and `args`; coverage with `c8` (`make test-workflows`). |
 | Build merges | `sdlc-build` returns the finished builder branches and the failed stories; `sdlc-work` merges them into the work branch one by one with `make check-frozen` after each. Trunk and leaves are two runs: trunk, merge, then leaves, merge. |
-| Triage criteria | None fixed. `sdlc-work` proposes a route justified by risk × blast radius; the human confirms. Documented as open. |
+| Triage | Method inspired by TypeSafe's System One model (docs.typesafe.ai), without using Jev itself: atomic questions written in `docs/development-process.md`, each answered by 3 independent Claude agents with structured output; the workflow `sdlc-triage` combines the answers in code into a proposed route and reports the vote agreement as the uncertainty signal; the human confirms; answers and the human's decision are recorded in the memlog to build a history. The initial questions and combination rule are proposed and validated in U30, then adjusted with the history. Jev was not adopted: low volume, no history to calibrate thresholds, blast radius needs multi-hop reasoning on code (a documented weakness), external hosted dependency. To revisit with the history. |
+| Spec-lint | Same method: workflow `sdlc-spec-lint`, atomic questions per acceptance criterion (names a verification method, is unambiguous), 3 votes, threshold as a vote proportion set in code. No `bmad-review` override. |
 | Documentation lint | `markdownlint-cli2`, configured in `.markdownlint-cli2.yaml`, run by `make lint-docs` locally and in CI. |
 | Process memlog | `_bmad-output/work/issue-{n}-{slug}/.memlog.md`. Gate HTML pages, the evidence record, `define-notes.md`, the per-work `plan.md` and `bug-report.md` go in the same folder. `SPEC.md`, `stories.yaml` and the story specs stay where `bmad-spec` and `bmad-build` write them (`_bmad-output/specs/spec-{slug}/`) and are referenced from the memlog. |
 | Branch and slug | Branch `{type}/{n}-{slug}` (type = Conventional Commits type planned for the PR); slug derived from the issue title, kebab-case, at most 4 words, confirmed with the route (long G1, G3). |
@@ -55,7 +56,7 @@ Status: **ready** or **blocked (stack)**.
 
 - Full process, condensed from `decisions.md`, the three `sequence-*.md`, the three simulations and the decisions above: routes, gates and their aids, two-failure rule, frozen tests, testing without Scaleway (`@manual`), GitHub mapping, Project v2 statuses, migration files, release.
 - Includes the three corrected sequence diagrams from the brainstorm folder (`sequence-*-process.md`, updated with the simulations). In particular, bug tests are frozen before the builders (bug G1), which supersedes `decisions.md`.
-- Triage criteria marked open.
+- Triage and spec-lint questions (from U30 and U5) written in the document.
 - Only what a future reader needs; no history of the brainstorm.
 - Acceptance: `make lint-docs` green; every string constant (labels, statuses, paths, skill names, `Migration: no impact`) matches the code of the other units (coherence check at review).
 - Depends on: nothing. Revisited at the end of the epic for consistency.
@@ -71,18 +72,22 @@ Status: **ready** or **blocked (stack)**.
 
 ### U4. `_bmad/custom/` common overrides — ready
 
-- `persistent_facts = ["file:{project-root}/docs/development-process.md"]` for the process skills: `bmad-forge-idea`, `bmad-advanced-elicitation`, `bmad-deep-recon`, `bmad-spec`, `bmad-review`, `bmad-architecture`, `bmad-build`, `bmad-walkthrough`. (`bmad-create-epics-and-stories` and `bmad-code-review` are no longer part of the process.)
+- `persistent_facts = ["file:{project-root}/docs/development-process.md"]` for the process skills: `bmad-forge-idea`, `bmad-advanced-elicitation`, `bmad-deep-recon`, `bmad-spec`, `bmad-architecture`, `bmad-build`, `bmad-walkthrough`. (`bmad-create-epics-and-stories`, `bmad-code-review` and `bmad-review` are no longer part of the process.)
 - `on_complete` on the same skills: when a `sdlc-work` process memlog is active, write the result to it and hand control back to `sdlc-work` (long G4).
 - `bmad-forge-idea`: `activation_steps_append` to check the code before each question, and at the end have every recorded assumption validated by yes or no (long G5).
 - Acceptance: each skill, when activated, states the process file among its loaded facts; at its end with an active memlog, the memlog has a new entry and `sdlc-work` proposes the next step.
 - Depends on: U2.
 
-### U5. `bmad-review` override: spec-lint lens — ready
+### U5. Workflow `sdlc-spec-lint` — ready
 
-- One more entry in `workflow.lenses` (`code = "spec-lint"`), applied to specs: every acceptance criterion names its verification method; ambiguities are listed.
-- Ambiguity threshold (machine gate): **open, value not set by the brainstorm**. To decide in this unit.
-- Acceptance: run on an existing `SPEC.md` with a criterion lacking its verification method; the lens reports it.
-- Depends on: U4.
+Replaces the former `bmad-review` spec-lint lens override, which is dropped.
+
+- `.claude/workflows/sdlc-spec-lint.js`. `args`: `SPEC.md` path.
+- An agent lists the acceptance criteria; for each criterion, atomic questions ("names a verification method?", "unambiguous?") each answered by 3 independent agents with structured output; a criterion fails when the proportion of "yes" votes is below the threshold set in code.
+- Returns the failing criteria with the votes, for `sdlc-work` to turn into questions.
+- Initial questions and threshold proposed by the agent and validated by the human in this unit.
+- Acceptance: harness tests of the vote combination; a real run on a `SPEC.md` with a criterion lacking its verification method reports it.
+- Depends on: U26.
 
 ### U6. `bmad-build` override: story specs for Plan — ready
 
@@ -167,13 +172,14 @@ Replaces the former `bmad-code-review` override, which is dropped.
 
 ### U17. Skill `sdlc-work`: start and triage — ready
 
-- Without argument: questions, route proposal (risk × blast radius) and optional milestone proposal, human confirmation, issue creation with its route label (`epic` for long work), add to Project v2 with its status, work branch `{type}/{n}-{slug}`, memlog init (long G1, G3).
+- Without argument: questions, route proposal by the workflow `sdlc-triage` (U30) shown with its answers and vote agreement, optional milestone proposal, human confirmation, issue creation with its route label (`epic` for long work), add to Project v2 with its status, work branch `{type}/{n}-{slug}`, memlog init (long G1, G3).
 - A chosen milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in the description (long G2).
 - With an external issue number not yet triaged: reads it and triages it; for a bug, writes `bug-report.md` from it (bug G3).
 - Rerouting to the long route: same issue promoted (`route:long` + `epic`, status Define, comment "rerouted: reason"), branch and memlog kept, branch renamed if its type changes (short G4).
 - Python allowed for internal scripts (for example Project v2 status updates).
+- The memlog records the triage answers, the proposed route and the human's decision.
 - Acceptance: on a test idea, the issue, label, Project status, branch and memlog exist and agree.
-- Depends on: U3, U1, U2.
+- Depends on: U3, U1, U2, U30.
 
 ### U18. Skill `sdlc-work`: resume — ready
 
@@ -193,7 +199,7 @@ Replaces the former `bmad-code-review` override, which is dropped.
 
 Follows the "Resulting sequence" of `simulation-long.md`:
 
-- Define: `bmad-forge-idea` → workflow `sdlc-parallax` → pre-mortem → research if proposed and accepted (long G8) → answers in `define-notes.md` (long G7) → `bmad-spec` (inputs `forged-idea.md` and `define-notes.md`) → spec-lint loop, alert after 3 rounds (long G9) → `spec.html`.
+- Define: `bmad-forge-idea` → workflow `sdlc-parallax` → pre-mortem → research if proposed and accepted (long G8) → answers in `define-notes.md` (long G7) → `bmad-spec` (inputs `forged-idea.md` and `define-notes.md`) → spec-lint loop (workflow `sdlc-spec-lint` per round, questions in `sdlc-work`, alert after 3 rounds, long G9) → `spec.html`.
 - Gates: `xdg-open` on the page (long G12); on validation, commit the work folder and the folders referenced by the memlog, push, comment with the commit link (long G11); on invalidation, propose a return step, the human chooses (long G10).
 - Setup guard before Plan (long G13).
 - Plan: reread the spine, `docs/solutions/`, previous specs and MemPalace (long G14); workflow `sdlc-explore`; write `work/…/plan.md` (long G15); Story Breakdown of `bmad-spec` (long G16); story specs through U6; cold-start loop (workflow `sdlc-cold-start` per round, questions and fixes in `sdlc-work`, alert after 3 rounds, long G18); `plan.html`; after the plan gate, one sub-issue per story spec.
@@ -268,12 +274,20 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Acceptance: harness tests for success, one failure then success, two failures; a builder that edits a frozen test fails `make check-frozen`.
 - Depends on: U25, U26, U8.
 
+### U30. Workflow `sdlc-triage` — ready
+
+- `.claude/workflows/sdlc-triage.js`. `args`: the idea or issue text, plus facts gathered by `sdlc-work` (files likely touched, visible in the UI or not).
+- Atomic questions (for example "introduces new behavior?", "touches the adoption keys: namespace, `project-id` annotation, CR names?", "describes an observed defect?", "visible in the UI?"), each answered by 3 independent agents with structured output; the combination rule in code yields a route (`short`, `bug`, `long`) and the vote agreement.
+- Initial questions and combination rule proposed by the agent and validated by the human in this unit, written in `docs/development-process.md`.
+- Acceptance: harness tests of the combination rule (unanimous, split, conflicting answers); a real run on three sample ideas yields the expected routes.
+- Depends on: U26.
+
 ## Order
 
 ```text
 Trunk:  U1, U2, U3, U8, U25  (independent, can start in parallel)
         → U4, U9, U26 → U10, U11, U15
-        → U5, U6, U7, U21, U22, U23, U27, U28, U29  (leaves, parallel)
+        → U5, U6, U7, U21, U22, U23, U27, U28, U29, U30  (leaves, parallel)
         → U17 → U18 → U19 → U20
         → U24, final pass on U2
 Blocked (stack): U12, U13, U14, U16
@@ -281,7 +295,6 @@ Blocked (stack): U12, U13, U14, U16
 
 ## Open in this plan
 
-- Ambiguity threshold of the spec-lint gate (U5).
 - Paths covered by the docs lint (U8).
 - Worktree base for builders (U25) and milestone title field (U15): to verify.
 - How to stop `bmad-build` at `ready-for-dev` (U6).

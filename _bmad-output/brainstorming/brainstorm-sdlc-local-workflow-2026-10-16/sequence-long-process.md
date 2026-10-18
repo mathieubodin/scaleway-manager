@@ -27,14 +27,18 @@ Corrected on 2026-10-18 with the simulation [`simulation-long.md`](../../plannin
 sequenceDiagram
     actor H as Human
     participant W as Session running sdlc-work
+    participant F as Workflows
     participant M as Process memlog (local, committed at each gate)
     participant G as GitHub (gh)
 
     alt Start: /sdlc-work
         H->>W: Idea
         W->>H: Questions, one at a time, code checked first
-        W->>H: Route, slug and milestone proposal (G1, G3)
-        H->>W: Confirms, chooses the milestone
+        W->>F: sdlc-triage (idea, gathered facts)
+        F-->>W: Proposed route, answers, vote agreement
+        W->>H: Route with answers and agreement, slug and milestone proposal (G1, G3)
+        H->>W: Confirms or changes the route, chooses the milestone
+        W->>M: Record triage answers and the human's decision
         opt Milestone missing (G2)
             W->>H: Theme of the milestone?
             W->>G: Create milestone, title = semver
@@ -85,9 +89,11 @@ sequenceDiagram
     end
     W->>K: bmad-spec (forged-idea.md + define-notes.md, G6)
     loop Until spec-lint is green, alert after 3 rounds (G9)
-        W->>K: bmad-review, spec-lint lens
-        K-->>W: Findings
-        W->>H: One question per finding
+        W->>F: sdlc-spec-lint (SPEC.md)
+        F->>A: 3 votes per atomic question per acceptance criterion
+        A-->>F: Votes
+        F-->>W: Failing criteria with votes
+        W->>H: One question per failing criterion
         H->>W: Answers to define-notes.md, bmad-spec updates SPEC.md
     end
     W->>K: sdlc-gate-page: spec.html
