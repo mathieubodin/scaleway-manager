@@ -25,16 +25,17 @@ These supersede the brainstorm where they differ.
 | Custom BMad module | `mathieubodin-sdlc`, under `skills/` (`bmad_builder_output_folder`). |
 | Skill names | `sdlc-work` (replaces `/work` everywhere) and `sdlc-gate-page`. The `x:y` form exists only for Claude Code plugins; the BMad installer copies skills flat into `.claude/skills/`. |
 | Dynamic workflows | Stages without human interaction run as saved Claude Code workflows in `.claude/workflows/` (versioned, outside the BMad module and the `bmad-help` catalog): `sdlc-triage`, `sdlc-parallax`, `sdlc-spec-lint`, `sdlc-explore`, `sdlc-cold-start`, `sdlc-rails`, `sdlc-build`, `sdlc-review`. A workflow accepts no input mid-run, so `sdlc-work` (skill) keeps every interaction and launches a workflow between two of them; alerts become return values. Reason: counters and caps enforced by script, intermediate results kept out of the session context, per-agent audit in `/workflows`. |
+| Alignment with manual BMad use | Where a BMad skill can be run by hand for the same job, its `_bmad/custom/<skill>.toml` override is the single definition and the workflow reads it: `sdlc-work` runs `_bmad/scripts/resolve_customization.py` (BMad's resolver: defaults, team and `.user.toml` overrides) and passes the resolved prompts in `args`. Prompts are written as plain prompt text usable by both. Pairs: `sdlc-review` ↔ `bmad-code-review` (`review_layers`), `sdlc-spec-lint` ↔ `bmad-review` (`spec-lint` lens), `sdlc-rails` and `sdlc-build` ↔ `bmad-build` (custom keys `sdlc_test_writer_prompt`, `sdlc_builder_prompt`, used by `implementation_handoff`; verified that the resolver passes custom keys). The workflow adds what the skill cannot do (votes, loops, counters, parallel worktrees). Not applicable: `sdlc-triage`, `sdlc-parallax`, `sdlc-cold-start`, `sdlc-explore`. |
 | Workflow tooling | Lint and format with Biome (`biome.json`, `make lint-workflows`). Control flow tested with a `node:test` harness that fakes `agent`, `parallel`, `pipeline` and `args`; coverage with `c8` (`make test-workflows`). |
 | Build merges | `sdlc-build` returns the finished builder branches and the failed stories; `sdlc-work` merges them into the work branch one by one with `make check-frozen` after each. Trunk and leaves are two runs: trunk, merge, then leaves, merge. |
 | Triage | Method inspired by TypeSafe's System One model (docs.typesafe.ai), without using Jev itself: atomic questions written in `docs/development-process.md`, each answered by 3 independent Claude agents with structured output; the workflow `sdlc-triage` combines the answers in code into a proposed route and reports the vote agreement as the uncertainty signal; the human confirms; answers and the human's decision are recorded in the memlog to build a history. The initial questions and combination rule are proposed and validated in U30, then adjusted with the history. Jev was not adopted: low volume, no history to calibrate thresholds, blast radius needs multi-hop reasoning on code (a documented weakness), external hosted dependency. To revisit with the history. |
-| Spec-lint | Same method: workflow `sdlc-spec-lint`, atomic questions per acceptance criterion (names a verification method, is unambiguous), 3 votes, threshold as a vote proportion set in code. No `bmad-review` override. |
+| Spec-lint | Same method: workflow `sdlc-spec-lint`, atomic questions per acceptance criterion (names a verification method, is unambiguous), 3 votes, threshold as a vote proportion set in code. The questions live in a `spec-lint` lens of the `bmad-review` override, so a manual `bmad-review` asks the same questions once. |
 | Documentation lint | `markdownlint-cli2`, configured in `.markdownlint-cli2.yaml`, run by `make lint-docs` locally and in CI. |
 | Process memlog | `_bmad-output/work/issue-{n}-{slug}/.memlog.md`. Gate HTML pages, the evidence record, `define-notes.md`, the per-work `plan.md` and `bug-report.md` go in the same folder. `SPEC.md`, `stories.yaml` and the story specs stay where `bmad-spec` and `bmad-build` write them (`_bmad-output/specs/spec-{slug}/`) and are referenced from the memlog. |
 | Branch and slug | Branch `{type}/{n}-{slug}` (type = Conventional Commits type planned for the PR); slug derived from the issue title, kebab-case, at most 4 words, confirmed with the route (long G1, G3). |
 | Migration files after a release | Nothing is moved. "Deliver" keeps only the `docs/migrations/next/` files added or changed since the previous tag (`git diff --name-only <prev-tag>..HEAD`); all files when no tag exists. |
-| Review loop | Workflow `sdlc-review`, parameterized by `args`: long route 2 dry passes, at most 5 rounds; bug route 1 dry pass, at most 2 rounds; short route one pass, verified findings fixed, no second pass. Lenses (security, correctness, coherence) and the verifier live in the workflow only; no `bmad-code-review` override (`bmad-code-review` has no loop anyway). Beyond the cap, the workflow returns the recurring findings; `sdlc-work` proposes a way out and the human chooses (long G23, bug G4, short G2). |
-| Role of `bmad-build` | Used only during Plan, to write the story specs up to `ready-for-dev`. Test writers and builders run in the workflows `sdlc-rails` and `sdlc-build` (long G17, G21). Its review layers are disabled by override. |
+| Review loop | Workflow `sdlc-review`, parameterized by `args`: long route 2 dry passes, at most 5 rounds; bug route 1 dry pass, at most 2 rounds; short route one pass, verified findings fixed, no second pass. Lenses (security, correctness, coherence) and the verifier are defined in the `bmad-code-review` override, whose 4 default layers are disabled; the workflow adds the loop (`bmad-code-review` has none). Beyond the cap, the workflow returns the recurring findings; `sdlc-work` proposes a way out and the human chooses (long G23, bug G4, short G2). |
+| Role of `bmad-build` | Used only during Plan, to write the story specs up to `ready-for-dev`. Test writers and builders run in the workflows `sdlc-rails` and `sdlc-build` (long G17, G21), with prompts defined in its override and shared with a manual run. Its review layers are disabled by override. |
 | Hand-back | Every process skill gets an `on_complete` override that writes its result to the active process memlog and hands control back to `sdlc-work` (long G4). |
 | Setup | Run manually in a separate session with `bmad-architecture`. `sdlc-work` refuses Plan unless the architecture spine exists and names the stack (long G13). |
 
@@ -72,40 +73,39 @@ Status: **ready** or **blocked (stack)**.
 
 ### U4. `_bmad/custom/` common overrides — ready
 
-- `persistent_facts = ["file:{project-root}/docs/development-process.md"]` for the process skills: `bmad-forge-idea`, `bmad-advanced-elicitation`, `bmad-deep-recon`, `bmad-spec`, `bmad-architecture`, `bmad-build`, `bmad-walkthrough`. (`bmad-create-epics-and-stories`, `bmad-code-review` and `bmad-review` are no longer part of the process.)
+- `persistent_facts = ["file:{project-root}/docs/development-process.md"]` for the process skills: `bmad-forge-idea`, `bmad-advanced-elicitation`, `bmad-deep-recon`, `bmad-spec`, `bmad-review`, `bmad-architecture`, `bmad-build`, `bmad-code-review`, `bmad-walkthrough`. (`bmad-create-epics-and-stories` is not used.) `bmad-review` and `bmad-code-review` are run by hand only, their overrides being read by the workflows.
 - `on_complete` on the same skills: when a `sdlc-work` process memlog is active, write the result to it and hand control back to `sdlc-work` (long G4).
 - `bmad-forge-idea`: `activation_steps_append` to check the code before each question, and at the end have every recorded assumption validated by yes or no (long G5).
 - Acceptance: each skill, when activated, states the process file among its loaded facts; at its end with an active memlog, the memlog has a new entry and `sdlc-work` proposes the next step.
 - Depends on: U2.
 
-### U5. Workflow `sdlc-spec-lint` — ready
+### U5. `bmad-review` spec-lint lens and workflow `sdlc-spec-lint` — ready
 
-Replaces the former `bmad-review` spec-lint lens override, which is dropped.
-
-- `.claude/workflows/sdlc-spec-lint.js`. `args`: `SPEC.md` path.
-- An agent lists the acceptance criteria; for each criterion, atomic questions ("names a verification method?", "unambiguous?") each answered by 3 independent agents with structured output; a criterion fails when the proportion of "yes" votes is below the threshold set in code.
+- `_bmad/custom/bmad-review.toml`: a `spec-lint` lens whose instruction lists the atomic questions ("names a verification method?", "unambiguous?") as plain prompt text. A manual `bmad-review` applies them once.
+- `.claude/workflows/sdlc-spec-lint.js`. `args`: `SPEC.md` path and the resolved `spec-lint` lens (passed by `sdlc-work` from the resolver).
+- An agent lists the acceptance criteria; for each criterion, each question is answered by 3 independent agents with structured output; a criterion fails when the proportion of "yes" votes is below the threshold set in code.
 - Returns the failing criteria with the votes, for `sdlc-work` to turn into questions.
 - Initial questions and threshold proposed by the agent and validated by the human in this unit.
-- Acceptance: harness tests of the vote combination; a real run on a `SPEC.md` with a criterion lacking its verification method reports it.
-- Depends on: U26.
+- Acceptance: harness tests of the vote combination; a real run on a `SPEC.md` with a criterion lacking its verification method reports it, and a manual `bmad-review` with the `spec-lint` lens reports it too.
+- Depends on: U26, U4.
 
 ### U6. `bmad-build` override: story specs for Plan — ready
 
 - `bmad-build` is used only during Plan: for each story of `stories.yaml`, it runs steps 01 and 02 and stops at status `ready-for-dev`, producing `{spec_folder}/stories/{id}-{slug}.md` (long G17). Check how to stop it there (override, or the way `sdlc-work` invokes it).
 - `review_layers` and `oneshot_review_layers`: empty `instruction`.
-- No `implementation_handoff` override: test writers and builders run in `sdlc-rails` and `sdlc-build` (U28, U29).
-- Acceptance: on a toy `stories.yaml`, one story spec per story exists in `ready-for-dev` and no code was written.
+- Custom keys `sdlc_test_writer_prompt` (given the story spec only, never the code) and `sdlc_builder_prompt` (story spec + frozen tests), read by `sdlc-rails` and `sdlc-build` through the resolver.
+- `implementation_handoff` for manual use, one story, sequential: test writer with `sdlc_test_writer_prompt` → `make freeze` → builder with `sdlc_builder_prompt`.
+- Acceptance: on a toy `stories.yaml`, one story spec per story exists in `ready-for-dev` and no code was written; a manual `bmad-build` on one story writes and freezes tests before the code.
 - Depends on: U4.
 
-### U7. Workflow `sdlc-review` — ready
+### U7. `bmad-code-review` override and workflow `sdlc-review` — ready
 
-Replaces the former `bmad-code-review` override, which is dropped.
-
-- `.claude/workflows/sdlc-review.js`. `args`: diff range, spec or bug report path, `dryPasses`, `maxRounds`, `singlePass`.
-- Each round: triage then findings (author's global review rule), lenses security, correctness and coherence (coherence mandatory: string constants between code and docs; actual content of security and config files); every finding reproduced by a verifier before it is kept; dedup against all findings seen; a fixer agent applies verified findings and runs `make`.
+- `_bmad/custom/bmad-code-review.toml`: `review_layers` security, correctness and coherence (coherence mandatory: string constants between code and docs; actual content of security and config files), plus a verifier layer that reproduces each finding before it is kept; triage then findings (author's global review rule); prompts as plain prompt text; the 4 default layers disabled (empty `instruction`). A manual `bmad-code-review` runs one pass with these layers.
+- `.claude/workflows/sdlc-review.js`. `args`: diff range, spec or bug report path, the resolved `review_layers` (passed by `sdlc-work` from the resolver), `dryPasses`, `maxRounds`, `singlePass`.
+- Each round: one agent per layer, every finding reproduced by the verifier before it is kept; dedup against all findings seen; a fixer agent applies verified findings and runs `make`.
 - A pass is dry only if at least three distinct lenses found nothing. Stops after `dryPasses` dry passes, or returns the recurring findings when `maxRounds` is reached.
-- Acceptance: harness tests (U26) for stop after 2 dry passes, return at round 5, single pass; a real run on a diff with a deliberate label mismatch between code and docs reports it and the verifier keeps it.
-- Depends on: U26, U8.
+- Acceptance: harness tests (U26) for stop after 2 dry passes, return at round 5, single pass; a real run on a diff with a deliberate label mismatch between code and docs reports it and the verifier keeps it; a manual `bmad-code-review` on the same diff reports it too.
+- Depends on: U26, U8, U4.
 
 ### U8. `make`: skeleton, docs lint, frozen tests — ready
 
@@ -259,20 +259,20 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 
 ### U28. Workflow `sdlc-rails` — ready
 
-- `.claude/workflows/sdlc-rails.js`. `args`: mode (`long` or `bug`), story spec paths or `bug-report.md`.
-- Long mode: one test writer per story, given the story spec only, never the code; then an agent runs `make freeze` for the written tests.
+- `.claude/workflows/sdlc-rails.js`. `args`: mode (`long` or `bug`), story spec paths or `bug-report.md`, the resolved `sdlc_test_writer_prompt` (U6).
+- Long mode: one test writer per story with `sdlc_test_writer_prompt`, given the story spec only, never the code; then an agent runs `make freeze` for the written tests.
 - Bug mode: one test writer that reads the code and writes tests only; an agent runs the new tests; no freeze, because the human must first confirm the failure reason (bug G2); `sdlc-work` runs `make freeze` after that confirmation.
 - Returns the test files written and, in bug mode, each test's failure message.
 - Acceptance: harness test; in a real long-mode run, the test writers' prompts contain no code path (checked in `/workflows`).
-- Depends on: U26, U8.
+- Depends on: U26, U8, U6.
 
 ### U29. Workflow `sdlc-build` — ready
 
-- `.claude/workflows/sdlc-build.js`. `args`: mode (`long` or `bug`), story spec paths or `bug-report.md`, work branch SHA (U25).
-- One builder per item with `isolation: 'worktree'`, given the story spec (or `bug-report.md`) and the frozen tests. Two-failure rule in script: after a failure, an agent improves the ticket (or enriches `bug-report.md`) and a new builder starts; after a second failure, the item is returned as "back to Plan" (long) or "ask the human" (bug).
+- `.claude/workflows/sdlc-build.js`. `args`: mode (`long` or `bug`), story spec paths or `bug-report.md`, work branch SHA (U25), the resolved `sdlc_builder_prompt` (U6).
+- One builder per item with `isolation: 'worktree'` and `sdlc_builder_prompt`, given the story spec (or `bug-report.md`) and the frozen tests. Two-failure rule in script: after a failure, an agent improves the ticket (or enriches `bug-report.md`) and a new builder starts; after a second failure, the item is returned as "back to Plan" (long) or "ask the human" (bug).
 - Returns the finished branches and the failed items; merging is done by `sdlc-work`.
 - Acceptance: harness tests for success, one failure then success, two failures; a builder that edits a frozen test fails `make check-frozen`.
-- Depends on: U25, U26, U8.
+- Depends on: U25, U26, U8, U6.
 
 ### U30. Workflow `sdlc-triage` — ready
 
