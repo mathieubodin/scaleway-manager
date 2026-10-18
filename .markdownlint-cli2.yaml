@@ -1,5 +1,5 @@
 # Markdown lint for every file written for this project.
-# Excluded: files installed by BMad (overwritten on each install).
+# Excluded: files of the BMad modules (core, bmm, bmb), overwritten on each install.
 # Checks only by default; `make fix-docs` passes --fix.
 gitignore: true
 noBanner: true

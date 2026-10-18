@@ -548,4 +548,16 @@ Locally, prek runs the same `make` targets on every commit. Install it once per 
 
 ## Installing the process module
 
-> **To be written (U3):** the exact `npx bmad-method install --custom-source <path>` command for the module `mathieubodin-sdlc`, and how to reinstall after a change.
+The module `mathieubodin-sdlc` is versioned in the repository, in the layout documented by BMad Builder for a multi-skill module: `.claude-plugin/marketplace.json` lists the skills under `skills/`; the setup skill `mathieubodin-sdlc-setup` carries `assets/module.yaml` and `assets/module-help.csv`. Workflows are not part of the module.
+
+Install it, and reinstall it after any change under `skills/`, from the project root:
+
+```bash
+npx bmad-method@6.12.4 install --directory "$PWD" --custom-source "$PWD" --tools claude-code --yes
+```
+
+- The installer copies the skills to `.claude/skills/` and merges the module rows into `_bmad/_config/bmad-help.csv`, which is never edited by hand. Commit what it changed.
+- Always pass `--custom-source`: on 6.12.4, an update without it fails for local custom modules (BMAD-METHOD issue #2869).
+- Edit the module in `skills/`, never its installed copies in `.claude/skills/` and `_bmad/mathieubodin-sdlc/module-help.csv`.
+- `_bmad/_config/manifest.yaml` records the module with the absolute `localPath` of the machine that installed it; a reinstall on another machine rewrites it.
+- `uv run .claude/skills/bmad-module-builder/scripts/validate-module.py skills` checks the module structure.
