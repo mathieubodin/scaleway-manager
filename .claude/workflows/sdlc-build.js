@@ -4,7 +4,7 @@ export const meta = {
     "Build each ticket (story spec or bug report) in its own worktree against the frozen tests, with the two-failure rule; return the finished branches and the failed tickets",
   whenToUse:
     "Launched by sdlc-work at Build, once for the trunk and once for the leaves (long route), or once for the bug, with args { mode, items, baseSha, builderPrompt }.",
-  phases: [{ title: "Build" }, { title: "Improve" }],
+  phases: [{ title: "Build" }, { title: "Verify" }, { title: "Improve" }],
 };
 
 // args:
@@ -15,6 +15,10 @@ export const meta = {
 // improves the ticket and a new builder starts; after a second failure the
 // ticket goes back to Plan (long) or to the human (bug). Decided with the
 // author on 2026-10-19: at most MAX_BUILDERS builders at the same time.
+// A builder that reports ok is checked by another agent (commit at the tip of
+// its branch, descending from baseSha, no frozen test changed). A builder that
+// started from another base is not a ticket failure: the item is returned as
+// "wrong base", without improving the ticket.
 const MAX_BUILDERS = 3;
 const SHA = /^[0-9a-f]{7,40}$/;
 
@@ -24,9 +28,16 @@ const BUILT = {
     ok: { type: "boolean" },
     branch: { type: "string" },
     commit: { type: "string" },
+    worktree: { type: "string" },
+    wrongBase: { type: "boolean" },
     report: { type: "string" },
   },
-  required: ["ok", "branch", "commit", "report"],
+  required: ["ok", "branch", "commit", "worktree", "wrongBase", "report"],
+};
+const CHECKED = {
+  type: "object",
+  properties: { ok: { type: "boolean" }, report: { type: "string" } },
+  required: ["ok", "report"],
 };
 const IMPROVED = {
   type: "object",
@@ -58,7 +69,8 @@ if (!prompt) throw new Error("args.builderPrompt is required");
 const label = mode === "long" ? "Story spec" : "Bug report";
 
 // At most n tasks at a time; the others wait for a free slot. A task is an
-// agent() call, which resolves to null when its subagent dies: it never rejects.
+// agent() call; one that rejects (budget exhausted) frees its slot and counts
+// as a dead agent.
 const slots = (n) => {
   let active = 0;
   const queue = [];
@@ -66,7 +78,11 @@ const slots = (n) => {
     if (active >= n || queue.length === 0) return;
     active++;
     const { task, resolve } = queue.shift();
-    task()
+    Promise.resolve()
+      .then(task)
+      // agent() under the test harness never rejects.
+      /* c8 ignore next */
+      .catch(() => null)
       .then(resolve)
       .finally(() => {
         active--;
@@ -81,92 +97,127 @@ const slots = (n) => {
 };
 const slot = slots(MAX_BUILDERS);
 
-const build = (item, i, improved) =>
+const build = (item, i, earlier) =>
   slot(() =>
     agent(
-      `${prompt.trim()}\n\nBefore anything else, run \`git rev-parse HEAD\`: if it does not start with ${baseSha}, change nothing and report a failure with the reason "wrong base". Work only in this worktree. When the ticket's tests and \`make check-frozen\` pass, commit your work on the current branch and report ok with the branch name (\`git branch --show-current\`) and the commit SHA; otherwise report a failure with what blocked you, and an empty branch and commit.${
-        improved
-          ? `\n\nAn earlier builder failed on this ticket. The improved ticket below supersedes the file named after it:\n\n${improved}`
-          : ""
-      }\n\n${label}: ${item}`,
+      `${prompt.trim()}\n\nAlways report the path of this worktree (\`git rev-parse --show-toplevel\`). Before anything else, run \`git rev-parse HEAD\`: if it does not start with ${baseSha}, change nothing and report a failure with wrongBase true. Work only in this worktree. When the ticket's tests and \`make check-frozen\` pass, commit your work on the current branch and report ok with the branch name (\`git branch --show-current\`) and the commit SHA; otherwise report a failure with what blocked you, and an empty branch and commit.${earlier ?? ""}\n\n${label}: ${item}`,
       {
         isolation: "worktree",
         schema: BUILT,
         phase: "Build",
-        label: `build ${i + 1}${improved ? " again" : ""}`,
+        label: `build ${i + 1}${earlier ? " again" : ""}`,
       },
     ),
   );
-// A dead builder, or one that reports ok without a branch and a commit SHA,
-// counts as a failure.
-const success = (r) => r?.ok === true && r.branch !== "" && SHA.test(r.commit);
-const why = (r) =>
-  r == null
-    ? "builder died"
-    : r.ok
-      ? `incomplete report: ${r.report}`
-      : r.report;
+
+const check = (r, i, again) =>
+  agent(
+    `From the repository root, change no file and check a builder's result: branch ${JSON.stringify(r.branch)}, commit ${r.commit}. Report ok only if all hold: \`git rev-parse --verify\` finds the commit; it is the tip of that branch; \`git merge-base --is-ancestor ${baseSha} ${r.commit}\` succeeds; and \`git diff --name-only ${baseSha} ${r.commit}\` lists no file named in frozen-tests.sha256 as it is at ${baseSha}. Otherwise report what failed.`,
+    {
+      schema: CHECKED,
+      phase: "Verify",
+      label: `check ${i + 1}${again ? " again" : ""}`,
+    },
+  );
+
+// One attempt: build, then check what the builder claims. A dead builder, one
+// that reports ok without a branch and a commit SHA, or one whose commit the
+// checker rejects, has failed.
+const attempt = async (item, i, earlier) => {
+  const r = await build(item, i, earlier);
+  if (r == null) return { r, ok: false, reason: "builder died" };
+  if (!r.ok) return { r, ok: false, reason: r.report };
+  if (r.branch === "" || !SHA.test(r.commit)) {
+    return { r, ok: false, reason: `incomplete report: ${r.report}` };
+  }
+  const c = await check(r, i, earlier != null);
+  if (c?.ok) return { r, ok: true };
+  return {
+    r,
+    ok: false,
+    reason: `check failed: ${c?.report ?? "checker died"}`,
+  };
+};
 
 const improve = (item, i, failure) =>
   agent(
-    mode === "long"
-      ? `A builder failed on the story spec ${item}. Its report: ${failure}\nImprove the story spec so that a new builder, given only this file and the frozen tests, can succeed: clarify and complete it in place. Do not change its acceptance criteria, any test, or any other file. Return the full improved story spec and a one-line summary of the changes.`
-      : `A builder failed on the bug report ${item}. Its report: ${failure}\nAdd what this attempt taught to ${item}, under a section "Builder attempts", without changing any other file or test. Return the full enriched bug report and a one-line summary of the changes.`,
+    `${
+      mode === "long"
+        ? `A builder failed on the story spec ${item}. Its report: ${failure}\nImprove the story spec so that a new builder, given only this file and the frozen tests, can succeed: clarify and complete it in place. Do not change its acceptance criteria, any test, or any other file.`
+        : `A builder failed on the bug report ${item}. Its report: ${failure}\nAdd what this attempt taught to ${item}, under a section "Builder attempts", without changing any other file or test.`
+    } Do not commit. Return the full ticket as it now is and a one-line summary of the changes.`,
     { schema: IMPROVED, phase: "Improve", label: `improve ${i + 1}` },
   );
 
 phase("Build");
 const outcomes = await parallel(
   items.map((item, i) => async () => {
-    const first = await build(item, i, null);
-    if (success(first)) {
+    const first = await attempt(item, i, null);
+    if (first.ok) return { item, ok: true, r: first.r, attempts: 1 };
+    if (first.r?.wrongBase) {
       return {
         item,
-        ok: true,
-        branch: first.branch,
-        commit: first.commit,
-        attempts: 1,
+        ok: false,
+        outcome: "wrong base",
+        reasons: [first.reason],
+        worktrees: [first.r.worktree],
       };
     }
-    const improved = await improve(item, i, why(first));
-    const second = await build(
+    const improved = await improve(item, i, first.reason);
+    const second = await attempt(
       item,
       i,
-      improved?.ticket ?? `(the ticket could not be improved) ${why(first)}`,
+      improved
+        ? `\n\nAn earlier builder failed on this ticket. The improved ticket below supersedes the file named after it:\n\n${improved.ticket}`
+        : `\n\nAn earlier builder failed on this ticket with: ${first.reason}. The ticket file stays the reference.`,
     );
-    if (success(second)) {
+    if (second.ok) {
       return {
         item,
         ok: true,
-        branch: second.branch,
-        commit: second.commit,
+        r: second.r,
         attempts: 2,
+        ticketImproved: improved != null,
       };
     }
     return {
       item,
       ok: false,
-      reasons: [why(first), why(second)],
+      outcome: second.r?.wrongBase
+        ? "wrong base"
+        : mode === "long"
+          ? "back to Plan"
+          : "ask the human",
+      reasons: [first.reason, second.reason],
       improvement: improved?.changes ?? "improver died",
+      worktrees: [first.r?.worktree, second.r?.worktree].filter(Boolean),
     };
   }),
 );
 
 const finished = outcomes
   .filter((o) => o.ok)
-  .map(({ item, branch, commit, attempts }) => ({
-    item,
-    branch,
-    commit,
-    attempts,
+  .map((o) => ({
+    item: o.item,
+    branch: o.r.branch,
+    commit: o.r.commit,
+    attempts: o.attempts,
+    ticketImproved: o.ticketImproved === true,
   }));
+// Failed items name the worktrees their builders left, for inspection.
 const failed = outcomes
   .filter((o) => !o.ok)
-  .map(({ item, reasons, improvement }) => ({
+  .map(({ item, outcome, reasons, improvement, worktrees }) => ({
     item,
+    outcome,
     reasons,
-    improvement,
-    outcome: mode === "long" ? "back to Plan" : "ask the human",
+    improvement: improvement ?? "",
+    worktrees,
   }));
 log(`${finished.length} finished, ${failed.length} failed`);
-return { mode, finished, failed };
+return {
+  mode,
+  finished,
+  failed,
+  backToPlan: failed.some((f) => f.outcome === "back to Plan"),
+};

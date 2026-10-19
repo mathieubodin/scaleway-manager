@@ -13,26 +13,43 @@ const LONG = {
 };
 const BUG = { ...LONG, mode: "bug", items: ["work/bug-report.md"] };
 
-const ok = (n) => ({
+const built = (n, more = {}) => ({
   ok: true,
   branch: `wt-${n}`,
   commit: "def5678",
+  worktree: `/wt/${n}`,
+  wrongBase: false,
   report: "done",
+  ...more,
 });
-const ko = (report) => ({ ok: false, branch: "", commit: "", report });
+const ko = (report, more = {}) => ({
+  ok: false,
+  branch: "",
+  commit: "",
+  worktree: "/wt/x",
+  wrongBase: false,
+  report,
+  ...more,
+});
 
-// Answers by label: "build <n>", "build <n> again", "improve <n>"; a function
-// is called (it may throw to make the agent die).
+// Answers by label: "build <n>", "build <n> again", "check <n>", "check <n>
+// again", "improve <n>". Checks and improvements succeed unless given; a
+// function is called (it may throw to make the agent die).
 const respond =
   (answers) =>
   ({ opts }) => {
     const a = answers[opts.label];
     if (typeof a === "function") return a();
-    if (a === undefined && opts.label.startsWith("improve")) {
+    if (a !== undefined) return a;
+    if (opts.label.startsWith("check")) return { ok: true, report: "ok" };
+    if (opts.label.startsWith("improve")) {
       return { ticket: "better ticket", changes: "added paths" };
     }
-    return a;
+    return undefined;
   };
+const dead = () => {
+  throw new Error("dead");
+};
 
 test("invalid args are refused", async () => {
   const bad = [
@@ -52,26 +69,45 @@ test("invalid args are refused", async () => {
   await assert.rejects(runWorkflow(SCRIPT), /mode/);
 });
 
-test("success at the first attempt, in a worktree, base checked", async () => {
+test("success at the first attempt, in a worktree, base checked, result checked", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: LONG,
-    respond: respond({ "build 1": ok(1), "build 2": ok(2) }),
+    respond: respond({ "build 1": built(1), "build 2": built(2) }),
   });
   assert.deepEqual(run.result, {
     mode: "long",
     finished: [
-      { item: STORIES[0], branch: "wt-1", commit: "def5678", attempts: 1 },
-      { item: STORIES[1], branch: "wt-2", commit: "def5678", attempts: 1 },
+      {
+        item: STORIES[0],
+        branch: "wt-1",
+        commit: "def5678",
+        attempts: 1,
+        ticketImproved: false,
+      },
+      {
+        item: STORIES[1],
+        branch: "wt-2",
+        commit: "def5678",
+        attempts: 1,
+        ticketImproved: false,
+      },
     ],
     failed: [],
+    backToPlan: false,
   });
-  for (const { prompt, opts } of run.calls) {
+  const builds = run.calls.filter((c) => c.opts.phase === "Build");
+  for (const { prompt, opts } of builds) {
     assert.equal(opts.isolation, "worktree");
     assert.ok(prompt.startsWith("Build it.\n\n"));
     assert.match(prompt, /if it does not start with abc1234, change nothing/);
     assert.match(prompt, /make check-frozen/);
   }
-  assert.ok(run.calls[0].prompt.endsWith(`Story spec: ${STORIES[0]}`));
+  assert.ok(builds[0].prompt.endsWith(`Story spec: ${STORIES[0]}`));
+  const check = run.calls.find((c) => c.opts.label === "check 1");
+  assert.equal(check.opts.isolation, undefined);
+  assert.match(check.prompt, /branch "wt-1", commit def5678/);
+  assert.match(check.prompt, /git merge-base --is-ancestor abc1234 def5678/);
+  assert.match(check.prompt, /frozen-tests\.sha256/);
 });
 
 test("one failure, ticket improved, second builder succeeds", async () => {
@@ -79,11 +115,17 @@ test("one failure, ticket improved, second builder succeeds", async () => {
     args: { ...LONG, items: [STORIES[0]] },
     respond: respond({
       "build 1": ko("no file named"),
-      "build 1 again": ok(1),
+      "build 1 again": built(1),
     }),
   });
   assert.deepEqual(run.result.finished, [
-    { item: STORIES[0], branch: "wt-1", commit: "def5678", attempts: 2 },
+    {
+      item: STORIES[0],
+      branch: "wt-1",
+      commit: "def5678",
+      attempts: 2,
+      ticketImproved: true,
+    },
   ]);
   const improve = run.calls.find((c) => c.opts.label === "improve 1");
   assert.equal(improve.opts.isolation, undefined);
@@ -92,6 +134,7 @@ test("one failure, ticket improved, second builder succeeds", async () => {
     /story spec stories\/1-a\.md\. Its report: no file named/,
   );
   assert.match(improve.prompt, /Do not change its acceptance criteria/);
+  assert.match(improve.prompt, /Do not commit\./);
   const again = run.calls.find((c) => c.opts.label === "build 1 again");
   assert.match(
     again.prompt,
@@ -99,15 +142,10 @@ test("one failure, ticket improved, second builder succeeds", async () => {
   );
 });
 
-test("long: two failures send the story back to Plan", async () => {
+test("long: two failures send the story back to Plan, worktrees named", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: { ...LONG, items: [STORIES[0]] },
-    respond: respond({
-      "build 1": ko("first"),
-      "build 1 again": () => {
-        throw new Error("dead");
-      },
-    }),
+    respond: respond({ "build 1": ko("first"), "build 1 again": dead }),
   });
   assert.deepEqual(run.result, {
     mode: "long",
@@ -115,46 +153,94 @@ test("long: two failures send the story back to Plan", async () => {
     failed: [
       {
         item: STORIES[0],
+        outcome: "back to Plan",
         reasons: ["first", "builder died"],
         improvement: "added paths",
-        outcome: "back to Plan",
+        worktrees: ["/wt/x"],
       },
     ],
+    backToPlan: true,
   });
 });
 
-test("bug: two failures ask the human; the bug report is enriched", async () => {
+test("a commit the checker rejects, or a dead checker, is a failure", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: { ...LONG, items: [STORIES[0]] },
+    respond: respond({
+      "build 1": built(1),
+      "check 1": { ok: false, report: "frozen test changed" },
+      "build 1 again": built(1),
+      "check 1 again": dead,
+    }),
+  });
+  assert.deepEqual(run.result.failed[0].reasons, [
+    "check failed: frozen test changed",
+    "check failed: checker died",
+  ]);
+});
+
+test("wrong base: no improvement, no second builder", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: { ...LONG, items: [STORIES[0]] },
+    respond: respond({ "build 1": ko("HEAD is 999", { wrongBase: true }) }),
+  });
+  assert.deepEqual(run.result.failed, [
+    {
+      item: STORIES[0],
+      outcome: "wrong base",
+      reasons: ["HEAD is 999"],
+      improvement: "",
+      worktrees: ["/wt/x"],
+    },
+  ]);
+  assert.equal(run.result.backToPlan, false);
+  assert.equal(run.calls.length, 1);
+});
+
+test("wrong base at the second attempt is reported as such", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: { ...LONG, items: [STORIES[0]] },
+    respond: respond({
+      "build 1": ko("red"),
+      "build 1 again": ko("moved", { wrongBase: true }),
+    }),
+  });
+  assert.equal(run.result.failed[0].outcome, "wrong base");
+  assert.equal(run.result.backToPlan, false);
+});
+
+test("bug: two failures ask the human; a dead improver keeps the file as the ticket", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: BUG,
     respond: respond({
       // ok without a commit SHA is not a success
-      "build 1": { ok: true, branch: "wt", commit: "", report: "said ok" },
+      "build 1": built(1, { commit: "" }),
       "build 1 again": ko("still red"),
-      "improve 1": () => {
-        throw new Error("dead");
-      },
+      "improve 1": dead,
     }),
   });
   assert.deepEqual(run.result.failed, [
     {
       item: "work/bug-report.md",
-      reasons: ["incomplete report: said ok", "still red"],
-      improvement: "improver died",
       outcome: "ask the human",
+      reasons: ["incomplete report: done", "still red"],
+      improvement: "improver died",
+      worktrees: ["/wt/1", "/wt/x"],
     },
   ]);
-  assert.ok(run.calls[0].prompt.endsWith("Bug report: work/bug-report.md"));
-  const again = run.calls.find((c) => c.opts.label === "build 1 again");
+  const builds = run.calls.filter((c) => c.opts.phase === "Build");
+  assert.ok(builds[0].prompt.endsWith("Bug report: work/bug-report.md"));
   assert.match(
-    again.prompt,
-    /\(the ticket could not be improved\) incomplete report/,
+    builds[1].prompt,
+    /failed on this ticket with: incomplete report: done\. The ticket file stays the reference\./,
   );
+  assert.doesNotMatch(builds[1].prompt, /supersedes/);
 });
 
 test("bug: the improver adds a Builder attempts section", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: BUG,
-    respond: respond({ "build 1": ko("x"), "build 1 again": ok(1) }),
+    respond: respond({ "build 1": ko("x"), "build 1 again": built(1) }),
   });
   const improve = run.calls.find((c) => c.opts.label === "improve 1");
   assert.match(improve.prompt, /under a section "Builder attempts"/);
@@ -168,11 +254,12 @@ test("at most 3 builders at the same time", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: { ...LONG, items },
     respond: async ({ opts }) => {
+      if (opts.label.startsWith("check")) return { ok: true, report: "ok" };
       active++;
       peak = Math.max(peak, active);
       await new Promise((r) => setTimeout(r, 5));
       active--;
-      return ok(opts.label.split(" ")[1]);
+      return built(opts.label.split(" ")[1]);
     },
   });
   assert.equal(peak, 3);
