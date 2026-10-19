@@ -157,7 +157,7 @@ A criterion passes with at least 2 "yes" out of 3 independent votes for each que
 
 The spec gate and the plan gate work the same way:
 
-- `sdlc-gate-page` renders an HTML page to help understand; the Markdown stays the reference, and the decision validates or invalidates it.
+- `sdlc-gate-page` renders an HTML page to help understand, from the reference files only, in English (decided with the author: the project rule applies), self-contained, with the sections listed in its `SKILL.md`; the Markdown stays the reference, and the decision validates or invalidates it.
 - `sdlc-work` prints the absolute path of the page and runs `xdg-open`.
 - Validated: commit of the work folder and the folders referenced by the memlog, push, comment `validated` on the epic with the commit link. This commit is also the resume point from another machine.
 - Invalidated: comment `invalidated: <reason>`; `sdlc-work` proposes a return step from the reason (forge if the problem is ill-posed, parallax or pre-mortem if a risk is missing, `bmad-spec` or the plan if it is the writing); the human chooses.

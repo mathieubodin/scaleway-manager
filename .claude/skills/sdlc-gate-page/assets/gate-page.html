@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{Gate}} gate: #{{n}} {{title}}</title>
+<style>
+:root {
+  --bg: #f5f6f4; --ink: #1f2421; --muted: #5d6762; --line: #d3d9d4;
+  --panel: #ffffff; --accent: #2f6f5e; --open: #a3620f;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816; --ink: #e2e7e3; --muted: #9ba59f; --line: #2c3430;
+    --panel: #1b201d; --accent: #7cc4ad; --open: #e0a24f;
+    color-scheme: dark;
+  }
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); padding: 0 16px; }
+main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 0 4rem; display: grid; gap: 1.8rem; }
+h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.25rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: grid; gap: .3rem; }
+section { display: grid; gap: .7rem; }
+.meta { color: var(--muted); font-size: .92rem; }
+.verdict { background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; padding: 1rem 1.2rem; display: grid; gap: .4rem; }
+.verdict strong { color: var(--accent); }
+.open { color: var(--open); font-weight: 600; }
+.wide { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+code { font-family: var(--mono); font-size: .88em; }
+.flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .2rem .6rem; }
+</style>
+</head>
+<body>
+<main>
+<header style="display: grid; gap: .5rem">
+  <h1>{{Gate}} gate: #{{n}} {{title}}</h1>
+  <p class="meta">Branch <code>{{branch}}</code>, commit <code>{{commit}}</code>. Reference: {{reference paths, each in <code>}}.</p>
+</header>
+<div class="verdict">
+  <strong>What you validate</strong>
+  <p>{{one or two sentences, from the reference}}</p>
+  <p class="meta">This page helps you understand; the reference files are what you validate or invalidate.</p>
+</div>
+<!-- One <section><h2>...</h2>...</section> per section listed in SKILL.md. -->
+</main>
+</body>
+</html>
