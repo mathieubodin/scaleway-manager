@@ -22,6 +22,14 @@ test("missing story paths are refused", async () => {
     /storyPaths/,
   );
   await assert.rejects(runWorkflow(SCRIPT), /storyPaths/);
+  await assert.rejects(
+    runWorkflow(SCRIPT, { args: { storyPaths: "stories/1-api.md" } }),
+    /list of story spec paths/,
+  );
+  await assert.rejects(
+    runWorkflow(SCRIPT, { args: { storyPaths: [PATHS[0], PATHS[0]] } }),
+    /twice/,
+  );
 });
 
 test("one agent per story, given its path only", async () => {
@@ -30,8 +38,16 @@ test("one agent per story, given its path only", async () => {
     respond: respond({}),
   });
   assert.equal(run.calls.length, 2);
-  assert.match(run.calls[0].prompt, /story spec stories\/1-api\.md is all/);
-  assert.doesNotMatch(run.calls[0].prompt, /2-button/);
+  PATHS.forEach((path, i) => {
+    const { prompt, opts } = run.calls[i];
+    assert.ok(prompt.includes(`the story spec ${path} and the files it names`));
+    assert.doesNotMatch(prompt, new RegExp(PATHS[1 - i]));
+    assert.match(prompt, /Implement nothing and change no file/);
+    assert.match(prompt, /code they create may not exist yet/);
+    assert.match(prompt, /their absence now is not a missing item/);
+    assert.equal(opts.phase, "Cold start");
+    assert.equal(JSON.stringify(opts.schema.required), '["missing"]');
+  });
   assert.deepEqual(run.result, {
     green: true,
     stories: PATHS.map((path) => ({
@@ -74,4 +90,11 @@ test("a dead agent leaves its story unchecked and the round red", async () => {
   });
   assert.equal(run.result.green, false);
   assert.equal(run.result.stories[1].dead, true);
+  assert.deepEqual(run.result.stories[0], {
+    path: PATHS[0],
+    dead: false,
+    blocking: [],
+    useful: [],
+  });
+  assert.match(run.logs.at(-1), /^1 of 2 stories red/);
 });
