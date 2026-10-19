@@ -17,7 +17,7 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 - Never use `default`, `kube-system`, `kube-public` or `kube-node-lease` for Scaleway resources; a dedicated namespace is required.
 - Every managed Scaleway resource is a CR. Do not display Scaleway objects that have none.
 - A YAML export never contains a Secret's value (the Secret `scaleway-ns-creds-{namespace}` holds the IAM key); export references only.
-- An export keeps, unchanged, the namespace name, its `scaleway.mathieubodin.io/project-id` annotation and each CR's name: the operator adopts existing resources by these keys (Instance: zone + name + project; LoadBalancer and ScalewaySecret: tags with namespace + CR name). Without them, re-import creates duplicates in Scaleway.
+- An export keeps, unchanged, the namespace name, its `scaleway.mathieubodin.io/project-id` annotation, each CR's name and each CR's `spec`: the operator adopts existing resources by these keys (Instance: `spec.zone` + `spec.name` + project, `spec.name` being the Scaleway name, not the CR's `metadata.name`; LoadBalancer and ScalewaySecret: tags with namespace + CR `metadata.name`). Without them, re-import creates duplicates in Scaleway.
 
 ## Versioning
 
