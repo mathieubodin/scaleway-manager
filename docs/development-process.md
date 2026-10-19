@@ -146,7 +146,12 @@ On another machine the memlog is available from the last gate commit; without it
 - `bmad-spec` writes `SPEC.md` from `forged-idea.md` and `define-notes.md`, scope with non-goals and success signal included. Every acceptance criterion names its verification method.
 - Spec-lint loop: `sdlc-spec-lint` asks each atomic question of each acceptance criterion to 3 independent agents; a criterion fails when the proportion of "yes" votes is below a threshold set in code. Each failing criterion becomes a question to the human, the answer goes to `define-notes.md`, `bmad-spec` updates `SPEC.md`, and spec-lint runs again. No gate page while it is red; alert to the human after 3 rounds. A manual `bmad-review` with the `spec-lint` lens asks the same questions once.
 
-> **To be written (U5):** the spec-lint questions and the threshold.
+Spec-lint questions, decided with the author and defined once in `_bmad/custom/bmad-review.toml` (`spec_lint_questions`, used by the `spec-lint` lens and passed to `sdlc-spec-lint`):
+
+1. Does this criterion say how we will verify that it is met?
+2. Does this criterion have only one possible reading?
+
+A criterion passes with at least 2 "yes" out of 3 independent votes for each question; a vote whose agent died counts as a missing "yes" (`.claude/workflows/sdlc-spec-lint.js`). A first trial on a two-criterion spec cost about 450,000 tokens for 13 agents.
 
 ### Gates
 
