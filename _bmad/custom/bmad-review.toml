@@ -1,0 +1,20 @@
+# Process overrides (docs/development-process.md): process file as a fact, hand-back to sdlc-work.
+[workflow]
+persistent_facts = ["file:{project-root}/docs/development-process.md"]
+on_complete = '''If the current git branch has the form `<type>/<n>-<slug>` (n and slug taken from the branch name, not from any variable of this skill) and `{project-root}/_bmad-output/work/issue-<n>-<slug>/.memlog.md` exists, a `sdlc-work` process memlog is active: append one line stating what this session produced, with the paths of its output files, by running `uv run {project-root}/_bmad/scripts/memlog.py append --workspace '{project-root}/_bmad-output/work/issue-<n>-<slug>' --type result --by bmad-review --text '<that line>'`; the line is plain text in single quotes and contains no single quote, backtick or dollar sign. Then do not recommend a next step yourself: hand control back to `sdlc-work`, which proposes the next step (if `sdlc-work` is not running in this session and the run is interactive, tell the user to run `/sdlc-work <n>`). Otherwise do nothing.'''
+
+# Spec-lint (docs/development-process.md, "Define and spec gate"): the questions asked
+# for each acceptance criterion, validated with the author on 2026-10-19. The workflow
+# sdlc-spec-lint receives them from sdlc-work through the resolver and asks each one to
+# 3 independent agents; a criterion passes with at least 2 "yes" out of 3 per question.
+spec_lint_questions = [
+  "Does this criterion say how we will verify that it is met?",
+  "Does this criterion have only one possible reading?",
+]
+
+[[workflow.lenses]]
+code = "spec-lint"
+name = "Spec-lint"
+applies_to = "docs"
+when = "Specs, requirements and stories with acceptance criteria."
+instruction = '''List every acceptance criterion of the document, in order, with its text. For each criterion, answer each question of {workflow.spec_lint_questions} by yes or no, judging the criterion's own wording only, with a one-sentence reason. Report one finding per "no": location = the criterion; trigger_condition = the question; guard_snippet = what the criterion must add so that the answer becomes yes; potential_consequence = what goes wrong at verification time if it stays as is. No finding for a criterion that gets yes to every question. A document without acceptance criteria gets a single finding saying so.'''

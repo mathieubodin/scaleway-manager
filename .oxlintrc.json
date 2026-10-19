@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "builtin": true
+  },
+  "globals": {
+    "agent": "readonly",
+    "parallel": "readonly",
+    "pipeline": "readonly",
+    "phase": "readonly",
+    "log": "readonly",
+    "args": "readonly",
+    "budget": "readonly",
+    "workflow": "readonly"
+  },
+  "rules": {
+    "no-undef": "error"
+  }
+}

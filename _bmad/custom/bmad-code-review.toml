@@ -1,0 +1,84 @@
+# Process overrides (docs/development-process.md): process file as a fact, hand-back to sdlc-work.
+[workflow]
+persistent_facts = ["file:{project-root}/docs/development-process.md"]
+
+sdlc_verifier_prompt = '''
+You verify the findings of one review round, alone, before any of them is fixed. For each finding listed below, go to the cited file and line and decide whether the bad outcome it describes actually occurs: read beyond the changed lines (callers, guards upstream, tests), and run a command or a test when that settles it, without changing any file. Code that fails loudly on a situation no caller can reach is correct behavior, not a defect.
+For each finding answer: real (true or false), the evidence in one or two sentences (what reproduces it, or what disproves this specific claim), a severity when real (high: intolerable; medium: tolerable; low: cosmetic), whether its fix needs a decision by the human (true when more than one fix is reasonable, or the fix changes documented behavior or edits a spec), duplicateOf (the number of an earlier finding of this round with the same root cause, otherwise null) and seenAs (the id of a finding of an earlier round with the same root cause, from the list given, otherwise null). Never drop a finding.
+'''
+
+sdlc_fixer_prompt = '''
+You fix the verified findings listed below, and only them, in the working tree. Make the smallest change that removes each bad outcome, in the style of the surrounding code. Never edit, move or delete a file listed in frozen-tests.sha256. Do not commit. Leave a finding unfixed, with the reason, when its fix needs a decision you cannot take alone. Then run `make check` and fix what your changes broke. Report, for each finding id, whether it is fixed, and the result of `make check`.
+'''
+on_complete = '''If the current git branch has the form `<type>/<n>-<slug>` (n and slug taken from the branch name, not from any variable of this skill) and `{project-root}/_bmad-output/work/issue-<n>-<slug>/.memlog.md` exists, a `sdlc-work` process memlog is active: append one line stating what this session produced, with the paths of its output files, by running `uv run {project-root}/_bmad/scripts/memlog.py append --workspace '{project-root}/_bmad-output/work/issue-<n>-<slug>' --type result --by bmad-code-review --text '<that line>'`; the line is plain text in single quotes and contains no single quote, backtick or dollar sign. Then do not recommend a next step yourself: hand control back to `sdlc-work`, which proposes the next step (if `sdlc-work` is not running in this session and the run is interactive, tell the user to run `/sdlc-work <n>`). Otherwise do nothing.'''
+
+# Review loop (docs/development-process.md, "Review loop"). The three lenses below are the
+# single definition of the review: a manual bmad-code-review runs them once, and its own
+# triage step verifies each finding; the workflow sdlc-review receives them, with
+# sdlc_verifier_prompt and sdlc_fixer_prompt, from sdlc-work through the resolver.
+# Layers run in parallel, so a verifier cannot be a layer: it lives in a custom key.
+
+[[workflow.review_layers]]
+id = "security"
+name = "Security lens"
+instruction = '''
+Launch a context-free subagent with this prompt:
+
+You review a change for security. Work in two phases and never merge them.
+Triage: from the diff, the commit messages of the branch and AGENTS.md, decide which files and areas to look at. Assign no severity here, and never trust a description that says a problem is resolved: check it in the code.
+Findings: read the actual files, beyond the changed lines. Look for secrets or credentials written to files, logs or exports; text from an issue, a PR, a branch name or an argument reaching a shell, a `run:` step or a command line without safe quoting; GitHub Actions jobs with broader permissions than needed, actions not pinned by commit SHA, untrusted event values used outside `env`; access rules (RBAC verbs, tokens, permissions) whose real content grants more than the documentation states; and breaches of the project policies in AGENTS.md (calls to the Scaleway API from this project, a Secret value in an export, a Scaleway resource in `default` or another system namespace).
+For each finding give a one-line title, the file and line, and what goes wrong, in which situation. No finding without a location you read. Return an empty list when you find nothing; do not invent findings to fill it.
+
+Diff: the unified diff at `{diff_file}`. Spec or bug report, if any: `{spec_file}`.
+
+Do not invoke any skill, and do not spawn subagents of your own. Do not change any file. Return your findings as text in your final message; do not route them through any findings-reporting tool the host may offer.
+'''
+
+[[workflow.review_layers]]
+id = "correctness"
+name = "Correctness lens"
+instruction = '''
+Launch a context-free subagent with this prompt:
+
+You review a change for correctness. Work in two phases and never merge them.
+Triage: from the diff, the commit messages of the branch and AGENTS.md, decide which files and areas to look at. Assign no severity here, and never trust a description that says a problem is resolved: check it in the code.
+Findings: read the actual files, beyond the changed lines: callers, guards upstream, tests. Look for logic errors, unhandled inputs and edge cases (empty, missing, repeated, special characters, failure of a called command), error paths that hide a failure, tests that pass without checking the behavior they name, and acceptance criteria of the spec or bug report that the change does not meet.
+For each finding give a one-line title, the file and line, and the concrete input or state that produces the wrong result. No finding without a location you read. Return an empty list when you find nothing; do not invent findings to fill it.
+
+Diff: the unified diff at `{diff_file}`. Spec or bug report, if any: `{spec_file}`.
+
+Do not invoke any skill, and do not spawn subagents of your own. Do not change any file. Return your findings as text in your final message; do not route them through any findings-reporting tool the host may offer.
+'''
+
+[[workflow.review_layers]]
+id = "coherence"
+name = "Coherence lens"
+instruction = '''
+Launch a context-free subagent with this prompt:
+
+You review a change for coherence across files. Work in two phases and never merge them.
+Triage: from the diff, the commit messages of the branch and AGENTS.md, decide which files and areas to look at. Assign no severity here, and never trust a description that says a problem is resolved: check it in the code.
+Findings: read the actual files, beyond the changed lines. Compare every string constant that appears both in code and in documentation (labels, statuses, file paths, make targets and variables, skill and workflow names, argument names, finalizers, annotations, Kubernetes labels) and report each mismatch with both locations. Compare the real content of security and configuration files (permissions, verbs, protected branches, pinned versions, tool settings) with what the documentation says they contain. Report documentation that describes a behavior the code no longer has, and code that changes a behavior the documentation still describes the old way.
+For each finding give a one-line title, the two locations (file and line) and the two values that disagree. No finding without locations you read. Return an empty list when you find nothing; do not invent findings to fill it.
+
+Diff: the unified diff at `{diff_file}`. Spec or bug report, if any: `{spec_file}`.
+
+Do not invoke any skill, and do not spawn subagents of your own. Do not change any file. Return your findings as text in your final message; do not route them through any findings-reporting tool the host may offer.
+'''
+
+# The four default layers are off.
+[[workflow.review_layers]]
+id = "blind-hunter"
+instruction = ""
+
+[[workflow.review_layers]]
+id = "edge-case-hunter"
+instruction = ""
+
+[[workflow.review_layers]]
+id = "verification-gap"
+instruction = ""
+
+[[workflow.review_layers]]
+id = "acceptance-auditor"
+instruction = ""

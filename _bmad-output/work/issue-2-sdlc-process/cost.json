@@ -1,0 +1,348 @@
+{
+  "issue": 2,
+  "route": null,
+  "tokens": 11134339,
+  "totals": {
+    "steps": {
+      "bootstrap": {
+        "claude-opus-5-5": {
+          "input": 4484,
+          "output": 1135836,
+          "cacheCreation": 9609688,
+          "cacheRead": 432949402
+        },
+        "claude-sonnet-5-5": {
+          "input": 348,
+          "output": 77508,
+          "cacheCreation": 306475,
+          "cacheRead": 18483369
+        }
+      }
+    },
+    "models": {
+      "claude-opus-5-5": {
+        "input": 4484,
+        "output": 1135836,
+        "cacheCreation": 9609688,
+        "cacheRead": 432949402
+      },
+      "claude-sonnet-5-5": {
+        "input": 348,
+        "output": 77508,
+        "cacheCreation": 306475,
+        "cacheRead": 18483369
+      }
+    },
+    "unattributed": {}
+  },
+  "sessions": {
+    "33470920-25e1-45f5-98e5-19c61a3c34a3": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 1182,
+            "output": 262669,
+            "cacheCreation": 2138010,
+            "cacheRead": 127568075
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "5ee1d1dd-14f0-4d12-8349-cdc97d874fd3": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 280,
+            "output": 96830,
+            "cacheCreation": 271652,
+            "cacheRead": 17634836
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "6b67a654-2772-431e-a6a9-11b9d78a40b8": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 546,
+            "output": 197570,
+            "cacheCreation": 1195809,
+            "cacheRead": 58896387
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "b0833aac-c349-441a-a5af-d45da80e4a58": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 462,
+            "output": 210818,
+            "cacheCreation": 820564,
+            "cacheRead": 52005126
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "b8e09581-02a3-41cc-8e58-08b0c08f057a": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-sonnet-5-5": {
+            "input": 348,
+            "output": 77508,
+            "cacheCreation": 306475,
+            "cacheRead": 18483369
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "c024b1e6-e7f0-46ec-b563-e4474308bb1f": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 8,
+            "output": 1766,
+            "cacheCreation": 78721,
+            "cacheRead": 233526
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "c1bceb1b-16e8-4136-a446-bf08d666e063": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 1388,
+            "output": 350989,
+            "cacheCreation": 2831312,
+            "cacheRead": 168566595
+          }
+        }
+      },
+      "unattributed": {}
+    }
+  },
+  "runs": {
+    "wf_1503d7de-b31": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 44,
+          "output": 220,
+          "cacheCreation": 141443,
+          "cacheRead": 911976
+        }
+      }
+    },
+    "wf_2032e59a-948": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 34,
+          "output": 230,
+          "cacheCreation": 156685,
+          "cacheRead": 637866
+        }
+      }
+    },
+    "wf_24953db5-6ea": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 62,
+          "output": 333,
+          "cacheCreation": 143374,
+          "cacheRead": 1436018
+        }
+      }
+    },
+    "wf_4512a4e7-334": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 46,
+          "output": 1547,
+          "cacheCreation": 90824,
+          "cacheRead": 931761
+        }
+      }
+    },
+    "wf_46d6a333-5ba": {
+      "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 4,
+          "output": 409,
+          "cacheCreation": 37204,
+          "cacheRead": 35710
+        }
+      }
+    },
+    "wf_4c8e40e6-f9e": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 76,
+          "output": 1528,
+          "cacheCreation": 325714,
+          "cacheRead": 1218106
+        }
+      }
+    },
+    "wf_6e426de3-937": {
+      "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 4,
+          "output": 395,
+          "cacheCreation": 37109,
+          "cacheRead": 35630
+        }
+      }
+    },
+    "wf_6e51848f-054": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 56,
+          "output": 1453,
+          "cacheCreation": 173052,
+          "cacheRead": 444819
+        }
+      }
+    },
+    "wf_7a8c6939-294": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 34,
+          "output": 1918,
+          "cacheCreation": 163022,
+          "cacheRead": 198554
+        }
+      }
+    },
+    "wf_7ce99353-a23": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 62,
+          "output": 1405,
+          "cacheCreation": 204685,
+          "cacheRead": 470680
+        }
+      }
+    },
+    "wf_8393a167-3e9": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 38,
+          "output": 978,
+          "cacheCreation": 46518,
+          "cacheRead": 359060
+        }
+      }
+    },
+    "wf_9cf7507c-b5d": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 64,
+          "output": 1302,
+          "cacheCreation": 38848,
+          "cacheRead": 655366
+        }
+      }
+    },
+    "wf_a08c46e7-14a": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 18,
+          "output": 529,
+          "cacheCreation": 120593,
+          "cacheRead": 231807
+        }
+      }
+    },
+    "wf_a9245a0e-535": {
+      "session": "33470920-25e1-45f5-98e5-19c61a3c34a3",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 28,
+          "output": 1233,
+          "cacheCreation": 337324,
+          "cacheRead": 145554
+        }
+      }
+    },
+    "wf_c6b2f0a6-e3b": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 8,
+          "output": 675,
+          "cacheCreation": 41837,
+          "cacheRead": 118671
+        }
+      }
+    },
+    "wf_eecdfcb1-b12": {
+      "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
+      "step": "bootstrap",
+      "computedAt": "2026-10-19T17:58:51Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 40,
+          "output": 1039,
+          "cacheCreation": 215388,
+          "cacheRead": 213279
+        }
+      }
+    }
+  }
+}

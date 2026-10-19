@@ -1,0 +1,86 @@
+name: pr-checks
+
+# One job per check, so that a failure shows on its own required status check.
+# The checks are the make targets run locally (docs/development-process.md, "CI").
+# Values from the PR reach scripts through env, never pasted into run.
+
+on:
+  pull_request:
+    # edited: the issue of the work is read from the PR body.
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  lint-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: make lint-docs
+
+  lint-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: make lint-workflows
+
+  test-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: make test-workflows
+
+  check-frozen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: make check-frozen
+
+  check-migration:
+    runs-on: ubuntu-latest
+    steps:
+      # The whole history: the check compares the branch from its merge-base with the base branch.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Read the issue of the work from the PR body (first "Closes #<n>")
+        id: issue
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          issue=$(printf '%s\n' "$BODY" | scripts/pr-issue.sh)
+          echo "issue=$issue" >> "$GITHUB_OUTPUT"
+      - name: Check docs/migrations/next/<issue>.md
+        env:
+          ISSUE: ${{ steps.issue.outputs.issue }}
+          BASE: origin/${{ github.base_ref }}
+        run: make check-migration

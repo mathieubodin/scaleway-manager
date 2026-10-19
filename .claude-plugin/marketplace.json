@@ -1,0 +1,25 @@
+{
+  "name": "mathieubodin-sdlc",
+  "owner": {
+    "name": "Mathieu BODIN"
+  },
+  "homepage": "https://github.com/mathieubodin/scaleway-manager",
+  "repository": "https://github.com/mathieubodin/scaleway-manager",
+  "keywords": ["bmad", "sdlc"],
+  "plugins": [
+    {
+      "name": "mathieubodin-sdlc",
+      "source": "./",
+      "description": "Development process of scaleway-manager: start, resume and gate a piece of work.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Mathieu BODIN"
+      },
+      "skills": [
+        "./skills/mathieubodin-sdlc-setup",
+        "./skills/sdlc-work",
+        "./skills/sdlc-gate-page"
+      ]
+    }
+  ]
+}

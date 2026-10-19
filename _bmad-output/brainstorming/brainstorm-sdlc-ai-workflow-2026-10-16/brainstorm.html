@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Session Receipt — brainstorm keepsake</title>
+<style>
+:root{
+  --bg:#f4f1ea; --paper:#fffdf8; --ink:#1f1d1a; --mute:#6b665d; --line:#d9d3c5;
+  --accent:#c2410c; --accent2:#0f766e; --warn:#b91c1c; --ok:#15803d; --gold:#a16207;
+  --tint:#efe9db; --stamp:#b91c1c;
+  --h-white:#ffffff; --h-red:#fecaca; --h-yellow:#fde68a; --h-black:#2b2b2b; --h-green:#bbf7d0; --h-blue:#bfdbfe;
+  --h-black-ink:#f4f4f4;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12110f; --paper:#1b1a17; --ink:#ece7dc; --mute:#9d978a; --line:#3a372f;
+    --accent:#fb923c; --accent2:#5eead4; --warn:#f87171; --ok:#4ade80; --gold:#facc15;
+    --tint:#242219; --stamp:#f87171;
+    --h-white:#e8e8e8; --h-red:#7f1d1d; --h-yellow:#713f12; --h-black:#0a0a0a; --h-green:#14532d; --h-blue:#1e3a8a;
+    --h-black-ink:#f4f4f4;
+    color-scheme: dark;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  padding-inline:max(16px,4vw);
+}
+.wrap{max-width:980px;margin:0 auto;padding-block:32px 80px}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;line-height:1.15;margin:0}
+h2{font-size:clamp(1.6rem,5vw,2.3rem);margin-bottom:6px}
+h3{font-size:1.1rem}
+p{margin:.4em 0}
+section{margin-top:72px}
+.tech{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
+.tno{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:2px 8px;border-radius:99px}
+.sub{color:var(--mute);margin:0 0 22px;max-width:62ch}
+.tape{border-top:2px dashed var(--line);margin:0 0 28px}
+
+/* HERO RECEIPT */
+.receipt{
+  background:var(--paper);border:1px solid var(--line);padding:28px clamp(16px,4vw,40px) 36px;position:relative;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  -webkit-mask:radial-gradient(circle 7px at 7px 100%,#0000 98%,#000) bottom/14px 100% repeat-x;
+          mask:radial-gradient(circle 7px at 7px 100%,#0000 98%,#000) bottom/14px 100% repeat-x;
+  -webkit-mask-size:14px 100%; mask-size:14px 100%;
+  padding-bottom:44px;
+}
+.receipt .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--mute);text-transform:uppercase;letter-spacing:.12em}
+.receipt h1{font-size:clamp(2rem,8vw,3.6rem);margin:18px 0 8px}
+.receipt .topic{font-size:1.02rem;max-width:64ch}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:22px 0 0;padding-top:16px;border-top:2px dashed var(--line);font-size:.9rem}
+dl.meta dt{color:var(--mute);text-transform:uppercase;letter-spacing:.1em;font-size:.75rem;padding-top:2px}
+dl.meta dd{margin:0}
+.counter{margin-top:22px;padding:14px;background:var(--tint);border:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.counter b{font-size:clamp(1.6rem,6vw,2.4rem);font-variant-numeric:tabular-nums;color:var(--accent)}
+.counter span{font-size:.8rem;color:var(--mute)}
+.legend-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.chip{display:inline-block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--mute)}
+.chip.coach{border-color:var(--accent);color:var(--accent)}
+.chip.unv{border-color:var(--warn);color:var(--warn)}
+
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.nav a{font-size:.78rem;color:var(--ink);text-decoration:none;border:1px solid var(--line);padding:3px 9px;border-radius:99px;background:var(--paper)}
+.nav a:hover{border-color:var(--accent);color:var(--accent)}
+
+/* 1 JTBD tickets */
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;counter-reset:job}
+.job{background:var(--paper);border:1px solid var(--line);border-left:6px solid var(--accent2);padding:12px 14px 14px;position:relative;font-size:.9rem;
+  clip-path:polygon(0 0,100% 0,100% calc(50% - 8px),calc(100% - 8px) 50%,100% calc(50% + 8px),100% 100%,0 100%)}
+.job::before{counter-increment:job;content:"JOB " counter(job,decimal-leading-zero);display:block;font-size:.7rem;letter-spacing:.14em;color:var(--accent2);margin-bottom:4px}
+.job.hero{grid-column:1/-1;border-left-color:var(--accent);background:var(--tint)}
+.job.hero::before{content:"THE REAL JOB OF COST MEASUREMENT";color:var(--accent)}
+.job.hero{font-size:1.05rem;font-family:Georgia,serif}
+.jobs .job.first{grid-column:1/-1;font-family:Georgia,serif;font-size:1.05rem;border-left-color:var(--accent)}
+
+/* 2 Backcasting stair */
+.stair{position:relative;display:flex;flex-direction:column;gap:0}
+.step{position:relative;padding:14px 16px;border:1px solid var(--line);background:var(--paper);margin-bottom:-1px}
+.step .lab{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.step.end{background:var(--accent);color:#fff;border-color:var(--accent)}
+.step.end .lab{color:#ffe7d6}
+.step[data-d="1"]{margin-left:0}
+.step[data-d="2"]{margin-left:min(4vw,24px)}
+.step[data-d="3"]{margin-left:min(8vw,48px)}
+.step[data-d="4"]{margin-left:min(12vw,72px)}
+.step[data-d="5"]{margin-left:min(16vw,96px)}
+.step[data-d="6"]{margin-left:min(20vw,120px)}
+.step::after{content:"↑ happens before";position:absolute;right:10px;top:-9px;font-size:.62rem;background:var(--bg);color:var(--mute);padding:0 6px;letter-spacing:.08em}
+.step.end::after{content:none}
+.firstmoves{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0 0 min(20vw,120px)}
+.firstmoves .step{margin:0;border-style:dashed}
+.firstmoves .step::after{content:none}
+.fm-title{margin:22px 0 4px min(20vw,120px);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2)}
+.auto{margin-top:26px;border:1px solid var(--line);background:var(--paper);padding:14px 16px}
+.auto h3{margin-bottom:8px}
+.auto ul{margin:0;padding-left:1.1em}
+.auto li{margin:6px 0}
+@media (max-width:520px){
+  .firstmoves,.fm-title{margin-left:0}
+  .step[data-d]{margin-left:0;border-left:6px solid var(--accent)}
+}
+
+/* 3 Ship 60 */
+.clockrow{display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.clock{width:120px;height:120px;border-radius:50%;border:3px solid var(--ink);position:relative;background:var(--paper);flex:none}
+.clock::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--accent) 0 360deg);opacity:.15}
+.clock i{position:absolute;left:50%;bottom:50%;width:3px;height:48px;background:var(--accent);transform-origin:bottom center;animation:sweep 60s linear infinite;margin-left:-1.5px}
+.clock b{position:absolute;inset:0;display:grid;place-items:center;font-size:.8rem}
+@keyframes sweep{to{transform:rotate(360deg)}}
+.clocktxt{max-width:44ch;color:var(--mute);font-size:.9rem}
+.sixty{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.lane{border:1px solid var(--line);background:var(--paper)}
+.lane h3{padding:8px 12px;font-family:inherit;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.lane.cut h3{background:var(--warn);color:#fff}
+.lane.fake h3{background:var(--gold);color:#fff}
+.lane.borrow h3{background:var(--accent2);color:#fff}
+.lane.ship h3{background:var(--ok);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lane h3{color:#0b0b0b}}
+.lane ul{list-style:none;margin:0;padding:6px 12px 10px}
+.lane li{padding:7px 0;border-bottom:1px dotted var(--line);font-size:.88rem}
+.lane li:last-child{border:0}
+.lane.cut li{text-decoration:line-through;text-decoration-color:var(--warn);text-decoration-thickness:1px}
+
+/* 4 Worst */
+.flipbar{margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{font:inherit;font-size:.85rem;background:var(--ink);color:var(--bg);border:0;padding:8px 14px;border-radius:4px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.worsts{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.flip{background:none;color:var(--ink);padding:0;border:0;text-align:left;border-radius:6px;width:100%;perspective:900px;cursor:pointer}
+.flip .in{display:grid;transition:transform .6s;transform-style:preserve-3d}
+.flip .f,.flip .b{grid-area:1/1;padding:14px 16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--line);border-radius:6px;min-height:150px;display:flex;flex-direction:column;gap:6px}
+.flip .f{background:var(--paper);border-top:5px solid var(--warn)}
+.flip .b{background:var(--paper);border-top:5px solid var(--ok);transform:rotateY(180deg)}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .tag{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase}
+.flip .f .tag{color:var(--warn)}.flip .b .tag{color:var(--ok)}
+.flip .hint{margin-top:auto;font-size:.7rem;color:var(--mute)}
+.nojs .flip .in{display:block}
+@media (prefers-reduced-motion:reduce){.flip .in{transition:none}.clock i{animation:none}}
+
+/* 5 One feature */
+.vault{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.slot{border:2px solid var(--ink);padding:14px;background:var(--paper);position:relative;font-size:.9rem}
+.slot::before{content:"";position:absolute;right:12px;top:12px;width:14px;height:14px;border-radius:50%;border:2px solid var(--ink)}
+.slot small{display:block;color:var(--mute);letter-spacing:.12em;text-transform:uppercase;font-size:.68rem;margin-bottom:6px}
+.insights2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:18px}
+.note{background:var(--tint);border-left:4px solid var(--gold);padding:12px 14px;font-size:.9rem}
+.note b{display:block;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.excel{margin-top:18px;padding:18px;border:2px solid var(--accent);text-align:center;font-family:Georgia,serif;font-size:1.15rem}
+.excel .three{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.excel .three span{border:1px solid var(--accent);padding:4px 12px;border-radius:99px;font-family:ui-monospace,monospace;font-size:.85rem;color:var(--accent)}
+
+/* 6 Hats */
+.hats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.hat{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.hat header{display:flex;align-items:center;gap:10px;padding:10px 14px;font-weight:bold;letter-spacing:.1em;text-transform:uppercase;font-size:.8rem;color:#161616;border-bottom:1px solid var(--line)}
+.hat header svg{width:34px;height:24px;flex:none}
+.hat.white header{background:var(--h-white)}
+.hat.red header{background:var(--h-red)}
+.hat.yellow header{background:var(--h-yellow)}
+.hat.black header{background:var(--h-black);color:var(--h-black-ink)}
+.hat.green header{background:var(--h-green)}
+.hat.blue header{background:var(--h-blue)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .hat header{color:#f2f2f2}}
+.hat ul{margin:0;padding:10px 14px 12px 30px;font-size:.88rem}
+.hat li{margin:6px 0}
+
+/* 7 Scenario cross */
+.cross{display:grid;grid-template-columns:28px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:6px;position:relative}
+.ax{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);display:flex;align-items:center;justify-content:center;text-align:center}
+.ax.v{writing-mode:vertical-rl;transform:rotate(180deg)}
+.quad{border:1px solid var(--line);background:var(--paper);padding:12px 14px;font-size:.88rem}
+.quad small{display:block;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:4px}
+.q1{background:linear-gradient(135deg,var(--paper),var(--tint))}
+.centre{margin-top:16px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.win{background:var(--ink);color:var(--bg);padding:14px 16px;position:relative}
+.win small{display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-bottom:4px}
+@media (max-width:520px){.cross{grid-template-columns:1fr}.ax.v{display:none}.cross .ax.h{justify-content:flex-start}}
+
+/* 8 Disney */
+.rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start}
+.room{border:1px solid var(--line);background:var(--paper);padding:0 0 10px}
+.room h3{padding:12px 14px;display:flex;align-items:center;gap:8px;font-size:1.05rem}
+.room ul{margin:0;padding:0 14px 0 30px;font-size:.88rem}
+.room li{margin:7px 0}
+.dream{background-image:radial-gradient(circle at 20% 0,rgba(251,191,36,.25),transparent 60%);border-radius:28px 6px 28px 6px}
+.dream h3{font-style:italic}
+.real{border-radius:2px;border-top:4px solid var(--accent2)}
+.crit{border-radius:6px;border:2px dashed var(--warn)}
+.crit h3{color:var(--warn)}
+
+/* 9 Free */
+.phases{display:flex;flex-wrap:wrap;gap:0;margin:0 0 6px;counter-reset:ph}
+.ph{flex:1 1 110px;min-width:110px;padding:12px 10px 12px 22px;background:var(--tint);border:1px solid var(--line);position:relative;font-size:.85rem;text-align:center;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%,14px 50%)}
+.ph::before{counter-increment:ph;content:counter(ph);display:block;font-size:.65rem;color:var(--accent)}
+.ph.learn{background:var(--accent);color:#fff}.ph.learn::before{color:#ffe7d6}
+.phnote{font-size:.85rem;color:var(--mute);margin:8px 0 22px}
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:26px}
+.map div{border:1px solid var(--line);background:var(--paper);padding:10px 12px;font-size:.85rem}
+.map small{display:block;color:var(--accent2);text-transform:uppercase;letter-spacing:.12em;font-size:.65rem}
+.map div:nth-child(1){border-top:4px solid var(--gold)}.map div:nth-child(2){border-top:4px solid var(--accent)}.map div:nth-child(3){border-top:4px solid var(--accent2)}.map div:nth-child(4){border-top:4px solid var(--ok)}
+.bins{columns:2 300px;column-gap:14px}
+.bin{break-inside:avoid;border:1px solid var(--line);background:var(--paper);margin-bottom:14px;padding:12px 14px}
+.bin h3{font-family:inherit;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.bin ul{margin:0;padding-left:1.1em;font-size:.86rem}
+.bin li{margin:6px 0}
+
+/* SYNTHESIS */
+.climax{margin-top:90px;background:var(--ink);color:var(--bg);padding:clamp(18px,4vw,40px);position:relative;overflow:hidden}
+.climax h2{font-size:clamp(1.9rem,7vw,3rem)}
+.climax .sub{color:inherit;opacity:.8}
+.disclaim{display:flex;gap:14px;align-items:center;border:2px solid var(--stamp);color:#fecaca;padding:12px 14px;margin:18px 0 26px;transform:rotate(-.6deg);background:rgba(185,28,28,.18)}
+.disclaim strong{letter-spacing:.14em;text-transform:uppercase;font-size:.9rem;color:#fca5a5}
+.disclaim span{font-size:.88rem}
+.syn{display:grid;gap:14px}
+.card{background:var(--paper);color:var(--ink);padding:16px 18px 16px 70px;position:relative;border-left:6px solid var(--accent)}
+.card .n{position:absolute;left:14px;top:10px;font:bold 2.4rem/1 Georgia,serif;color:var(--accent);opacity:.9}
+.card .tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.card h3{margin-bottom:4px}
+.card p{font-size:.9rem}
+.card .dep{margin-top:8px;padding:8px 10px;border:1px dashed var(--warn);color:var(--warn);font-size:.82rem}
+@media (max-width:520px){.card{padding-left:16px;padding-top:50px}}
+
+/* QUESTIONS */
+.qs{margin-top:72px}
+.qlist{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:12px;counter-reset:q}
+.qlist li{counter-increment:q;border:2px dashed var(--line);background:var(--paper);padding:14px 16px 14px 56px;position:relative}
+.qlist li::before{content:"?";position:absolute;left:14px;top:6px;font:bold 2rem Georgia,serif;color:var(--accent)}
+.qlist .chip{margin-left:6px}
+.sign{margin-top:48px;padding-top:14px;border-top:2px dashed var(--line);color:var(--mute);font-size:.78rem;text-align:center;letter-spacing:.1em;text-transform:uppercase}
+.barcode{height:36px;margin:14px auto 0;max-width:260px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 9px,var(--ink) 9px 12px,transparent 12px 14px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HERO -->
+<header class="receipt">
+  <div class="top"><span>Brainstorm receipt</span><span>2026-10-16 · 19:36</span></div>
+  <h1>The Session Receipt</h1>
+  <p class="topic">Local workflow following the SDLC in an AI-assisted environment (coding agent), with the place of work items in GitHub (milestone, issue, epic) and the token cost per item.</p>
+  <dl class="meta">
+    <dt>Goal</dt><dd>Reach a workable workflow for scaleway-manager, before tackling token cost measurement.</dd>
+    <dt>Mode</dt><dd>autonomous</dd>
+    <dt>Status</dt><dd>complete</dd>
+  </dl>
+  <div class="counter" aria-label="Session tally">
+    <div><b id="tally">0</b> <span>ideas, insights and questions on this receipt</span></div>
+    <span>9 sections · 8 techniques + free-form</span>
+  </div>
+  <div class="legend-row">
+    <span class="chip coach">Coach idea</span>
+    <span class="chip">Insight = coach proposal, not an author decision</span>
+    <span class="chip unv">Not verified</span>
+  </div>
+  <nav class="nav" aria-label="Sections">
+    <a href="#jtbd">Job to Be Done</a><a href="#back">Backcasting</a><a href="#ship">Ship in 60 Min</a><a href="#worst">Worst Idea</a><a href="#one">One Feature</a><a href="#hats">Six Hats</a><a href="#cross">Scenario Cross</a><a href="#disney">Disney</a><a href="#free">Free-form</a><a href="#synthesis">Synthesis</a><a href="#open">Open questions</a>
+  </nav>
+</header>
+
+<!-- 1 JTBD -->
+<section id="jtbd">
+  <div class="tech"><span class="tno">Technique 1</span><h2>Job to Be Done</h2></div>
+  <p class="sub">For which job is the workflow hired? Fourteen job tickets, each one a reason to hire it.</p>
+  <div class="tape"></div>
+  <div class="jobs">
+    <div class="job first">The workflow is hired so that the author can delegate to an agent without losing track of what was decided.</div>
+    <div class="job">Make every session findable, so that from GitHub one knows why a piece of code exists.</div>
+    <div class="job">Prevent an agent session from producing work with no trace, that is, with no item and no cost.</div>
+    <div class="job">Give the author a receipt per unit of value delivered: what a feature cost in tokens.</div>
+    <div class="job">Resume interrupted work in a blank session: the context lives in the item, not in the window.</div>
+    <div class="job">Separate what is decided (human) from what is executed (agent), so that human validation has a named place.</div>
+    <div class="job">Make cost visible before launching a session (estimated budget per item), not only afterwards.</div>
+    <div class="job">Stay usable by a solo author, with no team and no heavy ritual.</div>
+    <div class="job">Apply the throwaway-cluster spirit to working state: all durable state lives off the local machine.</div>
+    <div class="job">Produce a history readable by a stranger discovering the public repository.</div>
+    <div class="job">Keep the brainstorm, plan, issue chain from CLAUDE.md without GitHub being the starting point.</div>
+    <div class="job">Provide a definition of done that an agent can verify.</div>
+    <div class="job">Make the agent session the natural accounting unit, rather than the PR.</div>
+    <div class="job hero">Decide what to stop delegating to the AI, where it costs more than it brings back.</div>
+  </div>
+</section>
+
+<!-- 2 Backcasting -->
+<section id="back">
+  <div class="tech"><span class="tno">Technique 2</span><h2>Backcasting</h2></div>
+  <p class="sub">Fix the end state, then climb back down to the first gesture. Read from the top: each step happens before the one above it.</p>
+  <div class="tape"></div>
+  <div class="stair">
+    <div class="step end" data-d="1"><div class="lab">End state</div>A feature is an epic, and a single view gives its intent, its decisions, its PRs and its total token cost.</div>
+    <div class="step" data-d="2"><div class="lab">Just before</div>The cost of an epic is a sum of session costs, not of PRs or issues.</div>
+    <div class="step" data-d="3"><div class="lab">Before</div>Each session declares at start which item it is attached to.</div>
+    <div class="step" data-d="4"><div class="lab">Before</div>A session starts from a ready item (written acceptance criteria), not from a free conversation.</div>
+    <div class="step" data-d="5"><div class="lab">Before</div>A ready item comes out of a plan, itself issued from a brainstorm whose synthesis is deposited on a GitHub item.</div>
+  </div>
+  <div class="fm-title">Possible first gestures</div>
+  <div class="firstmoves">
+    <div class="step"><div class="lab">Possible first gesture</div>Name the item types (intent, plan, task, session) before choosing their GitHub tools.</div>
+    <div class="step"><div class="lab">Alternative</div>A stable session identifier found in the item, the branch and the PR.</div>
+    <div class="step"><div class="lab">Alternative</div>An issue template that forces why, end criterion and estimated budget.</div>
+  </div>
+  <div class="auto">
+    <h3>Backcast on automation</h3>
+    <ul>
+      <li>The measure is extracted from the agent's session log, not typed by a human.</li>
+      <li>An end-of-session hook writes the cost to a durable place: a comment on the item or a project field.</li>
+      <li>A session's cost lands on the item that launched it; aggregation per epic is a sum over sub-items.</li>
+      <li>The project #4 Tokens field already exists: make it carry session cost, not PR cost.</li>
+    </ul>
+    <p><span class="chip unv">Not verified</span> Does the agent's session log contain token counters usable locally?</p>
+    <p><span class="chip unv">Not verified</span> Does GitHub offer a native sum of a numeric field over sub-issues?</p>
+  </div>
+</section>
+
+<!-- 3 Ship in 60 -->
+<section id="ship">
+  <div class="tech"><span class="tno">Technique 3</span><h2>Ship in 60 Minutes</h2></div>
+  <p class="sub">What do we cut, fake or borrow to ship an hour from now?</p>
+  <div class="tape"></div>
+  <div class="clockrow">
+    <div class="clock" aria-hidden="true"><i></i><b>60 min</b></div>
+    <p class="clocktxt">Twelve moves sorted into four lanes. The cut lane is struck through on purpose: those things do not exist yet.</p>
+  </div>
+  <div class="sixty">
+    <div class="lane ship"><h3>Ship</h3><ul>
+      <li>Ship first without automation: a hand-filled end-of-session comment template, to validate the form before automating.</li>
+      <li>Ship the workflow first as a single procedure document readable by the agent, before any script.</li>
+      <li>Ship the item, session, PR cycle on one real small task and read what it costs.</li>
+    </ul></div>
+    <div class="lane cut"><h3>Cut</h3><ul>
+      <li>Epics at the start: issue and sub-issue only.</li>
+      <li>Milestones, as long as no version is targeted.</li>
+      <li>The Roadmap view, as long as there are no dates.</li>
+      <li>All GitHub Actions automation: everything goes through the gh CLI from the local session.</li>
+      <li>Priority and effort labels while there are fewer than ten items.</li>
+    </ul></div>
+    <div class="lane fake"><h3>Fake</h3><ul>
+      <li>Fake the measurement: estimate the cost from the AI tool's usage console, per day, reconciled by hand.</li>
+      <li>Fake granularity: a single session item per day at first, to have numbers before refining.</li>
+    </ul></div>
+    <div class="lane borrow"><h3>Borrow</h3><ul>
+      <li>The /cost comment template from scaleway-operator, attached to the session rather than the PR.</li>
+      <li>The usage counters shown by the AI tool at session end (to be checked).</li>
+      <li>The planning skills already installed to produce plans, with no new tool written.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 4 Worst -->
+<section id="worst">
+  <div class="tech"><span class="tno">Technique 4</span><h2>Worst Possible Idea</h2></div>
+  <p class="sub">The worst, then its reversal. Tap a card to flip it, or flip them all.</p>
+  <div class="tape"></div>
+  <div class="flipbar"><button type="button" id="flipall">Flip all cards</button><span class="chip">red side: worst · green side: reversed</span></div>
+  <div class="worsts" id="worsts">
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>Require the human to copy a number on every PR.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>Zero human entry.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>A session starts with no item and leaves no trace.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>No item, no session.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>Cost is written on all linked issues.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>Cost lives on a single object and accumulates upward by sum.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>Any comment from anyone can change the cost, which the operator's current workflow allows.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>Only the authenticated owner writes the cost.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>Measurement changes behaviour: useful sessions are avoided so the counter does not go up.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>Display the cost without making it a target; compare it to the value delivered.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>An epic that is never closed accumulates cost endlessly.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>Cost attached to bounded windows.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>The plan lives only in the context window.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>The plan is a durable item re-read by every session.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>The agent closes issues itself with no verification.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>Closing is conditioned on a verifiable criterion and on human validation.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>Decisions taken in session are never written down.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>End of session deposits the decision log on the item.</span></span></button>
+    <button class="flip" type="button"><span class="in"><span class="f"><span class="tag">Worst</span>A workflow so heavy it is bypassed for small tasks.<span class="hint">tap to reverse</span></span><span class="b"><span class="tag">Reversed</span>Two lanes, light and full, with the same minimum trace requirement.</span></span></button>
+  </div>
+</section>
+
+<!-- 5 One feature -->
+<section id="one">
+  <div class="tech"><span class="tno">Technique 5</span><h2>One Feature Only</h2></div>
+  <p class="sub">Only one capability may be kept. Four candidates sit in the vault.</p>
+  <div class="tape"></div>
+  <div class="vault">
+    <div class="slot"><small>Candidate A</small>Each session writes its cost on the item that launched it.</div>
+    <div class="slot"><small>Candidate B</small>Each PR references the originating item: pure traceability.</div>
+    <div class="slot"><small>Candidate C</small>The item contains the complete resume context.</div>
+    <div class="slot"><small>Candidate D</small>The session log is archived and linked to the item.</div>
+  </div>
+  <div class="insights2">
+    <div class="note"><b>Insight · hypothesis to test</b>Cost per session is the hardest to obtain after the fact, therefore the most urgent to capture.</div>
+    <div class="note"><b>Insight</b>The decision trail is hard to reconstruct but costs almost nothing to capture.</div>
+  </div>
+  <div class="excel">Make that single capability excellent:
+    <div class="three"><span>zero friction</span><span>zero entry</span><span>never wrong</span></div>
+  </div>
+</section>
+
+<!-- 6 Hats -->
+<section id="hats">
+  <div class="tech"><span class="tno">Technique 6</span><h2>Six Thinking Hats</h2></div>
+  <p class="sub">Six successive viewpoints. The white hat holds facts about the current setup (recorded here as insights).</p>
+  <div class="tape"></div>
+  <div class="hats">
+    <article class="hat white"><header><svg viewBox="0 0 34 24" aria-hidden="true"><path d="M2 20h30M7 20c0-9 4-16 10-16s10 7 10 16" fill="currentColor" stroke="#161616" stroke-width="1.5"/></svg>White · facts</header><ul>
+      <li>Project #4 has Status, Priority, Effort, Tokens and the views Overview, Board, Roadmap, Pull requests.</li>
+      <li>In the operator, cost is entered by hand through a /cost comment on the PR and written on each linked issue.</li>
+      <li>main is protected, squash merge only, PR title checked.</li></ul></article>
+    <article class="hat red"><header><svg viewBox="0 0 34 24" aria-hidden="true"><path d="M2 20h30M7 20c0-9 4-16 10-16s10 7 10 16" fill="#ef4444" stroke="#161616" stroke-width="1.5"/></svg>Red · gut feeling</header><ul>
+      <li>Manual cost entry is a chore that will be forgotten.</li>
+      <li>A wrong measure is worse than no measure.</li></ul></article>
+    <article class="hat yellow"><header><svg viewBox="0 0 34 24" aria-hidden="true"><path d="M2 20h30M7 20c0-9 4-16 10-16s10 7 10 16" fill="#facc15" stroke="#161616" stroke-width="1.5"/></svg>Yellow · benefits</header><ul>
+      <li>Knowing what a feature cost helps decide what to delegate to the agent.</li>
+      <li>Traces make the public repository readable to a third party.</li></ul></article>
+    <article class="hat black"><header><svg viewBox="0 0 34 24" aria-hidden="true"><path d="M2 20h30M7 20c0-9 4-16 10-16s10 7 10 16" fill="#111" stroke="#bbb" stroke-width="1.5"/></svg>Black · risks</header><ul>
+      <li>On a public repository, comments open to everyone can falsify the cost.</li>
+      <li>A personal token with project rights in Actions secrets is an attack surface.</li>
+      <li>Measured cost is incomplete: sessions outside the repo, sub-agents, discarded attempts.</li>
+      <li>Dependence on the AI tool's internal formats, which may change.</li></ul></article>
+    <article class="hat green"><header><svg viewBox="0 0 34 24" aria-hidden="true"><path d="M2 20h30M7 20c0-9 4-16 10-16s10 7 10 16" fill="#22c55e" stroke="#161616" stroke-width="1.5"/></svg>Green · new ideas</header><ul>
+      <li>Separate exploration cost (brainstorm, plan) from realisation cost (implementation).</li>
+      <li>A session item type, distinct from the issue and attached to it: a light sub-issue or a structured comment.</li></ul></article>
+    <article class="hat blue"><header><svg viewBox="0 0 34 24" aria-hidden="true"><path d="M2 20h30M7 20c0-9 4-16 10-16s10 7 10 16" fill="#3b82f6" stroke="#161616" stroke-width="1.5"/></svg>Blue · process</header><ul>
+      <li>Decide the item types first, the tools next, the measurement last.</li></ul></article>
+  </div>
+</section>
+
+<!-- 7 Scenario cross -->
+<section id="cross">
+  <div class="tech"><span class="tno">Technique 7</span><h2>Scenario Cross</h2></div>
+  <p class="sub">Two uncertainties, four worlds: are the counters reliable or not, is the author alone or with contributors.</p>
+  <div class="tape"></div>
+  <div class="cross">
+    <div></div><div class="ax h">Author alone</div><div class="ax h">Contributors</div>
+    <div class="ax v">Counters reliable</div>
+    <div class="quad q1"><small>Reliable · alone</small>A local hook writes the cost on the item, with no CI.</div>
+    <div class="quad"><small>Reliable · contributors</small>The measured cost is the owner's, or one measure per contributor.</div>
+    <div class="ax v">No counters</div>
+    <div class="quad"><small>No counters · alone</small>Estimate from the usage console, aggregated by period.</div>
+    <div class="quad"><small>No counters · contributors</small>Abandon per-item measurement and keep traceability alone.</div>
+  </div>
+  <div class="centre">
+    <div class="win"><small>Insight · winning move in all four cases</small>Store the cost where it is captured, the session, and derive the aggregates.</div>
+    <div class="win"><small>Insight · another winning move</small>Separate the schema (where the cost goes) from the source (where it comes from), to change the source without touching the schema.</div>
+  </div>
+</section>
+
+<!-- 8 Disney -->
+<section id="disney">
+  <div class="tech"><span class="tno">Technique 8</span><h2>Disney Method</h2></div>
+  <p class="sub">Dreamer, realist, critic: three rooms walked in order.</p>
+  <div class="tape"></div>
+  <div class="rooms">
+    <div class="room dream"><h3>The Dreamer</h3><ul>
+      <li>Every GitHub item creates itself from a conversation, with context, criteria and budget.</li>
+      <li>The project shows live cumulative cost per epic and average cost per task type.</li>
+      <li>The agent proposes the split into sub-issues and estimates its own cost before starting.</li>
+      <li>A table compares planned and actual cost per item.</li>
+      <li>The session ends with a summary published on the item by itself.</li></ul></div>
+    <div class="room real"><h3>The Realist</h3><ul>
+      <li>Start with an end-of-session template that the agent fills in and publishes via gh on the item.</li>
+      <li>The Tokens field receives the sum computed by a small local script launched by a hook.</li>
+      <li>Automatic splitting is adopted only after human validation.</li></ul></div>
+    <div class="room crit"><h3>The Critic</h3><ul>
+      <li>An agent estimating its own cost before acting is probably unreliable. <span class="chip">Untested</span></li>
+      <li>A hook writing to GitHub from the local machine requires a local token: where is it stored?</li>
+      <li>If the session crashes, the cost is lost if it is only written at the end.</li></ul></div>
+  </div>
+</section>
+
+<!-- 9 Free -->
+<section id="free">
+  <div class="tech"><span class="tno">Free-form</span><h2>Sequels and combinations</h2></div>
+  <p class="sub">Where the ideas started to chain together. The SDLC phases first, then the loose pieces grouped by theme.</p>
+  <div class="tape"></div>
+  <div class="phases" role="list">
+    <div class="ph" role="listitem">discover</div><div class="ph" role="listitem">define</div><div class="ph" role="listitem">design</div><div class="ph" role="listitem">build</div><div class="ph" role="listitem">verify</div><div class="ph" role="listitem">deliver</div><div class="ph learn" role="listitem">learn</div>
+  </div>
+  <p class="phnote">SDLC phases. Each phase produces a named local artifact and a matching GitHub item. The learn phase consumes the costs: one retrospective per epic. One agent role per phase (analyst, architect, developer), so each session type has its own cost. Avoid seven item types for seven phases: three types (intent, task, session) may suffice.</p>
+  <div class="map" aria-label="Possible GitHub mapping">
+    <div><small>milestone</small>published version</div>
+    <div><small>epic</small>capability</div>
+    <div><small>issue</small>deliverable task</div>
+    <div><small>session</small>execution carrying the cost</div>
+  </div>
+  <div class="bins">
+    <div class="bin"><h3>Surviving crashes and sub-agents</h3><ul>
+      <li>Write the cost incrementally through checkpoints rather than at the end, to survive crashes.</li>
+      <li>A parent session item that groups the sub-agents launched during a session.</li></ul></div>
+    <div class="bin"><h3>Linking code to cost</h3><ul>
+      <li>Link code and cost by a session identifier in the PR body, because the squash makes branch commits disappear.</li>
+      <li>The PR body becomes the squashed commit body, and the PR_BODY setting is already active: a Cost section would be kept there.</li>
+      <li>The PR body contains an automatically filled Cost section.</li>
+      <li>The cost of a PR is the sum of the costs of the sessions cited in its body; the PR writes nothing on the issues.</li></ul></div>
+    <div class="bin"><h3>Avoiding double counting</h3><ul>
+      <li>Two distinct fields, own cost and cumulative cost, avoid double counting.</li>
+      <li>Or a single own Tokens field, the cumulative being computed at read time by a script.</li></ul></div>
+    <div class="bin"><h3>Views, reports, budgets</h3><ul>
+      <li>A cost-per-epic view produced outside GitHub by a script reading the API.</li>
+      <li>A periodic report generated by a workflow: costs per epic, per type, trends.</li>
+      <li>A budget per epic, with overrun flagged in the item.</li>
+      <li>A measurement-debt item listing sessions with no associated cost, to see the coverage of the measure.</li></ul></div>
+    <div class="bin"><h3>Before the issue exists</h3><ul>
+      <li>Also count the brainstorm and planning sessions, which precede the issue: their cost attaches to the intent.</li>
+      <li>Correction: in this project brainstorms and plans are committed (everything in <code>_bmad-output/</code> is versioned), so they exist in Git. Whether their synthesis is also deposited on the GitHub item is a separate, open question.</li></ul></div>
+  </div>
+</section>
+
+<!-- CLIMAX -->
+<section id="synthesis" class="climax">
+  <h2>Synthesis</h2>
+  <p class="sub">Six insights drawn from the whole session.</p>
+  <div class="disclaim" role="note">
+    <strong>Coach proposals</strong>
+    <span>None of these is a decision by the author. They are proposals from the coach.</span>
+  </div>
+  <div class="syn">
+    <article class="card"><span class="n">1</span><div class="tagrow"><span class="chip coach">Coach proposal</span></div><h3>The accounting unit is the agent session</h3><p>Not the PR, not the issue. The cost is captured at the source and the aggregates (per item, per epic) are derived by sum, which removes the double counting observed in the operator.</p></article>
+    <article class="card"><span class="n">2</span><div class="tagrow"><span class="chip coach">Coach proposal</span></div><h3>Three item types may suffice</h3><p>Intent (epic), task (issue), session (carries the cost). Milestone = published version. The seven SDLC phases attach to these types without creating seven.</p></article>
+    <article class="card"><span class="n">3</span><div class="tagrow"><span class="chip coach">Coach proposal</span></div><h3>Traceability rule: no item, no session</h3><p>The end of a session deposits the decisions on the item. Correction: brainstorms and plans are committed in this project, so they are versioned in Git; depositing their synthesis on the item is a separate, open question.</p></article>
+    <article class="card"><span class="n">4</span><div class="tagrow"><span class="chip coach">Coach proposal</span><span class="chip unv">Depends on an unverified fact</span></div><h3>Cost automation hangs on one unverified fact</h3><p>The presence of token counters readable locally in the session log. If absent, fall back to the usage console aggregated by period. Separate the schema (where the cost goes) from the source (where it comes from).</p><div class="dep">Not verified: whether the session log holds usable token counters.</div></article>
+    <article class="card"><span class="n">5</span><div class="tagrow"><span class="chip coach">Coach proposal</span></div><h3>Security: only the authenticated owner writes the cost</h3><p>The operator's current workflow does not check the comment author, and a token with project rights in Actions secrets is an attack surface.</p></article>
+    <article class="card"><span class="n">6</span><div class="tagrow"><span class="chip coach">Coach proposal</span></div><h3>Minimal path: write it by hand first</h3><p>A hand-filled end-of-session template on a single small task, to read a first real cost, then automate.</p></article>
+  </div>
+</section>
+
+<!-- QUESTIONS -->
+<section id="open" class="qs">
+  <div class="tech"><span class="tno">Still open</span><h2>Open questions</h2></div>
+  <p class="sub">Nothing here is answered. Two are marked not verified in the session log.</p>
+  <ol class="qlist">
+    <li>Are token counters readable locally? <span class="chip unv">Not verified</span></li>
+    <li>Is there a native sum of a field over sub-issues? <span class="chip unv">Not verified</span></li>
+    <li>Where should a local token for writing to GitHub be stored?</li>
+    <li>Are three item types needed, or more?</li>
+  </ol>
+  <div class="sign">End of receipt · thank you for delegating
+    <div class="barcode" aria-hidden="true"></div>
+  </div>
+</section>
+
+</div>
+<script>
+(function(){
+  var d=document;
+  // tally: count entries on the page
+  var n=d.querySelectorAll('.job,.step,.lane li,.flip,.slot,.note,.hat li,.quad,.win,.room li,.ph,.map div,.bin li,.card,.qlist li').length;
+  var el=d.getElementById('tally');
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){el.textContent=n;}
+  else{var t0=null;(function f(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/1400,1);el.textContent=Math.round(n*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f);})(performance.now?performance.now():0);}
+  // flip cards
+  var cards=d.querySelectorAll('.flip');
+  cards.forEach(function(c){c.setAttribute('aria-pressed','false');c.addEventListener('click',function(){var on=c.classList.toggle('on');c.setAttribute('aria-pressed',on);});});
+  var all=false;
+  d.getElementById('flipall').addEventListener('click',function(){all=!all;cards.forEach(function(c){c.classList.toggle('on',all);c.setAttribute('aria-pressed',all);});});
+})();
+</script>
+</body>
+</html>
