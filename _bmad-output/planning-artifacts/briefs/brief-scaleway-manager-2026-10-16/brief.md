@@ -2,7 +2,7 @@
 title: "Product Brief: scaleway-manager"
 status: draft
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-19
 ---
 
 <!-- markdownlint-disable MD025 -->
@@ -28,7 +28,7 @@ A web interface, deployed in the cluster, that:
 - tells whether the cluster can talk to Scaleway and what is missing, and lets the user fill the gaps (create, edit, update) instead of only reporting them;
 - lists the namespaces that manage Scaleway projects and the Scaleway custom resources in them, with their sync status;
 - creates, edits (only when `Synced`) and deletes those resources;
-- exports resources as YAML and re-imports them later, because the kind cluster is disposable and durable state lives outside it.
+- exports resources as JSON and re-imports them later, because the kind cluster is disposable and durable state lives outside it.
 
 Every managed Scaleway resource is a custom resource. Existing infrastructure is taken over by writing matching resources, which the operator adopts by name or tags. The interface never shows Scaleway objects that have no resource in the cluster.
 
@@ -36,7 +36,7 @@ The backend is a client of the Kubernetes API and nothing else. How it works is 
 
 ## What Makes This Different
 
-Research found no existing tool that combines these traits for Scaleway: write access with delete, YAML export and re-import, a cluster readiness check, and filling of gaps, all aimed at a disposable cluster (see addendum for sources and what could not be verified).
+Research found no existing tool that combines these traits for Scaleway: write access with delete, JSON export and re-import, a cluster readiness check, and filling of gaps, all aimed at a disposable cluster (see addendum for sources and what could not be verified).
 
 Closest alternatives and why they fall short for this need:
 
@@ -58,7 +58,7 @@ Any user who wants to manage Scaleway infrastructure through Kubernetes custom r
 1. **Operator testing:** every operator state, including `Error` and `TerminationBlocked`, is visible in the interface with its message.
 2. **Quick deployment:** from an empty kind cluster, a resource reaches `Synced` in Scaleway without leaving the interface.
 3. **Compositions:** a KRO-composed object is created, observed and deleted from the interface.
-4. **Disposable cycle:** destroy the kind cluster, start a new one, re-import the YAML, and get the same Scaleway project back under control without duplicates.
+4. **Disposable cycle:** destroy the kind cluster, start a new one, re-import the JSON export, and get the same Scaleway project back under control without duplicates.
 
 Open: no criterion yet for a stranger installing and using it, which publication implies.
 
@@ -69,7 +69,7 @@ In for the first version:
 - cluster readiness check and filling of gaps;
 - namespaces that manage Scaleway projects, and their resources;
 - create, delete, and edit-when-`Synced`;
-- YAML export and re-import;
+- JSON export and re-import;
 - hand-written forms, one resource type at a time, added iteratively.
 
 Out, or deferred:
@@ -80,8 +80,8 @@ Out, or deferred:
 - multiple Scaleway accounts (possible, minor);
 - screen design and layout (not decided).
 
-Rule: the four default namespaces (`default`, `kube-system`, `kube-public`, `kube-node-lease`) are never valid support for Scaleway resources. At least one other namespace is needed before the cluster can talk to Scaleway.
+Rule: the four default namespaces (`default`, `kube-system`, `kube-public`, `kube-node-lease`) and `scaleway-system` are never valid support for Scaleway resources. At least one other namespace is needed before the cluster can talk to Scaleway. (Setup #34, 2026-10-19: export format JSON, `scaleway-system` added.)
 
 ## Vision
 
-The interface becomes the place from which a Scaleway project is bootstrapped and run from a small disposable cluster: start kind, re-import the saved YAML, and the project is back under control. KRO compositions could grow into a full landing zone.
+The interface becomes the place from which a Scaleway project is bootstrapped and run from a small disposable cluster: start kind, re-import the saved JSON export, and the project is back under control. KRO compositions could grow into a full landing zone.

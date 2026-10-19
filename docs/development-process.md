@@ -302,7 +302,7 @@ sequenceDiagram
 
 - Rails: `sdlc-rails` starts one test writer per story, given the story spec only, never the code; every new test is then run: it must fail, since the code does not exist yet. A test that already passes, or a file git already tracks, goes back once to a new writer for its story, who rewrites that same file; if it still passes, it is not frozen and is reported. Then a single `make freeze` of the failing tests and a commit on the work branch, for all stories before any build. `sdlc-work` shows the suspect tests and the stories left without tests to the human, who decides before the build. No other human check of the tests: a wrong test shows during the build or at the delivery gate.
 - Build: the trunk stories are built one at a time, in order, each merged before the next starts; then the leaves. `sdlc-build` starts one builder per story in its own worktree, with the story spec and the frozen tests, at most 3 at the same time; each builder commits on its worktree branch and returns the branch and commit, which another agent checks (commit at the tip of the branch, descending from the work branch SHA, no frozen test changed). `sdlc-work` merges each branch with `make check-frozen` and `make check` after it. A story improved after a failure (`ticketImproved`, or a failed story) has its story spec edited in the work tree: `sdlc-work` commits it before merging. A builder that did not start from the work branch SHA returns `wrong base`, without the two-failure rule. Failed builders' worktrees are named in the result and kept for inspection.
-- Verification: `make check` runs the checks and the frozen-test fingerprints. Code tests, coverage measured by a tool and mutation testing on the changed code (`MUTATION=0` switches it off) come once the stack is chosen.
+- Verification: `make check` runs the checks and the frozen-test fingerprints. Code tests, coverage measured by a tool and mutation testing on the changed code (`MUTATION=0` switches it off) come with #14.
 - Review: `sdlc-review`, see [Review loop](#review-loop).
 - Before the PR: `/ce-compound` records the lessons; MemPalace is updated; `sdlc-work` creates a `route:short` issue "simplify after #n" with the leads seen in review and, when recurring lessons exist, a "distill lessons" issue, both in Backlog; migration file; `make evidence`; behavior diff once it exists.
 - Delivery gate: the PR. Its body carries the cost summary, the evidence record's summary, the behavior diff once it exists, and the `/ce-compound` result. The human plays the Gherkin scenarios (`bmad-walkthrough` as an aid), then approves and merges: the merge is the decision.
@@ -525,7 +525,7 @@ A loop that does not converge signals a contradictory spec or a bad split.
 
 ### Testing without Scaleway
 
-The fake operator, the manual cluster target and the Gherkin runner come once the stack is chosen; the rules below already apply.
+The Gherkin runner comes with #15, the manual cluster target with #16, and the fake operator with its own issue (AD-9 of the architecture spine); the rules below already apply.
 
 - No automated test may cause cost at Scaleway; automated tests never leave the local machine.
 - A fake local operator, used only by automated tests, writes the CR `status` (Pending, Syncing, Synced, Error, TerminationBlocked) without calling Scaleway. The real operator is not installed in the test cluster.
@@ -535,7 +535,7 @@ The fake operator, the manual cluster target and the Gherkin runner come once th
 
 ### Behavior diff
 
-It comes once the stack is chosen; until then the evidence record lists it as not run. It covers the rendered UI, not the backend API. Gherkin scenarios are replayed in a browser before and after the change (playwright-bdd, ARIA snapshots as the main capture); the accepted capture becomes the reference. It runs locally, not in CI.
+It comes with #15; until then the evidence record lists it as not run. It covers the rendered UI, not the backend API. Gherkin scenarios are replayed in a browser before and after the change (playwright-bdd, ARIA snapshots as the main capture); the accepted capture becomes the reference. It runs locally, not in CI.
 
 ## Migration files
 
@@ -563,7 +563,7 @@ Steps to go back to the previous version.
 
 ## Evidence record
 
-`make evidence ISSUE=<n>` (`scripts/evidence.sh`) replays the checks and rewrites the whole `evidence.md` of the work folder, whoever runs it: `lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration ISSUE=<n>`, plus code tests, coverage, mutation testing and the behavior diff once the stack is chosen (the record lists what was not run). Every check runs even after a failure, and the target fails at the end if one did.
+`make evidence ISSUE=<n>` (`scripts/evidence.sh`) replays the checks and rewrites the whole `evidence.md` of the work folder, whoever runs it: `lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration ISSUE=<n>`, plus code tests, coverage, mutation testing and the behavior diff once #14 and #15 are done (the record lists what was not run). Every check runs even after a failure, and the target fails at the end if one did.
 
 - Each check's full output is kept, colors removed and durations replaced by `<t>`: two runs on an unchanged tree differ only by the "Generated at" line.
 - The record names the branch, the commit and whether the working tree had uncommitted changes; the exit code shown for a check is that of `make`.
@@ -594,7 +594,7 @@ Locally, prek runs on every commit `make fix-docs`, `make fix-workflows`, `make 
 
 - Versions follow semver. No published version is ever removed: a faulty version is fixed by a patch.
 - The "Deliver" workflow (`.github/workflows/deliver.yml`) has two triggers: milestone closed (version = milestone title, so a milestone title is always a version) and "Run workflow" (`workflow_dispatch`, the human types the tag). A patch release needs no milestone. The milestone trigger runs it from `main`; a run started on another branch stops.
-- It checks (`scripts/release-check.sh`) that the version is valid semver with a leading `v` (`v1.2.3`, `v1.2.3-rc.1`), that the tag does not exist and that the milestone of that title, if any, has no open issue; nothing is created before these checks pass. It then creates the tag and the GitHub release on the commit that triggered it. Building and publishing the image and the Helm chart (OCI, `oci://ghcr.io/<owner>/charts`) to ghcr.io come once the stack is chosen. A `concurrency` group makes a second delivery wait for the first; a third one cancels the waiting one. "Run workflow" publishes from `main` only, and a version with a `-` (`v1.2.3-rc.1`) is marked as a prerelease.
+- It checks (`scripts/release-check.sh`) that the version is valid semver with a leading `v` (`v1.2.3`, `v1.2.3-rc.1`), that the tag does not exist and that the milestone of that title, if any, has no open issue; nothing is created before these checks pass. It then creates the tag and the GitHub release on the commit that triggered it. Building and publishing the image and the Helm chart (OCI, `oci://ghcr.io/<owner>/charts`) to ghcr.io come with #18. A `concurrency` group makes a second delivery wait for the first; a third one cancels the waiting one. "Run workflow" publishes from `main` only, and a version with a `-` (`v1.2.3-rc.1`) is marked as a prerelease.
 - Release note (`scripts/release-note.sh`, previewed with `make release-note`): from the `docs/migrations/next/` files added, changed or renamed since the previous version (all of them when no tag exists). For a final version the previous version is the previous final one: `v0.3.0` lists everything since `v0.2.0`, `v0.3.0-rc.1` included; a prerelease lists what changed since the latest tag. Only no-impact entries: a single "No impact." line; otherwise the no-impact entries are dropped and each other entry appears under its issue number. The command that reinstalls the previous version is added with the image and chart publishing.
 
 ## Token cost
