@@ -57,7 +57,7 @@ code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
   <h2>The stack</h2>
   <div class="wide"><table>
     <tr><th>Part</th><th>Choice</th><th>What it means for you</th></tr>
-    <tr><td>Server</td><td>Go 1.27, standard library only, no dependency at all</td><td>One static binary; nothing to update but Go itself</td></tr>
+    <tr><td>Server</td><td>Go 1.27.1, standard library only, no dependency at all</td><td>One static binary; nothing to update but Go itself</td></tr>
     <tr><td>Web page</td><td>Plain JavaScript modules, no framework, no build step, served by the Go binary</td><td>What you read is what runs in the browser</td></tr>
     <tr><td>Login</td><td>Paste a Kubernetes token; every call uses it</td><td>Your RBAC is the UI's power; the pod itself has no rights</td></tr>
     <tr><td>Exposure</td><td>Gateway API <code>HTTPRoute</code>, HTTPS only; Envoy Gateway on the project's kind clusters</td><td>Works with any conformant Gateway at users</td></tr>
@@ -77,7 +77,7 @@ code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
     <li>Plain JavaScript without compilation; fake operator in Go; operator CRDs from its published chart; Helm 4.</li>
     <li>Exposure through Gateway API (your answer), hence login by Kubernetes token; Envoy Gateway on kind.</li>
     <li>Export in JSON; go-mutesting for Go mutation; short stack rules in <code>AGENTS.md</code>.</li>
-    <li>After review: <code>scaleway-system</code> is reserved too; Instance zone and Scaleway name are frozen after creation; the export holds no Secret, only the names to recreate; re-import only creates; a NamespaceRole is editable only when <code>Validated</code>.</li>
+    <li>After review: <code>scaleway-system</code> is reserved too; Instance zone and Scaleway name are frozen after creation; the export holds no Secret, only the names to recreate; re-import only creates; a NamespaceRole stays editable except its namespace field (corrected after review: the operator never writes its status).</li>
   </ul>
 </section>
 
@@ -89,10 +89,26 @@ code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
     <li><b>AD-5 details:</b> the exported Namespace carries two added annotations (<code>scaleway-manager.mathieubodin.io/export-format</code> and <code>…/required-secrets</code>); an export covers one namespace: Namespace, its NamespaceRole, then its resources.</li>
     <li><b>AD-6:</b> a namespace is "managed" only if it has a UUID <code>project-id</code> annotation; the page mirrors the rules from one file tested against the server's own test table.</li>
     <li><b>AD-7:</b> one live stream per open page, with a fixed event format and automatic recovery.</li>
-    <li><b>AD-12:</b> two user roles shipped unbound: one per namespace, one cluster-wide; each feature adds the rights it needs in the same PR.</li>
+    <li><b>AD-12:</b> user roles shipped unbound (two at the gate, three after review, see below); each feature adds the rights it needs in the same PR.</li>
     <li><b>AD-13:</b> one URL scheme and one error format for all features.</li>
     <li><b>AD-14:</b> Secret values never reach the browser.</li>
+    <li><b>Conventions:</b> custom elements named <code>smgr-…</code>; server logs in JSON through <code>log/slog</code>; configuration by environment variables only; fake-operator test annotations <code>fake.scaleway-manager.test/outcome</code> and <code>…/message</code>; Gherkin scenarios under <code>tests/e2e/features/</code>, JS unit tests under <code>tests/web/</code>.</li>
     <li><b>Security:</b> protection against cross-site requests on every write (not a delete confirmation), safe rendering of cluster data, strict page headers, token hidden from logs.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Changed after the Setup gate (pre-merge review)</h2>
+  <p>Three reviewers (security, correctness, coherence) read the files after your validation. These changes follow from their verified findings and from your two answers.</p>
+  <ul>
+    <li>NamespaceRole: always editable except <code>spec.namespace</code>; the fake operator writes no status on it.</li>
+    <li>LoadBalancer starts at <code>Syncing</code> like the other kinds; <code>Pending</code> only when Scaleway reports the object gone (checked in the operator code).</li>
+    <li>ScalewaySecret: <code>spec.region</code> and <code>spec.name</code> frozen after creation.</li>
+    <li>A third role, <code>scaleway-manager-credentials</code>, bound only in <code>scaleway-system</code>: it detects a missing key and creates it, and reads or replaces only the <code>scaleway-ns-creds-…</code> keys listed in the chart values (your choice); the global key can never be read or replaced through the UI.</li>
+    <li>Live updates watch resources namespace by namespace; a refused namespace no longer stops the whole stream; Secrets are never watched and never read beyond their metadata.</li>
+    <li>Sessions: random identifier, <code>__Host-</code> cookie, idle and absolute timeout; logout closes the open stream at once.</li>
+    <li>Stricter page header; JS tests moved out of <code>web/</code> so that only shipped files are embedded.</li>
+    <li>The fake operator gets its own issue, created after the merge with your go-ahead.</li>
   </ul>
 </section>
 
@@ -102,6 +118,7 @@ code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
     <li><code>AGENTS.md</code>: no longer says "no stack chosen"; six stack rules; <code>scaleway-system</code> reserved; export in JSON; link to the spine.</li>
     <li><code>_bmad-output/planning-artifacts/briefs/brief-scaleway-manager-2026-10-16/brief.md</code>: "YAML" becomes "JSON"; <code>scaleway-system</code> added to the reserved namespaces.</li>
     <li><code>docs/development-process.md</code>: "once the stack is chosen" becomes the issue that delivers each piece (#14, #15, #16, #18).</li>
+    <li><code>skills/sdlc-work/references/deliver.md</code> and its installed copy: the PR body says "Behavior diff: not run (U13, #15 not done)".</li>
     <li><code>_bmad/custom/bmad-build.toml</code>, <code>_bmad/custom/bmad-code-review.toml</code>: the spine is loaded by the build and review skills.</li>
   </ul>
 </section>

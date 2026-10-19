@@ -23,7 +23,7 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 
 The architecture spine holds the full rules: `_bmad-output/planning-artifacts/architecture/architecture-scaleway-manager-2026-10-19/ARCHITECTURE-SPINE.md`.
 
-- Shipped code (server, fake operator, page) uses only the Go standard library and the browser platform: no framework, no library, no `require` in `go.mod`. Test and lint tools are allowed outside `go.mod` and `web/`.
+- The server, the page and the fake operator use only the Go standard library and the browser platform: no framework, no library, no `require` in `go.mod`. Test, lint and build tools are allowed at pinned versions, outside `go.mod` and `web/`.
 - Every Kubernetes call the server makes carries the logged-in user's token, through `internal/kube`; the server pod's service account has no API rights.
 - Export and re-import are JSON; re-import only creates.
 - Custom resources stay raw JSON; updates are JSON merge patches carrying the `resourceVersion` the user saw.
@@ -39,7 +39,7 @@ The architecture spine holds the full rules: `_bmad-output/planning-artifacts/ar
 
 - Architecture spine (stack, invariants): `_bmad-output/planning-artifacts/architecture/architecture-scaleway-manager-2026-10-19/ARCHITECTURE-SPINE.md`
 - Brief: `_bmad-output/planning-artifacts/briefs/brief-scaleway-manager-2026-10-16/brief.md`
-- Scoping session: `_bmad-output/forge/scaleway-manager-web-ui/forged-idea.md`
+- Scoping session (historical; the architecture spine prevails where they differ): `_bmad-output/forge/scaleway-manager-web-ui/forged-idea.md`
 - Operator CR types and adoption: `/home/mathieu/dev/github.com/scaleway-operator/src/resources.rs` and `src/scaleway.rs`
 - Lessons learned: `docs/solutions/`, by category, with YAML front matter (`module`, `tags`, `problem_type`); relevant when working in a documented area.
 

@@ -525,7 +525,7 @@ A loop that does not converge signals a contradictory spec or a bad split.
 
 ### Testing without Scaleway
 
-The fake operator, the manual cluster target and the Gherkin runner come with #14, #15 and #16 (stack: the architecture spine); the rules below already apply.
+The Gherkin runner comes with #15, the manual cluster target with #16, and the fake operator with its own issue (AD-9 of the architecture spine); the rules below already apply.
 
 - No automated test may cause cost at Scaleway; automated tests never leave the local machine.
 - A fake local operator, used only by automated tests, writes the CR `status` (Pending, Syncing, Synced, Error, TerminationBlocked) without calling Scaleway. The real operator is not installed in the test cluster.
