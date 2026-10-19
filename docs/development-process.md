@@ -21,7 +21,7 @@ Workflows:
 | Workflow | Used in | Returns |
 | --- | --- | --- |
 | `sdlc-triage` | Triage | Proposed route, answers, vote agreement |
-| `sdlc-parallax` | Define | Divergences between 3 to 5 specs, as questions |
+| `sdlc-parallax` | Define | Divergences between 3 specs, as questions |
 | `sdlc-spec-lint` | Define | Failing acceptance criteria, with votes |
 | `sdlc-explore` | Plan | Map of the code, practices and frameworks |
 | `sdlc-cold-start` | Plan | What each story spec is missing |
@@ -140,7 +140,7 @@ On another machine the memlog is available from the last gate commit; without it
 ### Define and spec gate
 
 - `bmad-forge-idea` explores the problem, checks the code before each question, and has every recorded assumption validated by yes or no.
-- `sdlc-parallax`: 3 to 5 fresh agents each write the spec they would execute from `forged-idea.md`; every divergence becomes a question.
+- `sdlc-parallax`: 3 fresh agents (decided with the author) each write, alone, the spec they would execute from `forged-idea.md`, reading the code it concerns; an agent compares the specs and returns every divergence as a question. The specs stay in the run's transcript.
 - Pre-mortem with `bmad-advanced-elicitation`: "three months from now the project failed, write the postmortem"; every risk becomes a question; `sdlc-work` writes the risks to `define-notes.md` itself.
 - Answers go to `define-notes.md`. When it holds an external factual question without answer, `sdlc-work` proposes research (`bmad-deep-recon`); the human decides, and a skipped research is recorded.
 - `bmad-spec` writes `SPEC.md` from `forged-idea.md` and `define-notes.md`, scope with non-goals and success signal included. Every acceptance criterion names its verification method.
@@ -180,7 +180,7 @@ sequenceDiagram
     K->>H: Each recorded assumption: yes or no?
     H->>K: Validates
     W->>F: sdlc-parallax (forged-idea.md)
-    F->>A: 3 to 5 agents write the spec they would execute
+    F->>A: 3 agents write the spec they would execute
     A-->>F: Specs
     F-->>W: Divergences as questions
     W->>K: bmad-advanced-elicitation, pre-mortem
