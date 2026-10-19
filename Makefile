@@ -17,7 +17,7 @@ export MUTATION
 BASE ?= origin/main
 export BASE
 
-.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note
+.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -81,6 +81,8 @@ fix-workflows: check-node ## Fix lint and format in place, then lint
 
 test-workflows: check-node ## Run the workflow tests under the harness, with coverage (c8)
 	$(NODE_BIN)/c8 node --test 'tests/workflows/**/*.test.js'
+
+check: lint-docs lint-workflows test-workflows check-frozen ## Run the checks that need no issue number (used by the sdlc-review fixer)
 
 check-migration: ## Check docs/migrations/next/ISSUE.md: changed by the branch since BASE (origin/main), valid format
 	@scripts/check-migration.sh "$${ISSUE:-}" "$$BASE"

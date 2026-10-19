@@ -33,7 +33,7 @@ Where a BMad skill does the same job by hand, its override in `_bmad/custom/<ski
 
 | Workflow | Manual equivalent | Override keys |
 | --- | --- | --- |
-| `sdlc-review` | `bmad-code-review` | `review_layers` |
+| `sdlc-review` | `bmad-code-review` | `review_layers`, `sdlc_verifier_prompt`, `sdlc_fixer_prompt` |
 | `sdlc-spec-lint` | `bmad-review` | `lenses` (entry `spec-lint`) |
 | `sdlc-rails`, `sdlc-build` | `bmad-build` | `sdlc_test_writer_prompt`, `sdlc_builder_prompt` |
 
@@ -506,11 +506,13 @@ Each builder runs in its own git worktree. Worktrees start from the current `HEA
 
 ### Review loop
 
-Lenses security, correctness and coherence, defined in `_bmad/custom/bmad-code-review.toml`; a verifier reproduces each finding before it is kept; a fixer applies the verified findings and runs `make`. Triage first (where to look), then findings read in the files (severity). Coherence covers the string constants between code and docs, and the actual content of security and config files. A pass is dry only if at least three distinct lenses found nothing.
+Lenses security, correctness and coherence, defined as `review_layers` in `_bmad/custom/bmad-code-review.toml` (the four default layers are off). Each lens works in two phases: triage first (where to look), then findings read in the files. Coherence covers the string constants between code and docs, and the actual content of security and config files.
+
+Each round of `.claude/workflows/sdlc-review.js`: an agent writes the diff of the working tree since the base SHA, untracked files included (`scripts/review-diff.sh`); the lenses review it in parallel; a verifier (`sdlc_verifier_prompt`) checks every finding in the code, grades the real ones and matches them with those of earlier rounds; a fixer (`sdlc_fixer_prompt`) fixes the verified ones in the working tree, without committing, and runs `make check`. A verified finding whose fix needs a decision is set aside for the human. A round is dry when every lens answered, every finding got a verdict and no new verified finding remains (decided with the author: false alarms do not count). The workflow returns whether it converged, every verified finding with its status, the recurring ones, and the fixes of the last round that no round reviewed; `sdlc-work` commits the fixes. A manual `bmad-code-review` runs the same lenses once, and its own triage step verifies each finding: a verifier cannot be a layer, because layers run in parallel.
 
 | Route | `sdlc-review` arguments | At the cap |
 | --- | --- | --- |
-| long | `dryPasses` 2, `maxRounds` 5 | Back to Plan, back to Define, or accept and list the findings in the PR; the human chooses |
+| long | `dryPasses` 2, `maxRounds` 5 (2 dry rounds in a row) | Back to Plan, back to Define, or accept and list the findings in the PR; the human chooses |
 | bug | `dryPasses` 1, `maxRounds` 2 | Way out proposed; the human chooses |
 | short | `singlePass` | Unfixed findings listed in the PR |
 
@@ -580,7 +582,7 @@ Node tooling (Biome, oxlint, oxfmt, c8, markdownlint-cli2) is pinned in `package
 
 On every PR, `pr-checks.yml` runs `make lint-docs`, `make lint-workflows`, `make test-workflows`, `make check-frozen` and `make check-migration`, with `<n>` read from `Closes #<n>` in the PR body (the check fails without it); `<n>` is the issue of the work, the epic for long work. The jobs are required status checks of `main`, with `conventional-title` (PR title in Conventional Commits form).
 
-Locally, prek runs the same `make` targets on every commit. Install it once per clone with `prek install`; when a global `core.hooksPath` is set, `prek install` refuses, and `prek install --git-dir "$(git rev-parse --absolute-git-dir)"` is used instead. `make help` lists the targets.
+Locally, prek runs the same `make` targets on every commit. Install it once per clone with `prek install`; when a global `core.hooksPath` is set, `prek install` refuses, and `prek install --git-dir "$(git rev-parse --absolute-git-dir)"` is used instead. `make help` lists the targets; `make check` runs the four checks that need no issue number (`lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`).
 
 ## Release
 
