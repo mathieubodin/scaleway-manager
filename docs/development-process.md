@@ -49,7 +49,15 @@ Where a BMad skill does the same job by hand, its override in `_bmad/custom/<ski
 
 The session asks questions one at a time, checking the code first, then runs `sdlc-triage`. Each atomic question is answered by 3 independent agents; a rule in code combines the answers into a proposed route and reports the vote agreement as the uncertainty signal. The human confirms or changes the route. The answers, the proposed route and the human's decision are recorded in the process memlog, to adjust the questions later.
 
-> **To be written (U30):** the triage questions and the combination rule.
+Triage questions and rule, decided with the author and defined once in `.claude/workflows/sdlc-triage.js` (`QUESTIONS`, `VOTES`, `MIN_YES`); `args` are the idea or issue text and the facts `sdlc-work` gathered:
+
+1. `defect`: Does it describe an observed defect: something that should work and does not?
+2. `newBehavior`: Does it add a new behavior the user can see or use?
+3. `adoptionKeys`: Does it touch the adoption keys: the namespace name, the `scaleway.mathieubodin.io/project-id` annotation, or custom resource names?
+4. `data`: Does it change what is kept, exported or sent: custom resources, exports, Secrets?
+5. `smallChange`: Is it limited to a small edit: a typo, a wording, or a simplification that keeps the same behavior?
+
+A question is "yes" with at least 2 "yes" out of 3 votes; a vote whose agent died counts as a missing "yes". The rule, in order: `newBehavior`, `adoptionKeys` or `data` yes gives long; otherwise `defect` gives bug; otherwise `smallChange` gives short; otherwise long, the safest route. The agreement is the number of unanimous questions; a split on a question the rule read is returned as uncertain.
 
 At the same confirmation, `sdlc-work` proposes the slug and, optionally, a milestone. A milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in its description. An issue may have no milestone.
 
