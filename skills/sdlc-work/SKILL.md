@@ -11,7 +11,7 @@ Drives one piece of work from an idea to its PR, following `{project-root}/docs/
 
 - No argument: start a new piece of work from the user's idea, `references/start.md`.
 - An issue number `n`:
-  - a work folder `_bmad-output/work/issue-<n>-*/` exists locally, or the issue carries a `route:*` label: resume it. Resume is not available yet (epic #2, unit U18): tell the user so, and stop.
+  - a work folder `_bmad-output/work/issue-<n>-*/` exists locally, or the issue carries a `route:*` label: resume it, `references/resume.md`.
   - otherwise the issue was opened outside the process: triage it, `references/start.md`, section "External issue".
 - After triage, the route goes on with its own steps: short and bug routes (unit U19), long route (unit U20). They are not available yet: tell the user which route was chosen, that its next steps are not implemented, and stop.
 
@@ -30,3 +30,14 @@ Drives one piece of work from an idea to its PR, following `{project-root}/docs/
 - Before every commit this skill makes: `make cost ISSUE=<n>`, add the work folder's `cost.json` to the commit, then `scripts/project-item.sh tokens <n> <printed value>`. For long work, `<n>` is the epic; sub-issues carry no `Tokens`.
 - Project statuses are set with `scripts/project-item.sh status <n> '<status>'`; Done is never set by this skill.
 - Commit messages follow Conventional Commits and end with `Refs: #<n>`.
+
+## Gate comments
+
+At the spec and plan gates of long work, `sdlc-work` comments on the epic, first line exactly one of:
+
+```text
+validated: <spec|plan> gate, commit <full sha>
+invalidated: <spec|plan> gate: <reason>
+```
+
+followed by the commit link for a validation. The memlog records the same decision as a decision line `gate <spec|plan> validated commit=<sha>` or `gate <spec|plan> invalidated`. Resume reads both.

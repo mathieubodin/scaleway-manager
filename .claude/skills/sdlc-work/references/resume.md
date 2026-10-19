@@ -1,0 +1,47 @@
+# Resume
+
+`/sdlc-work <n>` on an issue that has a `route:*` label or a local work folder (`docs/development-process.md`, "Start and resume"). The goal: state the step reached, what was last done, and propose the next step; the human confirms.
+
+## 1. Before anything
+
+- The working tree must be clean. Otherwise tell the user what is uncommitted and stop.
+- Find the session id. If the current branch is another work's branch with a step of this session still open in its memlog, append that `step-end` first (SKILL.md, "One open step per session").
+
+## 2. Find the work branch
+
+In this order, `<n>` being the issue number:
+
+1. A local branch: `git branch --list '*/<n>-*'`.
+2. A remote branch: `git fetch origin`, then `git branch -r --list 'origin/*/<n>-*'`; switch to it with `git switch <type>/<n>-<slug>` (it tracks the remote one).
+3. None: the work was triaged but nothing was pushed (the memlog lived only on a branch of another machine). Go to step 4 with no memlog.
+
+More than one match: list them and ask the user which one. Switch to the branch found; when a local branch is behind its remote one (`git status -sb`), say so and ask before pulling.
+
+## 3. Read the memlog
+
+`_bmad-output/work/issue-<n>-<slug>/.memlog.md`, read in full (the one time the memlog is read). From it:
+
+- the route (last `route` event);
+- the step reached: the last `step-start` without a later `step-end` of the same step is in progress; otherwise the step after the last `step-end`, in the route's order (`docs/token-cost-tracking.md`, "Steps");
+- the last gate decisions (`gate ... validated` or `invalidated` decision lines) and the last results and decisions of the step reached.
+
+## 4. Read GitHub
+
+- `gh issue view <n> --json title,state,labels,milestone,comments`: the route label, and the gate comments of this work, whose first line is `validated: <spec|plan> gate, commit <sha>` or `invalidated: <spec|plan> gate: <reason>` (SKILL.md, "Gate comments"); the last one counts.
+- Board status: `gh api graphql` on the issue's `projectItems` with `fieldValueByName(name: "Status")` (project 4).
+- Long work, past the plan gate: its sub-issues, `gh api repos/{owner}/{repo}/issues/<n>/sub_issues --jq '.[] | {number, state, title}'`.
+
+Without a memlog (step 2.3, or a branch without its work folder), the step reached comes from the last gate comment: `validated: spec gate` → start of `plan`; `validated: plan gate` → start of `rails`; `invalidated: ...` → the reason is shown and the human chooses the return step again; no gate comment → the first step after `triage` of the route, from the label. Tell the user what was lost (everything after the last pushed gate).
+
+## 5. Compare
+
+Flag every disagreement to the user in one line each, without fixing anything silently: route label versus memlog route, board status versus step (`docs/development-process.md`, "GitHub mapping"), a gate in the memlog without its comment or the reverse, a gate commit not contained in the branch (`git merge-base --is-ancestor <sha> HEAD`), sub-issues whose state does not follow the epic. Ask the user which side is right before going on.
+
+## 6. Cost and ledger
+
+- `make cost ISSUE=<n>`, then `scripts/project-item.sh tokens <n> <printed value>`. Nothing is committed here.
+- Append event `step-start step=<step reached> session=<id> at=<now>`: a resume opens a new window in this session (`docs/token-cost-tracking.md`).
+
+## 7. Tell and propose
+
+In plain language: the issue and its route, the step reached and what was last done (the last few results and decisions), the disagreements of step 5 if any, and the proposed next step. Ask one clickable question: go on with the proposed step, or another one. Then go on with the route (SKILL.md, "Dispatch").
