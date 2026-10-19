@@ -171,16 +171,17 @@ Status: **ready** or **blocked (stack)**.
 - Builds the image and Helm chart locally, creates a kind cluster, installs the real operator and the local chart. Runs no scenario.
 - Depends on: stack choice.
 
-### U15. "Deliver" workflow: version, tag, release note — ready
+### U15. "Deliver" workflow: version, tag, release note — done (first real run after the merge of #33)
 
 - Triggers: `milestone` `closed` (version = milestone title) and `workflow_dispatch` with a `tag` input. One branch point for the version origin, then a common trunk.
 - Checks: valid semver; tag does not exist; no open issue in the milestone (when one has that title).
 - Creates the tag and the GitHub release. Release note from the migration files changed since the previous tag: only no-impact entries → a single "no impact" entry; otherwise no-impact entries dropped.
 - `concurrency` group preventing two deliveries at once.
-- To check: reading the milestone title from the event (`github.event.milestone.title` expected).
+- Milestone title read from `github.event.milestone.title`, open issues from `github.event.milestone.open_issues` (both required in the `milestone.closed` payload schema of `octokit/webhooks`); for a dispatch, from the milestones API.
 - The workflow must be on `main` to run; the first real run creates a real tag and release: the human chooses when.
 - Acceptance: a dispatch with an existing tag or an invalid semver fails before creating anything.
 - Depends on: U9.
+- Done on 2026-10-19: `.github/workflows/deliver.yml` (job only on `main`, `shell: bash` for `pipefail`, actions pinned by SHA, event values through `env`, one-line version guard against output injection, `--prerelease` for a version with `-`), `scripts/release-check.sh`, `scripts/release-note.sh`, `make release-note` to preview. Decided with the author: a final version lists everything since the previous final one, prereleases included. Verified in throwaway git repositories: versions `v0.1.0`, `v1.2.3-rc.1`, `v1.2.3+build.5`, `v1.0.0-0a` accepted; `0.1.0`, `v1.2`, `v01.2.3`, `v1.0.0-01`, `v1.0.0-rc.01`, a trailing space refused; an existing tag and open milestone issues refused; release note "No impact." with no file or only no-impact ones, impact entries under their issue with headings moved down outside code fences, a renamed file kept, a file not named `<issue>.md` refused, final `v0.3.0` after `v0.3.0-rc.1` lists both entries, `rc.2` only the new one. Independent review: 10 findings, fixed (renames, fences, `pipefail`, dispatch from another branch, prerelease identifiers, prerelease flag, third queued run documented, non-numeric names, comment), one decided with the author. Not verifiable before the merge: a real run.
 
 ### U16. "Deliver": build and publish to ghcr.io — blocked (stack)
 

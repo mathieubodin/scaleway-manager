@@ -1,0 +1,89 @@
+name: Deliver
+
+# Publish a version: check it, then create its tag and GitHub release with the
+# release note built from docs/migrations/next/ (docs/development-process.md, "Release").
+# Two ways to start it, one branch point for the version, then a common trunk.
+# GitHub runs it only from the default branch.
+
+on:
+  milestone:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version to publish, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  issues: read
+
+# One delivery at a time; GitHub keeps one waiting run per group, so a third run
+# cancels the waiting one.
+concurrency:
+  group: deliver
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    # "Run workflow" lets one pick any branch: publish from main only.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # -o pipefail: a failed `gh api` in a pipe must fail the step.
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      # Branch point: the version comes from the milestone title or from the typed tag.
+      - name: Read the version and the open issues of its milestone
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          MILESTONE_TITLE: ${{ github.event.milestone.title }}
+          MILESTONE_OPEN: ${{ github.event.milestone.open_issues }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          if [ "$EVENT" = milestone ]; then
+            version=$MILESTONE_TITLE
+            open=$MILESTONE_OPEN
+          else
+            version=$INPUT_TAG
+            open=$(gh api --paginate "repos/$GITHUB_REPOSITORY/milestones?state=all" \
+              | jq -rs --arg t "$version" '[.[][] | select(.title == $t) | .open_issues] | first // empty')
+          fi
+          # One line each, so that a typed value cannot add outputs.
+          case "$version$open" in *$'\n'* | *$'\r'*) echo "Error: the version must be one line"; exit 1 ;; esac
+          {
+            echo "version=$version"
+            echo "open=$open"
+          } >> "$GITHUB_OUTPUT"
+
+      # Common trunk. Nothing is created before these checks pass.
+      - name: Check the version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          OPEN: ${{ steps.version.outputs.open }}
+        run: scripts/release-check.sh "$VERSION" "$OPEN"
+
+      - name: Write the release note
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: scripts/release-note.sh "$VERSION" > "$RUNNER_TEMP/release-note.md"
+
+      - name: Create the tag and the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          flags=()
+          case "$VERSION" in *-*) flags=(--prerelease) ;; esac
+          gh release create "$VERSION" --target "$GITHUB_SHA" --title "$VERSION" \
+            --notes-file "$RUNNER_TEMP/release-note.md" "${flags[@]}"

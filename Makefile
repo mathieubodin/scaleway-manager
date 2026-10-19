@@ -17,7 +17,7 @@ export MUTATION
 BASE ?= origin/main
 export BASE
 
-.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence
+.PHONY: help lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -87,3 +87,6 @@ check-migration: ## Check docs/migrations/next/ISSUE.md: changed by the branch s
 
 evidence: ## Replay the checks, rewrite the evidence record of ISSUE=<n> (work folder evidence.md)
 	@scripts/evidence.sh "$${ISSUE:-}"
+
+release-note: ## Print the release note of the next version (migration files since the last v* tag)
+	@scripts/release-note.sh
