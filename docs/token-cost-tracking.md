@@ -48,7 +48,7 @@ Steps:
 - A gate is counted in the step it closes (spec gate in `define`, plan gate in `plan`).
 - `deliver` covers `/ce-compound`, MemPalace, the migration file, the evidence record, the PR and the fixes made after it is opened.
 - A resume (`/sdlc-work <n>`) opens a new `step-start` for the step resumed, in the new session.
-- A `step-start` ends at the next `step-start` or `step-end` of the same session, in any memlog, or never (end of transcript) when the session stopped. Starting work 8 in a session therefore closes the open step of work 7.
+- A `step-start` ends at the next `step-start` or `step-end` of the same session, in any memlog, or never (end of transcript) when the session stopped. Starting work 8 in a session therefore closes the open step of work 7. Each work's memlog lives on its own branch, and `make cost` reads only the memlogs of the current checkout: `sdlc-work` therefore writes the `step-end` of the open step of work 7 before starting a step of work 8 in the same session, so that each memlog closes its own windows.
 
 ## Attribution rules
 

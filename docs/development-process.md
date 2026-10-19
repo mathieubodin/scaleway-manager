@@ -126,14 +126,13 @@ sequenceDiagram
         F-->>W: Proposed route, answers, vote agreement
         W->>H: Route with answers and agreement, slug and milestone proposal
         H->>W: Confirms or changes the route, chooses the milestone
-        W->>M: Record triage answers and the human's decision
         opt Milestone missing
             W->>H: Theme of the milestone?
             W->>G: Create milestone, title = semver
         end
         W->>G: Create issue or epic, route label, status
-        W->>W: git: branch type/n-slug
-        W->>M: Init work/issue-n-slug/.memlog.md (route, step)
+        W->>W: git: branch type/n-slug from origin/main
+        W->>M: Init work/issue-n-slug/.memlog.md with the triage window, run, answers, human decision, route
     else Resume: /sdlc-work 42
         H->>W: /sdlc-work 42
         W->>M: Read memlog (same machine)
