@@ -12,8 +12,10 @@ export const meta = {
 // with the author on 2026-10-19 (docs/development-process.md, "Triage"): a
 // question is "yes" with at least MIN_YES "yes" out of VOTES; a vote whose
 // agent died counts as a missing "yes". The rule reads, in order:
-// newBehavior, adoptionKeys or data -> long; else defect -> bug; else
-// smallChange -> short; else long. A split question is uncertain when
+// newBehavior, adoptionKeys or data -> long; else smallChange -> short; else
+// defect -> bug; else long (order and data question changed with the author
+// after the first real runs: a typo is a defect too, and a deletion changes
+// what is kept). A split question is uncertain when
 // flipping its answer would change the route. Voters are read-only Explore
 // agents; the idea comes from issues anyone can open.
 const VOTES = 3;
@@ -33,7 +35,7 @@ const QUESTIONS = [
   },
   {
     id: "data",
-    text: "Does it change what is kept, exported or sent: custom resources, exports, Secrets?",
+    text: "Does it change the content or the format of what the project exports or sends, or how Secrets are handled?",
   },
   {
     id: "smallChange",
@@ -91,10 +93,10 @@ const answers = await parallel(
 const routeOf = (yes) =>
   yes.newBehavior || yes.adoptionKeys || yes.data
     ? "long"
-    : yes.defect
-      ? "bug"
-      : yes.smallChange
-        ? "short"
+    : yes.smallChange
+      ? "short"
+      : yes.defect
+        ? "bug"
         : "long";
 const yes = Object.fromEntries(answers.map((a) => [a.id, a.yes]));
 const route = routeOf(yes);

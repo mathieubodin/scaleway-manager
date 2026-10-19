@@ -58,18 +58,24 @@ test("adoption keys or data alone send to long, a split is uncertain", async () 
   assert.deepEqual(run.result.uncertain, ["data"]);
 });
 
-test("defect without new behavior: bug", async () => {
+test("defect without new behavior: bug; a 1-of-3 small change is uncertain", async () => {
   const run = await triage({ defect: 3, smallChange: 1 });
   assert.equal(run.result.route, "bug");
-  // smallChange split, but the rule did not read it
-  assert.deepEqual(run.result.uncertain, []);
+  // flipping smallChange would give short
+  assert.deepEqual(run.result.uncertain, ["smallChange"]);
   assert.deepEqual(run.result.agreement, { unanimous: 4, questions: 5 });
 });
 
-test("small change only: short; a 1-of-3 defect makes it uncertain", async () => {
+test("a typo is a defect and a small change: short", async () => {
+  const run = await triage({ smallChange: 3, defect: 3 });
+  assert.equal(run.result.route, "short");
+  assert.deepEqual(run.result.uncertain, []);
+});
+
+test("small change with a split defect: short, the defect cannot change it", async () => {
   const run = await triage({ smallChange: 3, defect: 1 });
   assert.equal(run.result.route, "short");
-  assert.deepEqual(run.result.uncertain, ["defect"]);
+  assert.deepEqual(run.result.uncertain, []);
 });
 
 test("nothing says yes: long, the safest route", async () => {

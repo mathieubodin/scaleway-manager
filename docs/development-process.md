@@ -54,10 +54,10 @@ Triage questions and rule, decided with the author and defined once in `.claude/
 1. `defect`: Does it describe an observed defect: something that should work and does not?
 2. `newBehavior`: Does it add a new behavior the user can see or use?
 3. `adoptionKeys`: Does it touch the adoption keys: the namespace name, the `scaleway.mathieubodin.io/project-id` annotation, custom resource names, an Instance's zone or Scaleway name, or the tags the operator sets on load balancers and secrets?
-4. `data`: Does it change what is kept, exported or sent: custom resources, exports, Secrets?
+4. `data`: Does it change the content or the format of what the project exports or sends, or how Secrets are handled?
 5. `smallChange`: Is it limited to a small edit: a typo, a wording, or a simplification that keeps the same behavior?
 
-A question is "yes" with at least 2 "yes" out of 3 votes; a vote whose agent died counts as a missing "yes". The rule, in order: `newBehavior`, `adoptionKeys` or `data` yes gives long; otherwise `defect` gives bug; otherwise `smallChange` gives short; otherwise long, the safest route. The agreement is the number of unanimous questions; a split question is returned as uncertain when flipping its answer would change the route. Voters are read-only agents (`Explore`); the idea and the facts are quoted as data, the question before them.
+A question is "yes" with at least 2 "yes" out of 3 votes; a vote whose agent died counts as a missing "yes". The rule, in order: `newBehavior`, `adoptionKeys` or `data` yes gives long; otherwise `smallChange` gives short; otherwise `defect` gives bug; otherwise long, the safest route. The `data` question and the order of `smallChange` and `defect` were changed with the author after the first real runs: a typo is a defect too, and a deletion changes what is kept. The agreement is the number of unanimous questions; a split question is returned as uncertain when flipping its answer would change the route. Voters are read-only agents (`Explore`); the idea and the facts are quoted as data, the question before them.
 
 At the same confirmation, `sdlc-work` proposes the slug and, optionally, a milestone. A milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in its description. An issue may have no milestone.
 
