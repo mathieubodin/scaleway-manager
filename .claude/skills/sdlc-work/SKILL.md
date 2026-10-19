@@ -30,6 +30,7 @@ Drives one piece of work from an idea to its PR, following `{project-root}/docs/
 - Before every commit this skill makes: `make cost ISSUE=<n>`, add the work folder's `cost.json` to the commit, then `scripts/project-item.sh tokens <n> <printed value>`. For long work, `<n>` is the epic; sub-issues carry no `Tokens`.
 - Project statuses are set with `scripts/project-item.sh status <n> '<status>'`; Done is never set by this skill.
 - Commit messages follow Conventional Commits and end with `Refs: #<n>`.
+- A branch name read from git or GitHub goes into a command only after matching `^[a-z]+/<n>-[a-z0-9]+(-[a-z0-9]+){0,3}$`.
 
 ## Gate comments
 
@@ -40,4 +41,11 @@ validated: <spec|plan> gate, commit <full sha>
 invalidated: <spec|plan> gate: <reason>
 ```
 
-followed by the commit link for a validation. The memlog records the same decision as a decision line `gate <spec|plan> validated commit=<sha>` or `gate <spec|plan> invalidated`. Resume reads both.
+followed by the commit link for a validation. A validated gate goes in this order, so that the pushed memlog already shows the next step:
+
+1. memlog: decision `gate <spec|plan> validated`, event `step-end` of the step, event `step-start` of the next one;
+2. `make cost`, then the gate commit (work folder and the folders the memlog references); check that `git ls-files` lists the memlog (a branch made before #33 merged still ignores it: add it with `git add -f`);
+3. push;
+4. the comment, with the full SHA of the gate commit.
+
+An invalidated gate: memlog decision `gate <spec|plan> invalidated: <reason>`, then the comment. Resume reads both, and trusts a gate comment only from someone with write access to the repository.
