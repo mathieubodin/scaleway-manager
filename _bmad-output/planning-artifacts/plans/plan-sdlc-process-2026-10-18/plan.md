@@ -56,7 +56,7 @@ Status: **ready** or **blocked (stack)**.
 - Depends on: nothing. Required checks extended by U11 (done on 2026-10-18).
 - Verified on 2026-10-18: `gh label list` shows `epic`, `route:short`, `route:bug`, `route:long`; GraphQL lists "Item closed" and "Pull request merged" as enabled (switched on in the UI, the API cannot do it); a test issue (#36) added to the Project without status moved to `Done` about 10 s after being closed, then was deleted; a direct push of an empty commit to `main` was refused with `GH006` ("Changes must be made through a pull request", "Required status check \"conventional-title\" is expected") and the remote `main` stayed at `945c57b`.
 
-### U2. `docs/development-process.md` — first version done, final pass pending
+### U2. `docs/development-process.md` — done
 
 - Full process, condensed from `decisions.md`, the three `sequence-*.md`, the three simulations and the decisions above: routes, gates and their aids, two-failure rule, frozen tests, testing without Scaleway (`@manual`), GitHub mapping, Project v2 statuses, migration files, release.
 - Includes the three corrected sequence diagrams from the brainstorm folder (`sequence-*-process.md`, updated with the simulations). In particular, bug tests are frozen before the builders (bug G1), which supersedes `decisions.md`.
@@ -66,6 +66,7 @@ Status: **ready** or **blocked (stack)**.
 - Acceptance: `make lint-docs` green; every string constant (labels, statuses, paths, skill names, `Migration: no impact`) matches the code of the other units (coherence check at review).
 - Depends on: nothing. Revisited at the end of the epic for consistency.
 - First version on 2026-10-18: `make lint-docs` green; triage and spec-lint questions and the install command left as marked placeholders (U30, U5, U3). Independent review (correctness, coherence) checked labels, statuses, `worktree.baseRef`, `make` targets and variables, `sdlc-review` args, `conventional-title`, `Migration: no impact` against the code and the sources; its 8 findings were fixed (two-failure notes in the diagrams, `lenses` key, forge path, first freeze without human decision, epic number for the migration file, prek install, token summary in evidence and PR, file loaded as a persistent fact). The freeze finding also fixed the `make freeze` help text and U8. The install command was then written by U3.
+- Final pass on 2026-10-19, after U7 to U31: an independent agent checked every constant of the document against the code (labels, statuses and required checks read live on GitHub; workflow args, results and constants; override keys; make targets; branch and gate formats; triage and spec-lint questions; counts; diagrams) and found no high mismatch. Fixed: the spec-lint override key, the `@manual` path of the bug route, the build diagram (trunk one story per run) and `sdlc-build`'s `whenToUse`, features waiting for the stack (code tests, coverage, mutation, behavior diff, fake operator) now marked as such, what prek runs, `make check` after each merge, the short and bug diagrams' order and confirmation, sub-issues starting in Backlog, gate page inputs, the cost table's Plan commits, history removed (trial costs, rule changes, per-line "decided with the author", replaced by one sentence at the top). `make lint-docs` green.
 
 ### U3. Custom BMad module skeleton `mathieubodin-sdlc` — done
 

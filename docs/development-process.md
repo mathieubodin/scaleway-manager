@@ -2,7 +2,7 @@
 
 How a piece of work goes from an idea to `main`, then to a release. Agents do the work; the human decides at the gates. Entry point: `/sdlc-work` in a Claude Code session.
 
-The process skills load this file as a persistent fact: every line added here costs tokens in each of them.
+The process skills load this file as a persistent fact: every line added here costs tokens in each of them. The rules here were decided with the author: change them only with the author.
 
 ## Building blocks
 
@@ -11,10 +11,10 @@ The process skills load this file as a persistent fact: every line added here co
 | Session | The Claude Code conversation the human starts; it runs the skill `sdlc-work` | Yes |
 | Skill | Instructions loaded by the session, which then plays that role: `sdlc-work`, `sdlc-gate-page` (module `mathieubodin-sdlc`) and BMad skills customized in `_bmad/custom/` | Yes (it is the session) |
 | Workflow | A saved script in `.claude/workflows/`, run in the background, whose loops, votes and counters are code; it accepts no input mid-run and returns one result | No |
-| Subagent | An agent with a fresh context, started by a workflow (or by the session for the `@manual` test writer of the bug route); works alone and returns a report | No |
+| Subagent | An agent with a fresh context, started by a workflow; works alone and returns a report | No |
 | Command | A tool without AI: `make`, `git`, `gh` | No |
 
-`sdlc-work` keeps every interaction with the human and launches a workflow between two of them. The BMad skills it calls (`bmad-forge-idea`, `bmad-deep-recon`, `bmad-spec`, `bmad-review`, `bmad-architecture`, `bmad-build`, `bmad-code-review`, `bmad-walkthrough`) load this file as a fact and, at their end, write their result to the process memlog and hand control back to `sdlc-work` (overrides in `_bmad/custom/<skill>.toml`). A memlog is active when the current branch is `{type}/{n}-{slug}` and `_bmad-output/work/issue-{n}-{slug}/.memlog.md` exists, so a skill run by hand on a work branch hands back too. `bmad-advanced-elicitation` offers no such override, and `bmad-build`, run for its steps 01 and 02 only during Plan, never reaches its completion step: for both, `sdlc-work` records the result itself. If the session drifted or stopped, `/sdlc-work <n>` resumes.
+`sdlc-work` keeps every interaction with the human and launches a workflow between two of them. The BMad skills it calls (`bmad-forge-idea`, `bmad-deep-recon`, `bmad-spec`, `bmad-review`, `bmad-architecture`, `bmad-build`, `bmad-code-review`, `bmad-walkthrough`) load this file as a fact and, at their end, write their result to the process memlog and hand control back to `sdlc-work` (overrides in `_bmad/custom/<skill>.toml`). A memlog is active when the current branch is `{type}/{n}-{slug}` and `_bmad-output/work/issue-{n}-{slug}/.memlog.md` exists, so a skill run by hand on a work branch hands back too. `bmad-advanced-elicitation` offers no such override, and `bmad-build`, run for its steps 01 and 02 only during Plan, never reaches its completion step: for both, `sdlc-work` writes their output itself (`define-notes.md`, the story spec commits). If the session drifted or stopped, `/sdlc-work <n>` resumes.
 
 Workflows:
 
@@ -34,7 +34,7 @@ Where a BMad skill does the same job by hand, its override in `_bmad/custom/<ski
 | Workflow | Manual equivalent | Override keys |
 | --- | --- | --- |
 | `sdlc-review` | `bmad-code-review` | `review_layers`, `sdlc_verifier_prompt`, `sdlc_fixer_prompt` |
-| `sdlc-spec-lint` | `bmad-review` | `lenses` (entry `spec-lint`) |
+| `sdlc-spec-lint` | `bmad-review` | `spec_lint_questions` (also used by the `lenses` entry `spec-lint`) |
 | `sdlc-rails`, `sdlc-build` | `bmad-build` | `sdlc_test_writer_prompt`, `sdlc_bug_test_writer_prompt`, `sdlc_builder_prompt` |
 
 ## Routes
@@ -49,7 +49,7 @@ Where a BMad skill does the same job by hand, its override in `_bmad/custom/<ski
 
 The session asks questions one at a time, checking the code first, then runs `sdlc-triage`. Each atomic question is answered by 3 independent agents; a rule in code combines the answers into a proposed route and reports the vote agreement as the uncertainty signal. The human confirms or changes the route. The answers, the proposed route and the human's decision are recorded in the process memlog, to adjust the questions later.
 
-Triage questions and rule, decided with the author and defined once in `.claude/workflows/sdlc-triage.js` (`QUESTIONS`, `VOTES`, `MIN_YES`); `args` are the idea or issue text and the facts `sdlc-work` gathered:
+Triage questions and rule are defined once in `.claude/workflows/sdlc-triage.js` (`QUESTIONS`, `VOTES`, `MIN_YES`); `args` are the idea or issue text and the facts `sdlc-work` gathered:
 
 1. `defect`: Does it describe an observed defect: something that should work and does not?
 2. `newBehavior`: Does it add a new behavior the user can see or use?
@@ -57,9 +57,9 @@ Triage questions and rule, decided with the author and defined once in `.claude/
 4. `data`: Does it change the content or the format of what the project exports or sends, or how Secrets are handled?
 5. `smallChange`: Is it limited to a small edit: a typo, a wording, or a simplification that keeps the same behavior?
 
-A question is "yes" with at least 2 "yes" out of 3 votes; a vote whose agent died counts as a missing "yes". The rule, in order: `newBehavior`, `adoptionKeys` or `data` yes gives long; otherwise `smallChange` gives short; otherwise `defect` gives bug; otherwise long, the safest route. The `data` question and the order of `smallChange` and `defect` were changed with the author after the first real runs: a typo is a defect too, and a deletion changes what is kept. The agreement is the number of unanimous questions; a split question is returned as uncertain when flipping its answer would change the route. Voters are read-only agents (`Explore`); the idea and the facts are quoted as data, the question before them.
+A question is "yes" with at least 2 "yes" out of 3 votes; a vote whose agent died counts as a missing "yes". The rule, in order: `newBehavior`, `adoptionKeys` or `data` yes gives long; otherwise `smallChange` gives short; otherwise `defect` gives bug; otherwise long, the safest route. `smallChange` comes before `defect` because a typo is a defect too. The agreement is the number of unanimous questions; a split question is returned as uncertain when flipping its answer would change the route. Voters are read-only agents (`Explore`); the idea and the facts are quoted as data, the question before them.
 
-At the same confirmation, `sdlc-work` proposes the issue title, the slug and, optionally, a milestone. A milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in its description. An issue may have no milestone. Decided with the author: this one confirmation covers the GitHub writes that follow (issue or labels, milestone, board status); `sdlc-work` then creates the branch from `origin/main` and the memlog, and pushes nothing yet. The board is updated with `scripts/project-item.sh`.
+At the same confirmation, `sdlc-work` proposes the issue title, the slug and, optionally, a milestone. A milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in its description. An issue may have no milestone. This one confirmation covers the GitHub writes that follow (issue or labels, milestone, board status); `sdlc-work` then creates the branch from `origin/main` and the memlog, and pushes nothing yet. The board is updated with `scripts/project-item.sh`.
 
 ### Rerouting
 
@@ -75,7 +75,7 @@ Work that turns out bigger than expected goes to the long route, on the human's 
 | Release | Milestone, titled with its semver version (for example `v0.3.0`) |
 
 - One branch per work: `{type}/{n}-{slug}`, `type` the Conventional Commits type planned for the PR, `slug` derived from the issue title, kebab-case, at most 4 words. Example: `feat/27-yaml-export`.
-- One PR per work, to `main`. No direct push to `main` (branch protection). Decided with the author: before the push, `sdlc-work` shows the migration entry, the PR title, the full PR body (first line `Closes #<n>`) and, for a bug, the comment on what was learned, and waits for the human's confirmation; the repository is public.
+- One PR per work, to `main`. No direct push to `main` (branch protection). Before the push, `sdlc-work` shows the migration entry, the PR title, the full PR body (first line `Closes #<n>`) and, for a bug, the comment on what was learned, and waits for the human's confirmation; the repository is public.
 - The PR references every issue it closes: `Closes #<n>`, and for long work the epic first, then every sub-issue (CI reads the issue of the work from the first `Closes`).
 - An issue opened by an external user is triaged with `/sdlc-work <n>`.
 
@@ -90,7 +90,7 @@ Project v2 (<https://github.com/users/mathieubodin/projects/4>) statuses:
 | Review | PR open |
 | Done | Issue closed or PR merged, set by the Project built-in workflows "Item closed" and "Pull request merged" |
 
-`sdlc-work` sets every status except Done. Sub-issues follow the epic: In Progress when the build starts, Review when the PR opens, Done at the merge.
+`sdlc-work` sets every status except Done. Sub-issues follow the epic: Backlog when created at the plan gate, In Progress when the build starts, Review when the PR opens, Done at the merge.
 
 ## Work folder
 
@@ -148,24 +148,24 @@ On another machine the memlog is available from the last gate commit; without it
 ### Define and spec gate
 
 - `bmad-forge-idea` explores the problem, checks the code before each question, and has every recorded assumption validated by yes or no.
-- `sdlc-parallax`: 3 fresh agents (decided with the author) each write, alone, the spec they would execute from `forged-idea.md`, reading the code it concerns; an agent compares the specs and returns every divergence as a question, with each reader's position. The specs stay in the run's transcript, under the reader numbers the result uses. The run stops when fewer than 2 specs were written. Each divergence comes with a proposed answer and is classified important (what the user sees or does, data, security, cost, acceptance) or detail; decided with the author: `sdlc-work` asks the important ones one at a time and shows the details as one list of proposed answers, validated or corrected together.
-- Pre-mortem with `bmad-advanced-elicitation`: "three months from now the project failed, write the postmortem"; every risk becomes a question; `sdlc-work` writes the risks to `define-notes.md` itself. Decided with the author: risks are sorted like the parallax divergences, important ones asked one at a time, details shown as one list of proposed answers.
+- `sdlc-parallax`: 3 fresh agents each write, alone, the spec they would execute from `forged-idea.md`, reading the code it concerns; an agent compares the specs and returns every divergence as a question, with each reader's position. The specs stay in the run's transcript, under the reader numbers the result uses. The run stops when fewer than 2 specs were written. Each divergence comes with a proposed answer and is classified important (what the user sees or does, data, security, cost, acceptance) or detail; `sdlc-work` asks the important ones one at a time and shows the details as one list of proposed answers, validated or corrected together.
+- Pre-mortem with `bmad-advanced-elicitation`: "three months from now the project failed, write the postmortem"; every risk becomes a question; `sdlc-work` writes the risks to `define-notes.md` itself. Risks are sorted like the parallax divergences, important ones asked one at a time, details shown as one list of proposed answers.
 - Answers go to `define-notes.md`. When it holds an external factual question without answer, `sdlc-work` proposes research (`bmad-deep-recon`); the human decides, and a skipped research is recorded.
 - `bmad-spec` writes `SPEC.md` from `forged-idea.md` and `define-notes.md`, scope with non-goals and success signal included. Every acceptance criterion names its verification method.
-- Spec-lint loop: `sdlc-spec-lint` asks each atomic question of each acceptance criterion to 3 independent agents; a criterion fails when the proportion of "yes" votes is below a threshold set in code. Each failing criterion becomes a question to the human, the answer goes to `define-notes.md`, `bmad-spec` updates `SPEC.md`, and spec-lint runs again. No gate page while it is red; alert to the human after 3 rounds. A manual `bmad-review` with the `spec-lint` lens asks the same questions once.
+- Spec-lint loop: `sdlc-spec-lint` asks each atomic question of each acceptance criterion to 3 independent agents; a criterion fails with fewer than 2 "yes" out of 3 on a question, and a spec without criteria fails as a whole. Each failing criterion becomes a question to the human, the answer goes to `define-notes.md`, `bmad-spec` updates `SPEC.md`, and spec-lint runs again. No gate page while it is red; alert to the human after 3 rounds. A manual `bmad-review` with the `spec-lint` lens asks the same questions once.
 
-Spec-lint questions, decided with the author and defined once in `_bmad/custom/bmad-review.toml` (`spec_lint_questions`, used by the `spec-lint` lens and passed to `sdlc-spec-lint`):
+Spec-lint questions are defined once in `_bmad/custom/bmad-review.toml` (`spec_lint_questions`, used by the `spec-lint` lens and passed to `sdlc-spec-lint`):
 
 1. Does this criterion say how we will verify that it is met?
 2. Does this criterion have only one possible reading?
 
-A criterion passes with at least 2 "yes" out of 3 independent votes for each question; a vote whose agent died counts as a missing "yes" (`.claude/workflows/sdlc-spec-lint.js`). A first trial on a two-criterion spec cost about 450,000 tokens for 13 agents.
+A criterion passes with at least 2 "yes" out of 3 independent votes for each question; a vote whose agent died counts as a missing "yes" (`.claude/workflows/sdlc-spec-lint.js`).
 
 ### Gates
 
 The spec gate and the plan gate work the same way:
 
-- `sdlc-gate-page` renders an HTML page to help understand, from the reference files only, in English (decided with the author: the project rule applies), self-contained, with the sections listed in its `SKILL.md`; the Markdown stays the reference, and the decision validates or invalidates it.
+- `sdlc-gate-page` renders an HTML page to help understand, from the reference files, `define-notes.md` and `cold-start.md` only, in English (the project rule), self-contained, with the sections listed in its `SKILL.md`; the Markdown stays the reference, and the decision validates or invalidates it.
 - `sdlc-work` prints the absolute path of the page and runs `xdg-open`.
 - Validated: the memlog records the gate, ends the step and opens the next one, then commit of the work folder and the folders referenced by the memlog, push, comment on the epic whose first line is `validated: <spec|plan> gate, commit <full sha>`, with the commit link. This commit is also the resume point from another machine; resume trusts gate comments only from people with write access (the repository is public).
 - Invalidated: comment `invalidated: <spec|plan> gate: <reason>`; `sdlc-work` proposes a return step from the reason (forge if the problem is ill-posed, parallax or pre-mortem if a risk is missing, `bmad-spec` or the plan if it is the writing); the human chooses.
@@ -234,11 +234,11 @@ Setup runs once per project, manually, in a separate session with `bmad-architec
 ### Plan and plan gate
 
 - Project memory reread: the architecture spine, `docs/solutions/`, previous `SPEC.md` files under `_bmad-output/specs/`, a MemPalace search in the `scaleway_manager` wing.
-- `sdlc-explore`: parallel readers of the code (repository only), practices and frameworks (project rules and lessons first, then the web, decided with the author); each finding carries its source, a path or a URL; a reader that died is listed in `failed` and its section is `null`.
+- `sdlc-explore`: parallel readers of the code (repository only), practices and frameworks (project rules and lessons first, then the web); each finding carries its source, a path or a URL; a reader that died is listed in `failed` and its section is `null`.
 - 2 or 3 approaches with trade-offs; the human chooses. `bmad-architecture` is called only when the choice changes the spine.
 - `sdlc-work` writes `plan.md`: explorations, approaches, choice, contracts at each boundary, sequential trunk and parallel leaves.
 - Story Breakdown of `bmad-spec` writes `stories.yaml`; `bmad-build` then writes one story spec per story, steps 01 and 02 only, up to status `ready-for-dev` (`_bmad/custom/bmad-build.toml` forbids its shortcut that would code a small story directly). At its checkpoint `sdlc-work` answers "Approve and stop", except for a story marked `spec_checkpoint: true` in `stories.yaml`, which the human reviews; every story spec is reviewed again at the plan gate. `sdlc-work` commits each story spec before the next one (`bmad-build` stops on uncommitted changes) and passes any question `bmad-build` asks to the human, never answering it itself. It never runs `bmad-build` again on a `ready-for-dev` story during Plan: that would start the implementation.
-- Cold-start loop: `sdlc-cold-start` gives each story spec alone to a fresh agent, as a builder will get it (the story spec, the files it names and the code, no other planning file; code from stories built before it and the frozen tests are taken as coming), which lists what it is missing, each item blocking (it would have to guess) or useful. Decided with the author: only blocking items, or an agent that died, keep the round red; the useful items of the last round, the green one, are listed on `plan.html`. Fixes go to `plan.md`, `stories.yaml` or the story specs, with questions to the human when needed. No gate page while it is red; alert after 3 rounds.
+- Cold-start loop: `sdlc-cold-start` gives each story spec alone to a fresh agent, as a builder will get it (the story spec, the files it names and the code, no other planning file; code from stories built before it and the frozen tests are taken as coming), which lists what it is missing, each item blocking (it would have to guess) or useful. Only blocking items, or an agent that died, keep the round red; the useful items of the last round, the green one, are listed on `plan.html`. Fixes go to `plan.md`, `stories.yaml` or the story specs, with questions to the human when needed. No gate page while it is red; alert after 3 rounds.
 - After the plan gate: one sub-issue per story spec.
 
 ```mermaid
@@ -300,12 +300,12 @@ sequenceDiagram
 
 ### Rails, build, review, delivery gate
 
-- Rails: `sdlc-rails` starts one test writer per story, given the story spec only, never the code; every new test is then run: it must fail, since the code does not exist yet. Decided with the author: a test that already passes, or a file git already tracks, goes back once to a new writer for its story, who rewrites that same file; if it still passes, it is not frozen and is reported. Then a single `make freeze` of the failing tests and a commit on the work branch, for all stories before any build. `sdlc-work` shows the suspect tests and the stories left without tests to the human, who decides before the build. No other human check of the tests: a wrong test shows during the build or at the delivery gate.
-- Build: the trunk stories are built one at a time, in order, each merged before the next starts; then the leaves. `sdlc-build` starts one builder per story in its own worktree, with the story spec and the frozen tests, at most 3 at the same time (decided with the author); each builder commits on its worktree branch and returns the branch and commit, which another agent checks (commit at the tip of the branch, descending from the work branch SHA, no frozen test changed). First the trunk, merged by `sdlc-work`, then the leaves in parallel, merged one by one with `make check-frozen` after each. A story improved after a failure (`ticketImproved`, or a failed story) has its story spec edited in the work tree: `sdlc-work` commits it before merging. A builder that did not start from the work branch SHA returns `wrong base`, without the two-failure rule. Failed builders' worktrees are named in the result and kept for inspection.
-- Verification: `make` runs the checks, coverage measured by a tool, mutation testing on the changed code (`MUTATION=0` switches it off), frozen tests.
+- Rails: `sdlc-rails` starts one test writer per story, given the story spec only, never the code; every new test is then run: it must fail, since the code does not exist yet. A test that already passes, or a file git already tracks, goes back once to a new writer for its story, who rewrites that same file; if it still passes, it is not frozen and is reported. Then a single `make freeze` of the failing tests and a commit on the work branch, for all stories before any build. `sdlc-work` shows the suspect tests and the stories left without tests to the human, who decides before the build. No other human check of the tests: a wrong test shows during the build or at the delivery gate.
+- Build: the trunk stories are built one at a time, in order, each merged before the next starts; then the leaves. `sdlc-build` starts one builder per story in its own worktree, with the story spec and the frozen tests, at most 3 at the same time; each builder commits on its worktree branch and returns the branch and commit, which another agent checks (commit at the tip of the branch, descending from the work branch SHA, no frozen test changed). `sdlc-work` merges each branch with `make check-frozen` and `make check` after it. A story improved after a failure (`ticketImproved`, or a failed story) has its story spec edited in the work tree: `sdlc-work` commits it before merging. A builder that did not start from the work branch SHA returns `wrong base`, without the two-failure rule. Failed builders' worktrees are named in the result and kept for inspection.
+- Verification: `make check` runs the checks and the frozen-test fingerprints. Code tests, coverage measured by a tool and mutation testing on the changed code (`MUTATION=0` switches it off) come once the stack is chosen.
 - Review: `sdlc-review`, see [Review loop](#review-loop).
-- Before the PR: `/ce-compound` records the lessons; MemPalace is updated; `sdlc-work` creates a `route:short` issue "simplify after #n" with the leads seen in review and, when recurring lessons exist, a "distill lessons" issue, both in Backlog; migration file; `make evidence`; behavior diff.
-- Delivery gate: the PR. The evidence record, the behavior diff and the `/ce-compound` result are posted on it. The human plays the Gherkin scenarios (`bmad-walkthrough` as an aid), then approves and merges: the merge is the decision.
+- Before the PR: `/ce-compound` records the lessons; MemPalace is updated; `sdlc-work` creates a `route:short` issue "simplify after #n" with the leads seen in review and, when recurring lessons exist, a "distill lessons" issue, both in Backlog; migration file; `make evidence`; behavior diff once it exists.
+- Delivery gate: the PR. Its body carries the cost summary, the evidence record's summary, the behavior diff once it exists, and the `/ce-compound` result. The human plays the Gherkin scenarios (`bmad-walkthrough` as an aid), then approves and merges: the merge is the decision.
 
 ```mermaid
 sequenceDiagram
@@ -328,15 +328,14 @@ sequenceDiagram
     F-->>W: Tests frozen, suspect tests, failed stories
     W->>W: Commit tests and fingerprint manifest
     W->>G: Sub-issues In Progress
-    loop Trunk run, then leaves run
+    loop Each trunk story in order, then one run for all leaves
         W->>F: sdlc-build, mode long (story specs, work branch SHA)
         F->>A: One builder per story, own worktree: story spec + frozen tests
         A-->>F: Branch, or failure
         Note over F,A: In script, on a failure: improve the story spec, new builder. Fails again: back to Plan
         F-->>W: Finished branches, failed stories
-        W->>T: Merge one by one, make check-frozen after each
+        W->>T: Merge one by one, make check-frozen and make check after each
     end
-    W->>T: make: checks, coverage, mutation, fingerprints
     W->>F: sdlc-review (dryPasses 2, maxRounds 5)
     loop In script: until two dry passes with 3 lenses, at most 5 rounds
         F->>A: Security, correctness, coherence, verifier
@@ -371,7 +370,7 @@ sequenceDiagram
 - Tests proposed by `sdlc-work` and confirmed by the human: a Gherkin scenario when the bug is visible in the UI, plus a code test when relevant; a code test only otherwise.
 - `sdlc-rails` in bug mode: the test writer reads the code (it needs the entry points) and writes tests only; the new tests are run, not frozen.
 - `sdlc-work` shows each test's failure message next to the reported symptom; the human confirms the reason. Then `make freeze`, before any builder, so that no builder can weaken the bug tests.
-- A bug that only shows against real Scaleway: first try to reproduce it with the fake operator; otherwise a `@manual` scenario that the human plays before and after the fix; if the cause is in the operator, `sdlc-work` proposes moving the issue to `scaleway-operator`.
+- A bug that only shows against real Scaleway: first try to reproduce it with the fake operator; otherwise a `@manual` scenario that the human plays to confirm the failure, and again on the PR before merging; if the cause is in the operator, `sdlc-work` proposes moving the issue to `scaleway-operator`.
 - `sdlc-build` in bug mode: after two failures, the human is asked whether to switch to the long route.
 - Review: `sdlc-review` with 1 dry pass, at most 2 rounds.
 - Before the PR: migration file, `make evidence`. With the PR: a comment on the issue summarizing what was learned, confirmed with the PR.
@@ -390,20 +389,20 @@ sequenceDiagram
     W->>W: Write work/issue-n-slug/bug-report.md from the issue
     W->>H: Proposed tests: Gherkin if visible, plus a code test if relevant
     H->>W: Confirms
-    alt Reproducible with the fake operator
+    opt Cause in the operator
+        W->>H: Move the issue to scaleway-operator?
+    end
+    loop Until the human confirms the failure reason, ask after a second wrong round
         W->>F: sdlc-rails, mode bug (bug-report.md)
-        F->>A: Test writer: reads the code, writes tests only
+        F->>A: Test writer: reads the code, writes tests only (@manual when only real Scaleway shows the bug)
         A-->>F: Tests
         F->>A: Run the new tests, no freeze
         F-->>W: Test files and failure messages
-        W->>H: Failure message next to the reported symptom
-        H->>W: Right reason: yes or no
-    else Only against real Scaleway
-        W->>A: Test writer: @manual scenario
-        H->>H: Plays it on the manual cluster, confirms the failure
-        opt Cause in the operator
-            W->>H: Move the issue to scaleway-operator?
+        opt @manual scenario
+            H->>H: Plays it on the manual cluster
         end
+        W->>H: Failure next to the reported symptom
+        H->>W: Right reason: yes or no
     end
     W->>T: make freeze, before any builder
     W->>F: sdlc-build, mode bug (bug-report.md, work branch SHA)
@@ -411,12 +410,11 @@ sequenceDiagram
     A-->>F: Branch, or failure
     Note over F,A: In script, on a failure: enrich bug-report.md, new builder. Fails again: ask the human
     F-->>W: Branch, or ask the human
-    W->>T: Merge, make check-frozen
     opt New builder failed too
         W->>H: Switch to the long route?
         H->>W: Decides
     end
-    W->>T: make: checks, coverage, mutation, fingerprints, behavior diff
+    W->>T: Merge, make check-frozen and make check
     W->>F: sdlc-review (dryPasses 1, maxRounds 2)
     loop In script: one dry pass, at most 2 rounds
         F->>A: Security, correctness, coherence, verifier
@@ -428,10 +426,11 @@ sequenceDiagram
         W->>H: Proposed way out
         H->>W: Chooses
     end
+    W->>H: Migration entry, PR title and body, comment on what was learned
+    H->>W: Confirms
     W->>W: Write docs/migrations/next/n.md
     W->>T: make evidence
-    W->>G: Open PR, post evidence and behavior diff, status Review
-    W->>G: Comment on the issue: what was learned
+    W->>G: Push, open PR, comment on the issue, status Review
 
     rect rgba(255, 180, 80, 0.2)
     Note over H,G: Gate
@@ -461,30 +460,27 @@ sequenceDiagram
 
     Note over H,G: After triage: label route:short, status In Progress, branch type/n-slug
     W->>W: Make the change on the work branch
-    W->>T: make: checks, fingerprints, behavior diff
-    alt Post-integration simplification
-        T-->>W: Behavior diff must be empty, otherwise propose rerouting
-    else Visible change
-        T-->>W: Behavior diff kept for the gate
-    end
     opt A frozen scenario must change
         W->>H: Change frozen test?
         H->>W: Decides
         W->>T: make freeze
+    end
+    W->>T: make check, then commit
+    opt Bigger than expected
+        W->>H: Reroute to the long route?
+        H->>W: Confirms
+        W->>G: route:long + epic, status Define, comment rerouted
     end
     W->>F: sdlc-review (singlePass)
     F->>A: Security, correctness, coherence, verifier
     A-->>F: Verified findings
     F->>A: Fixer: apply verified findings, run make check, no second review
     F-->>W: Fixed and unfixed findings
-    opt Bigger than expected
-        W->>H: Reroute to the long route?
-        H->>W: Confirms
-        W->>G: route:long + epic, status Define, comment rerouted
-    end
+    W->>H: Migration entry, PR title and body with unfixed findings
+    H->>W: Confirms
     W->>W: Write docs/migrations/next/n.md
     W->>T: make evidence
-    W->>G: Open PR, post evidence, behavior diff, unfixed findings, status Review
+    W->>G: Push, open PR, status Review
 
     rect rgba(255, 180, 80, 0.2)
     Note over H,G: Light gate
@@ -517,7 +513,7 @@ Each builder runs in its own git worktree, at most 3 at the same time. Worktrees
 
 Lenses security, correctness and coherence, defined as `review_layers` in `_bmad/custom/bmad-code-review.toml` (the four default layers are off). Each lens works in two phases: triage first (where to look), then findings read in the files. Coherence covers the string constants between code and docs, and the actual content of security and config files.
 
-Each round of `.claude/workflows/sdlc-review.js`: an agent writes the diff of the working tree since the base SHA, untracked files included, to a folder outside the repository (`scripts/review-diff.sh`, which refuses a path inside it); the lenses review it in parallel; a verifier (`sdlc_verifier_prompt`) checks every finding in the code, grades the real ones and matches them with those of earlier rounds; a fixer (`sdlc_fixer_prompt`) fixes the verified ones in the working tree, without committing, and runs `make check`. A verified finding whose fix needs a decision is set aside for the human. A round is dry when every lens answered, every finding got a verdict and no new verified finding remains (decided with the author: false alarms do not count). The workflow returns whether it converged, every verified finding with its status (`fixed`; `unfixed`, with the reason; `open` when the fixer gave no answer; `not found again` for an open finding no later round reported), the list of those not `fixed`, the recurring ones, the fixes of the last round that no round reviewed, and the fixer's last `make check` result; `sdlc-work` runs `make check` again before committing the fixes. A manual `bmad-code-review` runs the same lenses once, and its own triage step verifies each finding: a verifier cannot be a layer, because layers run in parallel. On uncommitted changes it diffs with `git diff HEAD`, which leaves out untracked files: run `git add -N <file>` on new files first.
+Each round of `.claude/workflows/sdlc-review.js`: an agent writes the diff of the working tree since the base SHA, untracked files included, to a folder outside the repository (`scripts/review-diff.sh`, which refuses a path inside it); the lenses review it in parallel; a verifier (`sdlc_verifier_prompt`) checks every finding in the code, grades the real ones and matches them with those of earlier rounds; a fixer (`sdlc_fixer_prompt`) fixes the verified ones in the working tree, without committing, and runs `make check`. A verified finding whose fix needs a decision is set aside for the human. A round is dry when every lens answered, every finding got a verdict and no new verified finding remains (false alarms do not count). The workflow returns whether it converged, every verified finding with its status (`fixed`; `unfixed`, with the reason; `open` when the fixer gave no answer; `not found again` for an open finding no later round reported), the list of those not `fixed`, the recurring ones, the fixes of the last round that no round reviewed, and the fixer's last `make check` result; `sdlc-work` runs `make check` again before committing the fixes. A manual `bmad-code-review` runs the same lenses once, and its own triage step verifies each finding: a verifier cannot be a layer, because layers run in parallel. On uncommitted changes it diffs with `git diff HEAD`, which leaves out untracked files: run `git add -N <file>` on new files first.
 
 | Route | `sdlc-review` arguments | At the cap |
 | --- | --- | --- |
@@ -529,6 +525,8 @@ A loop that does not converge signals a contradictory spec or a bad split.
 
 ### Testing without Scaleway
 
+The fake operator, the manual cluster target and the Gherkin runner come once the stack is chosen; the rules below already apply.
+
 - No automated test may cause cost at Scaleway; automated tests never leave the local machine.
 - A fake local operator, used only by automated tests, writes the CR `status` (Pending, Syncing, Synced, Error, TerminationBlocked) without calling Scaleway. The real operator is not installed in the test cluster.
 - Gherkin scenarios tagged `@manual` touch real Scaleway: never run automatically, played by the human. The others run automatically against the fake operator.
@@ -537,7 +535,7 @@ A loop that does not converge signals a contradictory spec or a bad split.
 
 ### Behavior diff
 
-It covers the rendered UI, not the backend API. Gherkin scenarios are replayed in a browser before and after the change (playwright-bdd, ARIA snapshots as the main capture); the accepted capture becomes the reference. It runs locally, not in CI.
+It comes once the stack is chosen; until then the evidence record lists it as not run. It covers the rendered UI, not the backend API. Gherkin scenarios are replayed in a browser before and after the change (playwright-bdd, ARIA snapshots as the main capture); the accepted capture becomes the reference. It runs locally, not in CI.
 
 ## Migration files
 
@@ -565,7 +563,7 @@ Steps to go back to the previous version.
 
 ## Evidence record
 
-`make evidence ISSUE=<n>` (`scripts/evidence.sh`) replays the checks and rewrites the whole `evidence.md` of the work folder, whoever runs it: `lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration ISSUE=<n>`, plus the checks of U12 to U14 once they exist (the record lists what was not run). Every check runs even after a failure, and the target fails at the end if one did.
+`make evidence ISSUE=<n>` (`scripts/evidence.sh`) replays the checks and rewrites the whole `evidence.md` of the work folder, whoever runs it: `lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`, `check-migration ISSUE=<n>`, plus code tests, coverage, mutation testing and the behavior diff once the stack is chosen (the record lists what was not run). Every check runs even after a failure, and the target fails at the end if one did.
 
 - Each check's full output is kept, colors removed and durations replaced by `<t>`: two runs on an unchanged tree differ only by the "Generated at" line.
 - The record names the branch, the commit and whether the working tree had uncommitted changes; the exit code shown for a check is that of `make`.
@@ -585,20 +583,19 @@ Node tooling (Biome, oxlint, oxfmt, c8, markdownlint-cli2) is pinned in `package
 - Why two tools: a workflow script returns its result with a top-level `return`. Biome cannot parse it and has no option for it; ESLint forces it off for ES modules with its default parser. The oxc parser (oxlint, oxfmt) always accepts it. Hooks provided by Claude Code (`agent`, `parallel`, `pipeline`, `phase`, `log`, `args`, `budget`, `workflow`) are declared as globals in `.oxlintrc.json`, so that `no-undef` catches anything else, Node APIs included. `.oxfmtrc.json` sets the line width to 80, as Biome; the other defaults already match.
 - Harness: `tests/workflows/harness.js` runs a workflow script in a fresh V8 context with fake hooks. `runWorkflow(path, { args, respond, budget, workflow })` calls `respond({ prompt, opts, index })` for each `agent()` call and returns the script's result, its `meta`, the agent calls, phases and logs. A `respond` that throws makes that `agent()` return `null`, as a subagent that died; a thunk or stage that throws yields `null` in `parallel` and `pipeline`. `budget.total` is the `budget` option, nothing is spent; `workflow()` calls the `workflow` option. `Date.now()`, `Math.random()`, `Date()` and `new Date()` without argument throw. The script must begin with `export const meta =`; the harness does not check that `meta` is a pure literal. Result and `meta` must be plain data (cloned with `structuredClone`). Errors and coverage point to the lines of the source file.
 - Saved workflows are read from `.claude/workflows/`: tests and fixtures live in `tests/workflows/`, never there.
-- A workflow saved during a session may not be found by name before the next session (seen with `sdlc-spec-lint`; `sdlc-triage` was found the same day); launch it by its file path when the name is not found.
 
 ## CI
 
 On every PR, `pr-checks.yml` runs `make lint-docs`, `make lint-workflows`, `make test-workflows`, `make check-frozen` and `make check-migration`, with `<n>` read from `Closes #<n>` in the PR body (the check fails without it); `<n>` is the issue of the work, the epic for long work. The jobs are required status checks of `main`, with `conventional-title` (PR title in Conventional Commits form).
 
-Locally, prek runs the same `make` targets on every commit. Install it once per clone with `prek install`; when a global `core.hooksPath` is set, `prek install` refuses, and `prek install --git-dir "$(git rev-parse --absolute-git-dir)"` is used instead. `make help` lists the targets; `make check` runs the four checks that need no issue number (`lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`).
+Locally, prek runs on every commit `make fix-docs`, `make fix-workflows`, `make check-frozen` and builtin checks of YAML, TOML, line endings and shebangs; `test-workflows` and `check-migration` run in CI. Install it once per clone with `prek install`; when a global `core.hooksPath` is set, `prek install` refuses, and `prek install --git-dir "$(git rev-parse --absolute-git-dir)"` is used instead. `make help` lists the targets; `make check` runs the four checks that need no issue number (`lint-docs`, `lint-workflows`, `test-workflows`, `check-frozen`).
 
 ## Release
 
 - Versions follow semver. No published version is ever removed: a faulty version is fixed by a patch.
 - The "Deliver" workflow (`.github/workflows/deliver.yml`) has two triggers: milestone closed (version = milestone title, so a milestone title is always a version) and "Run workflow" (`workflow_dispatch`, the human types the tag). A patch release needs no milestone. The milestone trigger runs it from `main`; a run started on another branch stops.
 - It checks (`scripts/release-check.sh`) that the version is valid semver with a leading `v` (`v1.2.3`, `v1.2.3-rc.1`), that the tag does not exist and that the milestone of that title, if any, has no open issue; nothing is created before these checks pass. It then creates the tag and the GitHub release on the commit that triggered it. Building and publishing the image and the Helm chart (OCI, `oci://ghcr.io/<owner>/charts`) to ghcr.io come once the stack is chosen. A `concurrency` group makes a second delivery wait for the first; a third one cancels the waiting one. "Run workflow" publishes from `main` only, and a version with a `-` (`v1.2.3-rc.1`) is marked as a prerelease.
-- Release note (`scripts/release-note.sh`, previewed with `make release-note`): from the `docs/migrations/next/` files added, changed or renamed since the previous version (all of them when no tag exists). For a final version the previous version is the previous final one: `v0.3.0` lists everything since `v0.2.0`, `v0.3.0-rc.1` included (decided with the author); a prerelease lists what changed since the latest tag. Only no-impact entries: a single "No impact." line; otherwise the no-impact entries are dropped and each other entry appears under its issue number. The command that reinstalls the previous version is added with the image and chart publishing.
+- Release note (`scripts/release-note.sh`, previewed with `make release-note`): from the `docs/migrations/next/` files added, changed or renamed since the previous version (all of them when no tag exists). For a final version the previous version is the previous final one: `v0.3.0` lists everything since `v0.2.0`, `v0.3.0-rc.1` included; a prerelease lists what changed since the latest tag. Only no-impact entries: a single "No impact." line; otherwise the no-impact entries are dropped and each other entry appears under its issue number. The command that reinstalls the previous version is added with the image and chart publishing.
 
 ## Token cost
 

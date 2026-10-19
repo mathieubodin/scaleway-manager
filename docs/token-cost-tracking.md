@@ -99,7 +99,7 @@ Where these runs fall in the process sequences (`docs/development-process.md`):
 | --- | --- | --- |
 | all | Resume `/sdlc-work <n>` (no commit; the PR and `Tokens` are updated) | step resumed |
 | long | Spec gate validated: commit of the work, forge and spec folders | `define` |
-| long | Plan gate validated: commit of `plan.md`, `stories.yaml`, story specs | `plan` |
+| long | `plan.md` and `stories.yaml`, each story spec, the cold-start fixes, then the plan gate commit | `plan` |
 | long | Tests and fingerprint manifest after `sdlc-rails` | `rails` |
 | long | Each builder branch merged, trunk then leaves | `build` |
 | long | Review result in the memlog | `review` |

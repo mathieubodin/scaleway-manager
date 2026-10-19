@@ -3,7 +3,7 @@ export const meta = {
   description:
     "Build each ticket (story spec or bug report) in its own worktree against the frozen tests, with the two-failure rule; return the finished branches and the failed tickets",
   whenToUse:
-    "Launched by sdlc-work at Build, once for the trunk and once for the leaves (long route), or once for the bug, with args { mode, items, baseSha, builderPrompt }.",
+    "Launched by sdlc-work at Build, once per trunk story in order, then once for the leaves (long route), or once for the bug, with args { mode, items, baseSha, builderPrompt }.",
   phases: [{ title: "Build" }, { title: "Verify" }, { title: "Improve" }],
 };
 
