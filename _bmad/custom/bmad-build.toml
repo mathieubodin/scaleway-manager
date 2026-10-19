@@ -1,4 +1,43 @@
 # Process overrides (docs/development-process.md): process file as a fact, hand-back to sdlc-work.
 [workflow]
-persistent_facts = ["file:{project-root}/docs/development-process.md"]
+persistent_facts = [
+  "file:{project-root}/docs/development-process.md",
+  "Never take the oneshot route: always write the full spec with route dispatch and reach CHECKPOINT 1, however small the story. Story specs are written during Plan, before any code.",
+]
 on_complete = '''If the current git branch has the form `<type>/<n>-<slug>` (n and slug taken from the branch name, not from any variable of this skill) and `{project-root}/_bmad-output/work/issue-<n>-<slug>/.memlog.md` exists, a `sdlc-work` process memlog is active: append one line stating what this session produced, with the paths of its output files, by running `uv run {project-root}/_bmad/scripts/memlog.py append --workspace {project-root}/_bmad-output/work/issue-<n>-<slug> --type result --by bmad-build --text '<that line>'`; the line is plain text in single quotes and contains no single quote, backtick or dollar sign. Then do not recommend a next step yourself: hand control back to `sdlc-work`, which proposes the next step (if `sdlc-work` is not running in this session and the run is interactive, tell the user to run `/sdlc-work <n>`). Otherwise do nothing.'''
+
+# Manual use, one story: tests written blind, frozen, then the code (docs/development-process.md).
+# The two prompts below are also read by the workflows sdlc-rails and sdlc-build through the resolver.
+implementation_handoff = """
+Do not implement in this session. Read the fields `sdlc_test_writer_prompt` and `sdlc_builder_prompt` from the output of `uv run {project-root}/_bmad/scripts/resolve_customization.py --skill {project-root}/.claude/skills/bmad-build --project-root {project-root} --key workflow`, then:
+1. Launch a subagent with no prior context, with `sdlc_test_writer_prompt` followed by the line "Story spec: {spec_file}". Wait for its list of test files.
+2. Run `make freeze FILES="<those test files>"` and commit the tests with the updated `frozen-tests.sha256`.
+3. Launch another subagent with no prior context, with `sdlc_builder_prompt` followed by the line "Story spec: {spec_file}".
+When it is done, report what each subagent changed and how it was verified.
+"""
+
+sdlc_test_writer_prompt = """
+You write the tests of one story before its code exists. Read the story spec given below and the files it names as interfaces or context; never read or open the code that implements the story, and do not write any implementation code. For each acceptance criterion of the story, write at least one test that fails until the story is implemented: a Gherkin scenario when the behavior is visible in the UI (tag it @manual when it needs real Scaleway resources), a code test otherwise, following the test layout the project uses. Return the list of test files you wrote and, for each, the acceptance criterion it covers.
+"""
+
+sdlc_builder_prompt = """
+You implement one story. Read the story spec given below fully: it is the sole source of truth, together with the files it names. The tests listed in frozen-tests.sha256 are the contract: never edit, move or delete them; `make check-frozen` must pass. Implement until the story's tests pass without breaking the others, then run `make check-frozen` and the project's checks. Report what you changed, how you verified it, and anything left open.
+"""
+
+# Review is done by sdlc-review and bmad-code-review: the built-in layers are off.
+# A manual run that implements then stops with "no active review layers".
+[[workflow.review_layers]]
+id = "blind-hunter"
+instruction = ""
+
+[[workflow.review_layers]]
+id = "edge-case-hunter"
+instruction = ""
+
+[[workflow.review_layers]]
+id = "verification-gap"
+instruction = ""
+
+[[workflow.oneshot_review_layers]]
+id = "blind-hunter"
+instruction = ""
