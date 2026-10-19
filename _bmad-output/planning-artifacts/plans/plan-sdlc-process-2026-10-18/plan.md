@@ -259,12 +259,13 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Depends on: U3; reads what U20 records (memlog result lines, `cold-start.md`).
 - Done on 2026-10-19. Decided with the author: pages in English (project rule). `skills/sdlc-gate-page/SKILL.md` and its template `assets/gate-page.html` (system fonts, light and dark, no external resource, no script); fixed sections per gate; every statement taken from the reference files, open points marked, copied text escaped; two grep checks before printing the path; `sdlc-work` opens the page. Catalog row args `{path: work folder, kind: spec or plan}`; module reinstalled. Verified: a fresh agent ran the skill on a toy `SPEC.md` and `define-notes.md` outside the repository and wrote a faithful `spec.html` (about 47,000 tokens); it found the template comment failing the placeholder check, no title source and paths outside the project, fixed. Independent review: 8 findings, fixed (no source for the cold-start useful items, now `cold-start.md`; copied text not escaped and checks missing scripts and loaded resources; legitimate double braces; long paths overflowing at phone width; story specs required at the spec gate; placeholder sources and a misleading commit; this entry).
 
-### U24. `AGENTS.md` "Development process" section — ready
+### U24. `AGENTS.md` "Development process" section — done
 
 - A few lines: entry point `/sdlc-work`, link to `docs/development-process.md`, hard rules (no direct push to `main`; frozen tests change only on a human decision; no automated test touches Scaleway, `@manual` scenarios are played by the human; every PR adds `docs/migrations/next/<issue>.md`).
 - "Running and verifying": point to `make help`.
 - Acceptance: the file grows by at most the section; no rule duplicated from `docs/development-process.md` beyond the hard rules.
 - Depends on: U2, U8, U17.
+- Done on 2026-10-19. Text validated by the author on a visual page: entry point and process file, four hard rules (no push to `main`, frozen tests changed on a human decision, no automated test touching Scaleway, migration file in every PR); "Running and verifying" points to `make help` and `make check`. The file grows by the section only; `make lint-docs` green.
 
 ### U25. Spike: base of `isolation: 'worktree'` — done
 

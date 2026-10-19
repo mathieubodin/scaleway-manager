@@ -30,6 +30,14 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 - Scoping session: `_bmad-output/forge/scaleway-manager-web-ui/forged-idea.md`
 - Operator CR types and adoption: `/home/mathieu/dev/github.com/scaleway-operator/src/resources.rs` and `src/scaleway.rs`
 
+## Development process
+
+- Every piece of work starts or resumes with `/sdlc-work` (`/sdlc-work <n>` for issue n). The process is `docs/development-process.md`.
+- Never push to `main`; every change goes through a PR.
+- A frozen test (listed in `frozen-tests.sha256`) changes only after the human decides it, then `make freeze`.
+- No automated test touches Scaleway; `@manual` scenarios are played by the human.
+- Every PR adds or changes `docs/migrations/next/<issue>.md`.
+
 ## Running and verifying
 
-- No command exists yet (stack not chosen). Fill in once code exists.
+- `make help` lists the targets; `make check` runs the checks that need no issue number.
