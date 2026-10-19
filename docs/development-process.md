@@ -293,7 +293,7 @@ sequenceDiagram
 
 ### Rails, build, review, delivery gate
 
-- Rails: `sdlc-rails` starts one test writer per story, given the story spec only, never the code; then a single `make freeze` and a commit on the work branch, for all stories before any build. No human check of the tests: a wrong test shows during the build or at the delivery gate.
+- Rails: `sdlc-rails` starts one test writer per story, given the story spec only, never the code; every new test is then run: it must fail, since the code does not exist yet. Decided with the author: a test that already passes goes back once to a new writer for its story; if it still passes, it is not frozen and is reported. Then a single `make freeze` of the failing tests and a commit on the work branch, for all stories before any build. No other human check of the tests: a wrong test shows during the build or at the delivery gate.
 - Build: `sdlc-build` starts one builder per story in its own worktree, with the story spec and the frozen tests; first the trunk, merged by `sdlc-work`, then the leaves in parallel, merged one by one with `make check-frozen` after each.
 - Verification: `make` runs the checks, coverage measured by a tool, mutation testing on the changed code (`MUTATION=0` switches it off), frozen tests.
 - Review: `sdlc-review`, see [Review loop](#review-loop).
@@ -316,6 +316,7 @@ sequenceDiagram
     W->>F: sdlc-rails, mode long (story specs)
     F->>A: One test writer per story: story spec only, no code
     A-->>F: Gherkin features, code tests
+    F->>A: Run each new test: it must fail; one rewrite if it passes
     F->>A: Run make freeze, no human check
     F-->>W: Test files written
     W->>W: Commit tests and fingerprint manifest
