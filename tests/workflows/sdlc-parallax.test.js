@@ -11,7 +11,10 @@ const DIV = {
     { readers: [2], position: "one file per resource" },
   ],
   question: "One YAML file, or one file per resource?",
+  weight: "important",
+  proposal: "One file.",
 };
+const DETAIL = { ...DIV, topic: "name", weight: "detail", proposal: "x.yaml" };
 
 // Readers return "spec <n>" unless `dead` holds their number.
 const respond =
@@ -32,9 +35,9 @@ test("3 readers with the same prompt, then one comparison", async () => {
   const run = await runWorkflow(SCRIPT, { args: ARGS, respond: respond() });
   assert.deepEqual(run.result, {
     readers: 3,
-    specs: 3,
-    incomplete: false,
-    divergences: [DIV],
+    deadReaders: [],
+    important: [DIV],
+    details: [],
   });
   const readers = run.calls.filter((c) => c.opts.phase === "Readers");
   assert.equal(readers.length, 3);
@@ -45,38 +48,69 @@ test("3 readers with the same prompt, then one comparison", async () => {
   assert.match(compare, /--- Reader 3 ---\nspec 3/);
 });
 
-test("no divergence: empty list", async () => {
+test("no divergence: empty lists", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: ARGS,
     respond: respond({ divergences: [] }),
   });
-  assert.deepEqual(run.result.divergences, []);
+  assert.deepEqual([run.result.important, run.result.details], [[], []]);
 });
 
-test("one dead reader: the two others are compared, marked incomplete", async () => {
+test("details apart from important points, order kept", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: ARGS,
-    respond: respond({ dead: [2] }),
+    respond: respond({
+      divergences: [DETAIL, DIV, { ...DETAIL, topic: "order" }],
+    }),
   });
-  assert.equal(run.result.specs, 2);
-  assert.equal(run.result.incomplete, true);
+  assert.deepEqual(run.result.important, [DIV]);
+  assert.deepEqual(
+    run.result.details.map((d) => d.topic),
+    ["name", "order"],
+  );
+  assert.match(run.calls.at(-1).prompt, /"important" when/);
+});
+
+test("one dead reader: the two others compared under their own numbers", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: ARGS,
+    respond: respond({
+      dead: [2],
+      divergences: [
+        {
+          topic: "t",
+          positions: [
+            { readers: [1, 2], position: "a" },
+            { readers: [3, 4, 0], position: "b" },
+          ],
+          question: "q?",
+          weight: "important",
+          proposal: "a",
+        },
+      ],
+    }),
+  });
+  assert.deepEqual(run.result.deadReaders, [2]);
+  assert.deepEqual(
+    run.result.important[0].positions.map((p) => p.readers),
+    [[1], [3]],
+  );
   const compare = run.calls.at(-1).prompt;
   assert.match(compare, /^2 agents/);
-  assert.match(compare, /--- Reader 2 ---\nspec 3/);
+  assert.match(compare, /--- Reader 3 ---\nspec 3/);
+  assert.doesNotMatch(compare, /Reader 2/);
 });
 
-test("fewer than 2 specs: nothing compared", async () => {
-  const run = await runWorkflow(SCRIPT, {
-    args: ARGS,
-    respond: respond({ dead: [1, 3] }),
-  });
-  assert.deepEqual(run.result, {
-    readers: 3,
-    specs: 1,
-    incomplete: true,
-    divergences: [],
-  });
-  assert.equal(run.calls.length, 3);
+test("fewer than 2 specs: the run stops, nothing compared", async () => {
+  for (const dead of [
+    [1, 3],
+    [1, 2, 3],
+  ]) {
+    await assert.rejects(
+      runWorkflow(SCRIPT, { args: ARGS, respond: respond({ dead }) }),
+      new RegExp(`only ${3 - dead.length} spec written`),
+    );
+  }
 });
 
 test("a dead comparison agent stops the run", async () => {

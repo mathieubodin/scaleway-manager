@@ -234,12 +234,13 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - PR body with `Closes` for the epic first, then every sub-issue, and the cost summary; sub-issues follow the epic's status (long G22). The epic carries the `Tokens` total; sub-issues have none.
 - Depends on: U17, U18, U5, U6, U7, U21, U22, U23, U27, U28, U29.
 
-### U21. Workflow `sdlc-parallax` — ready
+### U21. Workflow `sdlc-parallax` — done
 
 - `.claude/workflows/sdlc-parallax.js`. `args`: path of `forged-idea.md`, number of agents (3 to 5).
 - Each agent writes the spec it would execute from the same input; a synthesis agent returns every divergence as a question for the human (structured output).
 - Acceptance: harness test of the control flow; a real run on an intentionally ambiguous input reports at least one divergence.
 - Depends on: U26.
+- Done on 2026-10-19. Decided with the author: always 3 readers (constant `READERS`; `args` is `{ ideaPath }` only); each divergence gets a proposed answer and a weight, important (what the user sees or does, data, security, cost, acceptance) or detail; `sdlc-work` asks the important ones one at a time and shows the details as one list of proposed answers, validated or corrected together (U20). Readers' specs stay in the run's transcript, numbered as in the result; the run stops when fewer than 2 specs are written. Verified: harness tests, 100 % coverage; a real run (`wf_1503d7de-b31`, 4 agents, about 218,000 subagent tokens, 2.5 min) on a deliberately vague `forged-idea.md` (YAML export of a namespace) returned 20 divergences, many trivial, which led to the weight; a second run (`wf_2032e59a-948`, about 216,000 tokens) returned 9 important and 9 detail divergences. Independent review: 5 findings, 4 fixed (reader numbers shifted after a dead reader, positions naming unknown readers, a run with fewer than 2 specs looking like "no divergence", readers told not to invoke skills), plus this entry.
 
 ### U22. Workflow `sdlc-cold-start` — ready
 
