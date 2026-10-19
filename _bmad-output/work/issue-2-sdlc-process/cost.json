@@ -1,15 +1,15 @@
 {
   "issue": 2,
   "route": null,
-  "tokens": 10638262,
+  "tokens": 11134339,
   "totals": {
     "steps": {
       "bootstrap": {
         "claude-opus-5-5": {
-          "input": 4324,
-          "output": 1105859,
-          "cacheCreation": 9143748,
-          "cacheRead": 398625543
+          "input": 4484,
+          "output": 1135836,
+          "cacheCreation": 9609688,
+          "cacheRead": 432949402
         },
         "claude-sonnet-5-5": {
           "input": 348,
@@ -21,10 +21,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 4324,
-        "output": 1105859,
-        "cacheCreation": 9143748,
-        "cacheRead": 398625543
+        "input": 4484,
+        "output": 1135836,
+        "cacheCreation": 9609688,
+        "cacheRead": 432949402
       },
       "claude-sonnet-5-5": {
         "input": 348,
@@ -37,7 +37,7 @@
   },
   "sessions": {
     "33470920-25e1-45f5-98e5-19c61a3c34a3": {
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
@@ -51,7 +51,7 @@
       "unattributed": {}
     },
     "5ee1d1dd-14f0-4d12-8349-cdc97d874fd3": {
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
@@ -65,7 +65,7 @@
       "unattributed": {}
     },
     "6b67a654-2772-431e-a6a9-11b9d78a40b8": {
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
@@ -79,7 +79,7 @@
       "unattributed": {}
     },
     "b0833aac-c349-441a-a5af-d45da80e4a58": {
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
@@ -93,7 +93,7 @@
       "unattributed": {}
     },
     "b8e09581-02a3-41cc-8e58-08b0c08f057a": {
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "steps": {
         "bootstrap": {
           "claude-sonnet-5-5": {
@@ -106,15 +106,29 @@
       },
       "unattributed": {}
     },
-    "c1bceb1b-16e8-4136-a446-bf08d666e063": {
-      "computedAt": "2026-10-19T17:22:43Z",
+    "c024b1e6-e7f0-46ec-b563-e4474308bb1f": {
+      "computedAt": "2026-10-19T17:58:51Z",
       "steps": {
         "bootstrap": {
           "claude-opus-5-5": {
-            "input": 1236,
-            "output": 322778,
-            "cacheCreation": 2444093,
-            "cacheRead": 134476262
+            "input": 8,
+            "output": 1766,
+            "cacheCreation": 78721,
+            "cacheRead": 233526
+          }
+        }
+      },
+      "unattributed": {}
+    },
+    "c1bceb1b-16e8-4136-a446-bf08d666e063": {
+      "computedAt": "2026-10-19T17:58:51Z",
+      "steps": {
+        "bootstrap": {
+          "claude-opus-5-5": {
+            "input": 1388,
+            "output": 350989,
+            "cacheCreation": 2831312,
+            "cacheRead": 168566595
           }
         }
       },
@@ -125,7 +139,7 @@
     "wf_1503d7de-b31": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 44,
@@ -138,7 +152,7 @@
     "wf_2032e59a-948": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 34,
@@ -151,7 +165,7 @@
     "wf_24953db5-6ea": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 62,
@@ -164,7 +178,7 @@
     "wf_4512a4e7-334": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 46,
@@ -177,7 +191,7 @@
     "wf_46d6a333-5ba": {
       "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 4,
@@ -190,7 +204,7 @@
     "wf_4c8e40e6-f9e": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 76,
@@ -203,7 +217,7 @@
     "wf_6e426de3-937": {
       "session": "b0833aac-c349-441a-a5af-d45da80e4a58",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 4,
@@ -216,7 +230,7 @@
     "wf_6e51848f-054": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 56,
@@ -229,7 +243,7 @@
     "wf_7a8c6939-294": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 34,
@@ -242,7 +256,7 @@
     "wf_7ce99353-a23": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 62,
@@ -255,7 +269,7 @@
     "wf_8393a167-3e9": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 38,
@@ -268,7 +282,7 @@
     "wf_9cf7507c-b5d": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 64,
@@ -281,7 +295,7 @@
     "wf_a08c46e7-14a": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 18,
@@ -294,7 +308,7 @@
     "wf_a9245a0e-535": {
       "session": "33470920-25e1-45f5-98e5-19c61a3c34a3",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 28,
@@ -307,7 +321,7 @@
     "wf_c6b2f0a6-e3b": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 8,
@@ -320,7 +334,7 @@
     "wf_eecdfcb1-b12": {
       "session": "c1bceb1b-16e8-4136-a446-bf08d666e063",
       "step": "bootstrap",
-      "computedAt": "2026-10-19T17:22:43Z",
+      "computedAt": "2026-10-19T17:58:51Z",
       "models": {
         "claude-opus-5-5": {
           "input": 40,
