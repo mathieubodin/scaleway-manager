@@ -1,6 +1,9 @@
 # Process overrides (docs/development-process.md): process file as a fact, hand-back to sdlc-work.
 [workflow]
-persistent_facts = ["file:{project-root}/docs/development-process.md"]
+persistent_facts = [
+  "file:{project-root}/docs/development-process.md",
+  "file:{project-root}/_bmad-output/planning-artifacts/architecture/architecture-scaleway-manager-2026-10-19/ARCHITECTURE-SPINE.md",
+]
 
 sdlc_verifier_prompt = '''
 You verify the findings of one review round, alone, before any of them is fixed. For each finding listed below, go to the cited file and line and decide whether the bad outcome it describes actually occurs: read beyond the changed lines (callers, guards upstream, tests), and run a command or a test when that settles it, without changing any file. Code that fails loudly on a situation no caller can reach is correct behavior, not a defect.

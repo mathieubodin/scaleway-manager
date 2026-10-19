@@ -1,6 +1,6 @@
 # scaleway-manager
 
-Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) that drives Scaleway through custom resources. `scaleway-operator` (separate repository, same author) reconciles them into infrastructure. Project is at the brief stage: no code, no stack chosen. Planning lives in `_bmad-output/planning-artifacts/`.
+Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) that drives Scaleway through custom resources. `scaleway-operator` (separate repository, same author) reconciles them into infrastructure. Stack chosen (Setup #34): Go server and plain JavaScript page, standard library only. Planning lives in `_bmad-output/planning-artifacts/`.
 
 ## Working rules
 
@@ -14,10 +14,21 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 
 - The backend talks only to the Kubernetes API. Never call the Scaleway API from this project; that is the operator's job.
 - Never add a confirmation or any safeguard to deletion.
-- Never use `default`, `kube-system`, `kube-public` or `kube-node-lease` for Scaleway resources; a dedicated namespace is required.
+- Never use `default`, `kube-system`, `kube-public`, `kube-node-lease` or `scaleway-system` for Scaleway resources; a dedicated namespace is required.
 - Every managed Scaleway resource is a CR. Do not display Scaleway objects that have none.
-- A YAML export never contains a Secret's value (the Secret `scaleway-ns-creds-{namespace}` holds the IAM key); export references only.
+- An export (JSON) never contains a Secret object or value (the Secret `scaleway-ns-creds-{namespace}` holds the IAM key); export references only.
 - An export keeps, unchanged, the namespace name, its `scaleway.mathieubodin.io/project-id` annotation, each CR's name and each CR's `spec`: the operator adopts existing resources by these keys (Instance: `spec.zone` + `spec.name` + project, `spec.name` being the Scaleway name, not the CR's `metadata.name`; LoadBalancer and ScalewaySecret: tags with namespace + CR `metadata.name`). Without them, re-import creates duplicates in Scaleway.
+
+## Stack rules
+
+The architecture spine holds the full rules: `_bmad-output/planning-artifacts/architecture/architecture-scaleway-manager-2026-10-19/ARCHITECTURE-SPINE.md`.
+
+- Shipped code (server, fake operator, page) uses only the Go standard library and the browser platform: no framework, no library, no `require` in `go.mod`. Test and lint tools are allowed outside `go.mod` and `web/`.
+- Every Kubernetes call the server makes carries the logged-in user's token, through `internal/kube`; the server pod's service account has no API rights.
+- Export and re-import are JSON; re-import only creates.
+- Custom resources stay raw JSON; updates are JSON merge patches carrying the `resourceVersion` the user saw.
+- Secret values never reach the browser.
+- The fake operator (`cmd/fake-operator`) is for automated tests only; Gherkin steps steer it through its annotations, never by writing `status`.
 
 ## Versioning
 
@@ -26,6 +37,7 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 
 ## Where things are
 
+- Architecture spine (stack, invariants): `_bmad-output/planning-artifacts/architecture/architecture-scaleway-manager-2026-10-19/ARCHITECTURE-SPINE.md`
 - Brief: `_bmad-output/planning-artifacts/briefs/brief-scaleway-manager-2026-10-16/brief.md`
 - Scoping session: `_bmad-output/forge/scaleway-manager-web-ui/forged-idea.md`
 - Operator CR types and adoption: `/home/mathieu/dev/github.com/scaleway-operator/src/resources.rs` and `src/scaleway.rs`
