@@ -191,7 +191,7 @@ Status: **ready** or **blocked (stack)**.
 - Build the image and the Helm chart, publish to `ghcr.io` (chart as OCI, `oci://ghcr.io/<owner>/charts`), add to the release note the command that reinstalls the previous version.
 - Depends on: stack choice, U15.
 
-### U17. Skill `sdlc-work`: start and triage — ready
+### U17. Skill `sdlc-work`: start and triage — done
 
 - Without argument: questions, route proposal by the workflow `sdlc-triage` (U30) shown with its answers and vote agreement, optional milestone proposal, human confirmation, issue creation with its route label (`epic` for long work), add to Project v2 with its status, work branch `{type}/{n}-{slug}`, memlog init (long G1, G3).
 - A chosen milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in the description (long G2).
@@ -203,6 +203,7 @@ Status: **ready** or **blocked (stack)**.
 - Acceptance: on a test idea, the issue, label, Project status, branch and memlog exist and agree.
 - Depends on: U3, U1, U2, U30, U31.
 - Launch workflows by name; a workflow saved during the current session is found only by `scriptPath` until the next session (found with U5).
+- Done on 2026-10-19. `skills/sdlc-work/SKILL.md` (dispatch, rules for every step) and `references/start.md` (questions, `sdlc-triage`, proposal, issue or external issue, milestone, board, branch from `origin/main`, memlog, bug report, rerouting); `scripts/project-item.sh` (`add`, `status`, `tokens`, ids looked up by name). Decided with the author: one confirmation of the proposal covers the GitHub writes that follow. Session id from `CLAUDE_CODE_SESSION_ID`; text from people or issues reaches shell commands only through files. Verified: a real start played in this session on a test idea (`wf_6e51848f-054`, route short, 5/5): issue #38 with `route:short`, board status In Progress, branch `docs/38-plan-u8-wording` from `origin/main`, memlog with the triage window, run, answers, decision and route; then #38 deleted, branch and folder removed. The run showed the ledger counting 3.86 million tokens for that triage: every earlier message of the session went to it (rule 4), since the other work's memlog is on another branch. Fixed in U31: optional `since` on the triage `step-start`, set by `sdlc-work` to the end of the session's previous step; and `make cost` now stops on a malformed `at` or `since` (jq 1.7 exited 0 and printed 0). Independent review: 11 findings, fixed (issue titles in shell lines, cross-branch windows, bug report outside the triage window, unrecoverable partial start, session id guess, Triage status, external milestone overwritten, branch types, topic with `#`, start diagram); kept: the first real start needs epic #2 merged (`origin/main` lacks the tooling).
 
 ### U18. Skill `sdlc-work`: resume — ready
 
@@ -330,6 +331,7 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Bootstrap: `work/issue-2-sdlc-process/` with a memlog listing epic #2's sessions under the `bootstrap` step (`b8e09581`, `6b67a654`, `b0833aac`, `5ee1d1dd`, chosen by the author; `45a99285`, `4a876ab8`, `85d508f7` left out) and its `cost.json`. Must happen before those transcripts are purged (30 days by default, first session on 2026-10-16).
 - Acceptance: on this session's transcript, the totals match a direct jq sum over the same files; a second run without the transcripts keeps the entries; `make cost-report` lists epic #2.
 - Depends on: U8.
+- Changed on 2026-10-19 (U17 trial): optional `since` on a triage `step-start` bounds rule 4; a malformed `at` or `since` stops `make cost` with exit code 1 (before, jq 1.7 printed the error and exit 0 with `Tokens` 0). Checked on a fixture repository: with `since`, a message before it is unattributed (110 instead of 111); a bad `at` or `since` exits 1 naming the line; issue 2 unchanged.
 - Verified on 2026-10-18: `cost.json` of issue 2 equals, per model and category, a direct jq sum of the same files grouped by `message.id`; a run with `COST_TRANSCRIPTS_DIR` set to an empty folder leaves `cost.json` identical; `make cost-report` lists issue 2. Synthetic fixtures (two memlogs sharing one session) check: pre-triage, windows, declared and undeclared runs, subagents, duplicated lines, an open window closed by another work's triage, a `session` line overriding another memlog's window, a session removed from the memlog, fractional seconds, a non-UTC `at` rejected with its line, unknown keys ignored, a non-numeric issue rejected. Independent review (security, correctness, coherence) found these cases; all fixed. Found on the way: the global `claude-token-tracking` Stop hook counts every transcript line without grouping by `message.id` (about 2.2 times the real total for this session).
 
 ## Order

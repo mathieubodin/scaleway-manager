@@ -5,7 +5,7 @@ From an idea to an issue with its route, a work branch and a process memlog (`do
 ## 1. Before anything
 
 - The working tree must be clean (`git status --porcelain` empty). Otherwise tell the user what is uncommitted and stop.
-- If the current branch is a work branch whose memlog has a `step-start` of this session without its `step-end`, append that `step-end` there first (SKILL.md, "One open step per session").
+- If the current branch is a work branch whose memlog has a `step-start` of this session without its `step-end`, append that `step-end` there first (SKILL.md, "One open step per session"). Note `since`: the time of the last `step-end` of this session in that memlog; none when this session has not worked on another work.
 - Find the session id and note the time `t0` (UTC) at which this triage starts.
 
 ## 2. Understand the idea
@@ -48,7 +48,7 @@ Ask one clickable question: confirm all of it, or change the route, the title, t
 - `git fetch origin main`, then `git switch -c <type>/<n>-<slug> origin/main`.
 - `uv run {project-root}/_bmad/scripts/memlog.py init --workspace '_bmad-output/work/issue-<n>-<slug>' --field 'topic=Issue <n>, <slug>'`.
 - Append, in this order (`docs/token-cost-tracking.md`; messages of this session before `t0` count in the triage step):
-  1. event `step-start step=triage session=<id> at=<t0>`
+  1. event `step-start step=triage session=<id> at=<t0> since=<since>`, without `since=` when there is none
   2. event `workflow-run run=<triage run id> step=triage session=<id>`
   3. result: one line per question, `triage <question id>=<yes|no> votes=<k>/3`
   4. result: `triage proposed route=<route> agreement=<unanimous>/<questions> uncertain=<ids or none>`

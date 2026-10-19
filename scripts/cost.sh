@@ -30,23 +30,33 @@ epoch_def='def epoch: . as $t
   | ($t | sub("\\.[0-9]+"; "") | fromdateiso8601)
     + ([$t | capture("\\.(?<f>[0-9]+)Z$")? | .f] | first | if . then tonumber / pow(10; length) else 0 end);'
 
-# Attribution events of every memlog, as JSON: {memlog, line, kind, step, session, run, at, epoch, route}.
+# Attribution events of every memlog, as JSON: {memlog, line, kind, step, session, run, at, epoch,
+# since, sinceEpoch, route}.
 parse_events() {
   jq -R --arg memlog "$1" "$epoch_def"'
     [., input_line_number] as [$text, $line]
     | $text | capture("^- \\(event\\) (?<kind>route|step-start|step-end|workflow-run|session)(?<rest>( [a-z]+=[^ ]+)*)\\s*$")?
     | . as $e
     | ($e.rest | [scan(" ([a-z]+)=([^ ]+)") | {key: .[0], value: .[1]}] | from_entries
-       | with_entries(select(.key | IN("route", "step", "session", "run", "at")))) as $kv
+       | with_entries(select(.key | IN("route", "step", "session", "run", "at", "since")))) as $kv
     | $kv + {memlog: $memlog, line: $line, kind: $e.kind}
     | if .at then
         if (.at | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"))
         then .epoch = (.at | epoch)
-        else error("\($memlog):\($line): at must be UTC, like 2026-10-18T10:00:00Z, got \(.at)") end
+        else {bad: "\($memlog):\($line): at must be UTC, like 2026-10-18T10:00:00Z, got \(.at)"} end
+      else . end
+    | if .since and (.bad | not) then
+        if (.since | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"))
+        then .sinceEpoch = (.since | epoch)
+        else {bad: "\($memlog):\($line): since must be UTC, like 2026-10-18T10:00:00Z, got \(.since)"} end
       else . end
   ' "$1"
 }
+# A malformed line is returned as {bad}, not raised: jq 1.7 exits 0 on an error raised
+# after a "?" operator, which would let a wrong Tokens value through.
 for m in _bmad-output/work/*/.memlog.md; do parse_events "$m"; done | jq -s . > "$tmp/events.json"
+bad=$(jq -r '.[] | select(.bad) | .bad' "$tmp/events.json")
+[ -z "$bad" ] || { echo "Error: $bad" >&2; exit 1; }
 
 # Sessions named by this memlog.
 mapfile -t sessions < <(jq -r --arg m "$memlog" '[.[] | select(.memlog == $m and .session) | .session] | unique[]' "$tmp/events.json")
@@ -87,7 +97,8 @@ jq -n --arg m "$memlog" --argjson issue "$issue" --arg now "$(date -u +%Y-%m-%dT
       | group_by(.session)[] | sort_by(.epoch) | . as $l
       | range(length) as $i | select($l[$i].kind == "step-start")
       | {memlog: $l[$i].memlog, session: $l[$i].session, step: $l[$i].step,
-         from: $l[$i].epoch, to: ($l[$i + 1].epoch // infinite)}]) as $windows
+         from: $l[$i].epoch, to: ($l[$i + 1].epoch // infinite),
+         since: ($l[$i].sinceEpoch // -infinite)}]) as $windows
   | [$events[] | select(.kind == "session")] as $wholes
   | [$events[] | select(.kind == "workflow-run")] as $runs
 
@@ -97,9 +108,10 @@ jq -n --arg m "$memlog" --argjson issue "$issue" --arg now "$(date -u +%Y-%m-%dT
       ($wholes | map(select(.session == $x.session)) | sort_by(.memlog != $m) | first | mine_or_other) //
       (if $x.run then $runs | map(select(.run == $x.run)) | sort_by(.memlog != $m) | first | mine_or_other else null end) //
       ($windows | map(select(.session == $x.session and .from <= $x.epoch and $x.epoch < .to)) | first | mine_or_other) //
-      # Outside every window: before a triage, it belongs to the work that triage creates.
+      # Outside every window: before a triage, and not before its "since", it belongs to the
+      # work that triage creates.
       ($windows | map(select(.session == $x.session and .from > $x.epoch)) | min_by(.from)
-       | if . and .step == "triage" then mine_or_other else null end) //
+       | if . and .step == "triage" and .since <= $x.epoch then mine_or_other else null end) //
       "unattributed";
 
   def addu: reduce .[] as $x ({}; .[$x.model] |= (. // {input: 0, output: 0, cacheCreation: 0, cacheRead: 0}

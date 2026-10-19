@@ -26,12 +26,12 @@ Each piece of work has a process memlog, `_bmad-output/work/issue-{n}-{slug}/.me
 - (event) <keyword> <key>=<value> <key>=<value> ...
 ```
 
-Values contain no space; `at` is UTC and ends with `Z` (fractional seconds allowed), otherwise `make cost` stops and names the line. Keys other than those below are ignored, and so is any other line of the memlog.
+Values contain no space; `at` and `since` are UTC and end with `Z` (fractional seconds allowed), otherwise `make cost` stops with exit code 1 and names the line. Keys other than those below are ignored, and so is any other line of the memlog.
 
 | Keyword | Keys | Meaning |
 | --- | --- | --- |
 | `route` | `route` (`short`, `bug`, `long`) | Route chosen at triage |
-| `step-start` | `step`, `session`, `at` (UTC, ISO 8601) | A step starts in a session |
+| `step-start` | `step`, `session`, `at` (UTC, ISO 8601), optional `since` (UTC) | A step starts in a session; on a `triage`, `since` bounds the messages before it that it takes |
 | `step-end` | `step`, `session`, `at` | That step ends |
 | `workflow-run` | `run`, `step`, `session` | A workflow run launched during a step |
 | `session` | `step`, `session` | A whole session, with its subagents and workflow runs, belongs to a step (epic #2 bootstrap only) |
@@ -57,7 +57,7 @@ Steps:
 1. The session has a `session` line: its step.
 2. The message belongs to a workflow run declared by a `workflow-run` line: its step.
 3. Its timestamp falls in a step window of this session: that step.
-4. The next window of this session is a `triage`: that `triage` (what precedes triage belongs to the issue it creates).
+4. The next window of this session is a `triage` and the message is not before its `since`: that `triage` (what precedes triage belongs to the issue it creates). `sdlc-work` sets `since` to the end of the step this session had open in another work, because that work's memlog is on another branch and does not close the window here.
 5. Otherwise: `unattributed`, reported apart, outside `Tokens`, to show how much the ledger misses.
 
 When this memlog and another one both match a case, this memlog's line wins. Windows of all memlogs close one another (see above), so a message is counted at most once across all works, as long as no session and no run is declared in two memlogs.
