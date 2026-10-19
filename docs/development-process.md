@@ -2,7 +2,7 @@
 
 How a piece of work goes from an idea to `main`, then to a release. Agents do the work; the human decides at the gates. Entry point: `/sdlc-work` in a Claude Code session.
 
-The process skills load this file as a persistent fact: every line added here costs tokens in each of them. The rules here were decided with the author: change them only with the author.
+The process skills load this file as a persistent fact: every line added here costs tokens in each of them. The rules here were decided with the author: change them only with the author. Terms such as route, gate, process memlog and step are defined in [process-vocabulary.md](process-vocabulary.md).
 
 ## Building blocks
 

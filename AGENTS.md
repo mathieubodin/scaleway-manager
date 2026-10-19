@@ -30,7 +30,6 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 - Scoping session: `_bmad-output/forge/scaleway-manager-web-ui/forged-idea.md`
 - Operator CR types and adoption: `/home/mathieu/dev/github.com/scaleway-operator/src/resources.rs` and `src/scaleway.rs`
 - Lessons learned: `docs/solutions/`, by category, with YAML front matter (`module`, `tags`, `problem_type`); relevant when working in a documented area.
-- Process vocabulary: `CONCEPTS.md`.
 
 ## Development process
 
