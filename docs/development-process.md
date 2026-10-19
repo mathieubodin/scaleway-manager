@@ -24,7 +24,7 @@ Workflows:
 | `sdlc-parallax` | Define | Divergences between 3 specs, as questions |
 | `sdlc-spec-lint` | Define | Failing acceptance criteria, with votes |
 | `sdlc-explore` | Plan | Map of the code, practices and frameworks |
-| `sdlc-cold-start` | Plan | What each story spec is missing |
+| `sdlc-cold-start` | Plan | What each story spec is missing, blocking items apart |
 | `sdlc-rails` | Rails | Test files written; in bug mode, each test's failure message |
 | `sdlc-build` | Build | Finished builder branches, failed items |
 | `sdlc-review` | Review | Converged, or the recurring findings at the cap |
@@ -230,7 +230,7 @@ Setup runs once per project, manually, in a separate session with `bmad-architec
 - 2 or 3 approaches with trade-offs; the human chooses. `bmad-architecture` is called only when the choice changes the spine.
 - `sdlc-work` writes `plan.md`: explorations, approaches, choice, contracts at each boundary, sequential trunk and parallel leaves.
 - Story Breakdown of `bmad-spec` writes `stories.yaml`; `bmad-build` then writes one story spec per story, steps 01 and 02 only, up to status `ready-for-dev` (`_bmad/custom/bmad-build.toml` forbids its shortcut that would code a small story directly). At its checkpoint `sdlc-work` answers "Approve and stop", except for a story marked `spec_checkpoint: true` in `stories.yaml`, which the human reviews; every story spec is reviewed again at the plan gate. `sdlc-work` commits each story spec before the next one (`bmad-build` stops on uncommitted changes) and passes any question `bmad-build` asks to the human, never answering it itself. It never runs `bmad-build` again on a `ready-for-dev` story during Plan: that would start the implementation.
-- Cold-start loop: `sdlc-cold-start` gives each story spec alone to a fresh agent, which lists what it is missing. Fixes go to `plan.md`, `stories.yaml` or the story specs, with questions to the human when needed. No gate page while it is red; alert after 3 rounds.
+- Cold-start loop: `sdlc-cold-start` gives each story spec alone to a fresh agent, as a builder will get it (the story spec and the code, no other planning file), which lists what it is missing, each item blocking (it would have to guess) or useful. Decided with the author: only blocking items, or an agent that died, keep the round red; useful items are listed with the plan gate page. Fixes go to `plan.md`, `stories.yaml` or the story specs, with questions to the human when needed. No gate page while it is red; alert after 3 rounds.
 - After the plan gate: one sub-issue per story spec.
 
 ```mermaid
