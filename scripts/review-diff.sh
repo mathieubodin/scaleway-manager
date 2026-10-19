@@ -2,6 +2,8 @@
 # Write the diff under review: changes of the working tree since <base>, untracked
 # files included (as new files), ignored files excluded. Used by the workflow
 # sdlc-review at the start of each round, after the fixer of the previous round.
+# The output file must be outside the repository, or it and the diffs of earlier
+# rounds would appear in the diff. Its folder is created when missing.
 # Usage: scripts/review-diff.sh <base> <out-file>
 set -euo pipefail
 
@@ -11,6 +13,10 @@ out=${2:-}
 cd "$(git rev-parse --show-toplevel)"
 [[ $base != -* ]] && git rev-parse --verify --quiet "$base^{commit}" >/dev/null \
   || { echo "Error: '$base' is not a commit"; exit 2; }
+case $(realpath -m -- "$out") in
+  "$(pwd -P)"/*) echo "Error: '$out' is inside the repository; write it outside"; exit 2 ;;
+esac
+mkdir -p -- "$(dirname -- "$out")"
 
 {
   git diff --no-color --no-ext-diff "$base" --

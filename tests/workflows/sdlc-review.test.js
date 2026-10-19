@@ -58,23 +58,31 @@ const respond =
 
 test("invalid args are refused", async () => {
   const bad = [
-    {},
-    { ...LONG, base: "main" },
-    { ...LONG, base: "abc1234'; rm -rf /" },
-    { ...LONG, diffDir: "/tmp/x y" },
-    { ...LONG, diffDir: undefined },
-    { ...LONG, verifierPrompt: "" },
-    { ...LONG, fixerPrompt: undefined },
-    { ...LONG, layers: LAYERS.slice(0, 2) },
-    { ...LONG, layers: [...LAYERS.slice(0, 2), { id: "x", instruction: "" }] },
-    { ...LONG, layers: [LAYERS[0], LAYERS[0], LAYERS[1]] },
-    { ...LONG, layers: undefined },
-    { ...LONG, dryPasses: 0 },
-    { ...LONG, dryPasses: 3, maxRounds: 2 },
-    { ...LONG, maxRounds: "5" },
-    { ...BASE },
+    [{}, /base/],
+    [{ ...LONG, base: "main" }, /base/],
+    [{ ...LONG, base: "abc1234'; rm -rf /" }, /base/],
+    [{ ...LONG, diffDir: "/tmp/x y" }, /diffDir/],
+    [{ ...LONG, diffDir: undefined }, /diffDir/],
+    [{ ...LONG, verifierPrompt: "" }, /verifierPrompt/],
+    [{ ...LONG, fixerPrompt: undefined }, /fixerPrompt/],
+    [{ ...LONG, layers: LAYERS.slice(0, 2) }, /lenses/],
+    [
+      {
+        ...LONG,
+        layers: [...LAYERS.slice(0, 2), { id: "x", instruction: "" }],
+      },
+      /lenses/,
+    ],
+    [{ ...LONG, layers: [LAYERS[0], LAYERS[0], LAYERS[1]] }, /lenses/],
+    [{ ...LONG, layers: undefined }, /lenses/],
+    [{ ...LONG, dryPasses: 0 }, /dryPasses/],
+    [{ ...LONG, dryPasses: 3, maxRounds: 2 }, /dryPasses/],
+    [{ ...LONG, maxRounds: "5" }, /dryPasses/],
+    [{ ...BASE }, /dryPasses/],
   ];
-  for (const args of bad) await assert.rejects(runWorkflow(SCRIPT, { args }));
+  for (const [args, message] of bad) {
+    await assert.rejects(runWorkflow(SCRIPT, { args }), message);
+  }
   await assert.rejects(runWorkflow(SCRIPT), /base/);
 });
 
@@ -97,6 +105,7 @@ test("lens prompt: the subagent prompt, placeholders replaced", async () => {
     /^security review of \/tmp\/review\/round-1\.diff against none\./,
   );
   assert.doesNotMatch(prompts[1], /Launch/);
+  assert.match(prompts[1], /requested structured form/);
   assert.match(prompts[4], /^Plain \/tmp\/review\/round-1\.diff\./);
 });
 
@@ -285,6 +294,7 @@ test("a dead fixer leaves the finding open; not found again once converged", asy
     r.findings.map((f) => f.status),
     ["not found again", "not found again"],
   );
+  assert.equal(r.unfixed.length, 2);
   assert.equal(r.checks, null);
 });
 
@@ -331,5 +341,34 @@ test("a diff that cannot be written stops the run", async () => {
       },
     }),
     /agent died/,
+  );
+});
+
+test("a duplicate counts only when it points to an earlier real finding", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: { ...BASE, singlePass: true },
+    respond: respond({
+      lenses: (_, id) =>
+        id === "security"
+          ? [
+              finding("a"),
+              finding("b"),
+              finding("c"),
+              finding("d"),
+              finding("e"),
+            ]
+          : [],
+      verify: () => [
+        verdict(1, { real: false, severity: null }),
+        verdict(2, { duplicateOf: 1 }), // points to a false alarm: kept
+        verdict(3, { duplicateOf: 3 }), // points to itself: kept
+        verdict(4, { duplicateOf: 5 }), // points to a later finding: kept
+        verdict(5, { duplicateOf: 2 }), // real duplicate of 2: dropped
+      ],
+    }),
+  });
+  assert.deepEqual(
+    run.result.findings.map((f) => f.title),
+    ["b", "c", "d"],
   );
 });

@@ -332,7 +332,7 @@ sequenceDiagram
     loop In script: until two dry passes with 3 lenses, at most 5 rounds
         F->>A: Security, correctness, coherence, verifier
         A-->>F: Verified findings
-        F->>A: Fixer: apply verified findings, run make
+        F->>A: Fixer: apply verified findings, run make check
     end
     F-->>W: Converged, or recurring findings at the cap
     opt Not converged after 5 rounds
@@ -412,7 +412,7 @@ sequenceDiagram
     loop In script: one dry pass, at most 2 rounds
         F->>A: Security, correctness, coherence, verifier
         A-->>F: Verified findings
-        F->>A: Fixer: apply verified findings, run make
+        F->>A: Fixer: apply verified findings, run make check
     end
     F-->>W: Converged, or recurring findings at the cap
     opt Not converged
@@ -437,7 +437,7 @@ sequenceDiagram
 - The session makes the change itself on the work branch, without a subagent.
 - Behavior diff: must be empty for a post-integration simplification, otherwise `sdlc-work` proposes rerouting; for a visible change it is posted on the PR, and the merge accepts it as the new reference.
 - A frozen scenario that must change needs the human's decision, then `make freeze`.
-- Review: `sdlc-review` with a single pass; verified findings are fixed and `make` runs again, without a second review; unfixed findings are listed in the PR.
+- Review: `sdlc-review` with a single pass; verified findings are fixed and `make check` runs again, without a second review; unfixed findings are listed in the PR.
 - Light gate: the human reviews the change and the evidence record, plays the Gherkin scenarios only if the change looks bigger than expected, then merges.
 
 ```mermaid
@@ -466,7 +466,7 @@ sequenceDiagram
     W->>F: sdlc-review (singlePass)
     F->>A: Security, correctness, coherence, verifier
     A-->>F: Verified findings
-    F->>A: Fixer: apply verified findings, run make, no second review
+    F->>A: Fixer: apply verified findings, run make check, no second review
     F-->>W: Fixed and unfixed findings
     opt Bigger than expected
         W->>H: Reroute to the long route?
@@ -508,7 +508,7 @@ Each builder runs in its own git worktree. Worktrees start from the current `HEA
 
 Lenses security, correctness and coherence, defined as `review_layers` in `_bmad/custom/bmad-code-review.toml` (the four default layers are off). Each lens works in two phases: triage first (where to look), then findings read in the files. Coherence covers the string constants between code and docs, and the actual content of security and config files.
 
-Each round of `.claude/workflows/sdlc-review.js`: an agent writes the diff of the working tree since the base SHA, untracked files included (`scripts/review-diff.sh`); the lenses review it in parallel; a verifier (`sdlc_verifier_prompt`) checks every finding in the code, grades the real ones and matches them with those of earlier rounds; a fixer (`sdlc_fixer_prompt`) fixes the verified ones in the working tree, without committing, and runs `make check`. A verified finding whose fix needs a decision is set aside for the human. A round is dry when every lens answered, every finding got a verdict and no new verified finding remains (decided with the author: false alarms do not count). The workflow returns whether it converged, every verified finding with its status, the recurring ones, and the fixes of the last round that no round reviewed; `sdlc-work` commits the fixes. A manual `bmad-code-review` runs the same lenses once, and its own triage step verifies each finding: a verifier cannot be a layer, because layers run in parallel.
+Each round of `.claude/workflows/sdlc-review.js`: an agent writes the diff of the working tree since the base SHA, untracked files included, to a folder outside the repository (`scripts/review-diff.sh`, which refuses a path inside it); the lenses review it in parallel; a verifier (`sdlc_verifier_prompt`) checks every finding in the code, grades the real ones and matches them with those of earlier rounds; a fixer (`sdlc_fixer_prompt`) fixes the verified ones in the working tree, without committing, and runs `make check`. A verified finding whose fix needs a decision is set aside for the human. A round is dry when every lens answered, every finding got a verdict and no new verified finding remains (decided with the author: false alarms do not count). The workflow returns whether it converged, every verified finding with its status (`fixed`; `unfixed`, with the reason; `open` when the fixer gave no answer; `not found again` for an open finding no later round reported), the list of those not `fixed`, the recurring ones, the fixes of the last round that no round reviewed, and the fixer's last `make check` result; `sdlc-work` runs `make check` again before committing the fixes. A manual `bmad-code-review` runs the same lenses once, and its own triage step verifies each finding: a verifier cannot be a layer, because layers run in parallel. On uncommitted changes it diffs with `git diff HEAD`, which leaves out untracked files: run `git add -N <file>` on new files first.
 
 | Route | `sdlc-review` arguments | At the cap |
 | --- | --- | --- |

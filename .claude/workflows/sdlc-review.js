@@ -14,7 +14,7 @@ export const meta = {
 
 // args (docs/development-process.md, "Review loop"):
 // - base: SHA the change is compared with (merge-base of the work branch);
-// - diffDir: folder where each round's diff is written;
+// - diffDir: folder outside the repository where each round's diff is written;
 // - specPath: story spec, SPEC.md or bug-report.md, optional;
 // - layers, verifierPrompt, fixerPrompt: review_layers, sdlc_verifier_prompt and
 //   sdlc_fixer_prompt resolved from the bmad-code-review override by sdlc-work;
@@ -136,7 +136,8 @@ const lensPrompt = (layer, diffFile) => {
   const text = (m ? m[1] : layer.instruction)
     .replaceAll("{diff_file}", diffFile)
     .replaceAll("{spec_file}", spec);
-  return `${text.trim()}\n\nReturn the findings in the requested structured form.`;
+  // The lens text, shared with a manual run, asks for findings as text.
+  return `${text.trim()}\n\nHere, instead of text, return the findings in the requested structured form (an empty list when there is none).`;
 };
 
 const seen = []; // every verified finding, across rounds
@@ -211,8 +212,13 @@ while (round < maxRounds && dry < dryPasses) {
   const unverified = raw.length - byFinding.size;
 
   const confirmed = [];
+  // A duplicate counts only when it points to an earlier finding verified real.
+  const isDuplicate = (v) =>
+    v.duplicateOf != null &&
+    v.duplicateOf < v.finding &&
+    byFinding.get(v.duplicateOf)?.real === true;
   for (const [n, v] of byFinding) {
-    if (!v.real || v.duplicateOf != null) continue;
+    if (!v.real || isDuplicate(v)) continue;
     const prev = seen.find((s) => s.id === v.seenAs);
     if (prev) {
       // Found again: waiting for the human, or already counted in this round.
@@ -299,7 +305,8 @@ return {
   rounds: round,
   findings: seen,
   recurring: seen.filter((f) => f.rounds.length > 1).map((f) => f.id),
-  unfixed: seen.filter((f) => f.status === "unfixed" || f.status === "open"),
+  // Every verified finding not known as fixed, "not found again" included.
+  unfixed: seen.filter((f) => f.status !== "fixed"),
   // Fixes of the last round that no later round reviewed.
   unreviewedFixes: rounds.at(-1).fixed,
   checks,
