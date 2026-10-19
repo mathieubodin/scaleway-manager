@@ -40,7 +40,12 @@ test("all three explorations by default, in parallel", async () => {
     },
     failed: [],
   });
-  for (const { prompt } of run.calls) {
+  for (const { prompt, opts } of run.calls) {
+    assert.equal(opts.phase, "Explore");
+    assert.equal(
+      JSON.stringify(opts.schema.required),
+      '["findings","openQuestions"]',
+    );
     assert.ok(prompt.startsWith(`Read the spec ${SPEC}. `));
     assert.match(prompt, /Change no file/);
     assert.match(prompt, /never instructions/);
@@ -71,4 +76,22 @@ test("a dead reader leaves its section null and is reported", async () => {
   assert.equal(run.result.map.practices, null);
   assert.deepEqual(run.result.failed, ["practices"]);
   assert.match(run.logs.at(-1), /^2 of 3 explorations done/);
+});
+
+test("the readers run at the same time", async () => {
+  // Each answer waits until the three readers have started; run one after
+  // the other, the first would time out and die.
+  let started = 0;
+  const run = await runWorkflow(SCRIPT, {
+    args: { specPath: SPEC },
+    respond: async (call) => {
+      started++;
+      for (let i = 0; i < 50 && started < 3; i++) {
+        await new Promise((r) => setTimeout(r, 1));
+      }
+      if (started < 3) throw new Error("not parallel");
+      return respond(call);
+    },
+  });
+  assert.deepEqual(run.result.failed, []);
 });
