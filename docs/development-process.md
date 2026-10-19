@@ -93,6 +93,7 @@ Project v2 (<https://github.com/users/mathieubodin/projects/4>) statuses:
 | `.memlog.md` | Process memlog: route, steps, triage answers, gate decisions, workflow runs, results of the called skills |
 | `define-notes.md` | Long route: questions and answers from Parallax, Premortem and Research sections |
 | `plan.md` | Long route: plan of this work |
+| `cold-start.md` | Long route: useful items of the last cold-start round, rewritten by `sdlc-work` at each round, shown on `plan.html` |
 | `bug-report.md` | Bug route: written from the issue at triage, enriched at each builder failure |
 | `spec.html`, `plan.html` | Gate pages |
 | `evidence.md` | Evidence record, rewritten by `make evidence` |

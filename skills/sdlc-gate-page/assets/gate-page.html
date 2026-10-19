@@ -36,7 +36,7 @@ section { display: grid; gap: .7rem; }
 table { border-collapse: collapse; width: 100%; font-size: .95rem; }
 th, td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
 th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-code { font-family: var(--mono); font-size: .88em; }
+code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
 .flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .step { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .2rem .6rem; }
 </style>
@@ -45,7 +45,7 @@ code { font-family: var(--mono); font-size: .88em; }
 <main>
 <header style="display: grid; gap: .5rem">
   <h1>{{Gate}} gate: #{{n}} {{title}}</h1>
-  <p class="meta">Branch <code>{{branch}}</code>, commit <code>{{commit}}</code>. Reference: {{reference paths, each in <code>}}.</p>
+  <p class="meta">Branch <code>{{branch}}</code>. Reference: {{reference paths, each in a code element}}.</p>
 </header>
 <div class="verdict">
   <strong>What you validate</strong>
