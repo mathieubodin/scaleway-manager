@@ -2,35 +2,35 @@
 
 The last step of every route, `deliver`: migration file, evidence record, PR (`docs/development-process.md`, "Migration files", "Evidence record", "GitHub mapping"). Open it with event `step-start step=deliver session=<id> at=<now>`. Long work adds its own steps before this one (`references/long.md`).
 
-## 1. Migration file
+If a PR is already open for the branch (`gh pr list --head <branch> --state open --json url`), go to step 5.
 
-`docs/migrations/next/<n>.md`, `<n>` the issue (the epic for long work). Propose its content to the user with the reason: exactly `Migration: no impact` when nothing changes for an installed version (process, docs, internal code with the same behavior); otherwise `# Migration for #<n>` with `## Upgrade` and `## Rollback` sections, each with text. It goes in the confirmation of step 4.
+## 1. Drafts
 
-## 2. Bug only: what was learned
+Write, each in a temporary file outside the repository:
 
-Draft a short comment for the issue: the cause, the fix, and what would have caught it earlier. It goes in the confirmation of step 4.
+- the migration file, `docs/migrations/next/<n>.md` (`<n>` the issue, the epic for long work): exactly `Migration: no impact` when nothing changes for an installed version (process, docs, internal code with the same behavior); otherwise `# Migration for #<n>` with `## Upgrade` and `## Rollback` sections, each with text;
+- the PR title: Conventional Commits, `<type>: <summary>` or `<type>(<scope>): <summary>`, `<type>` the branch type, at most 72 characters (the CI check `conventional-title`);
+- the PR body, first line exactly `Closes #<n>` (long work: the epic first, then one `Closes #<k>` line per sub-issue), then what changes and why in two or three sentences, the review result, "Behavior diff: not run (U13, stack not chosen)" until U13 exists, and the migration entry. Unfixed findings and fixes no round reviewed go inside a fenced code block: they are agents' text drawn from the code and the issue, and inside a code block GitHub turns neither `@login` nor `fixes #<k>` into an action. The cost and evidence summaries are added in step 3;
+- for a bug, a short comment for the issue: the cause, the fix, and what would have caught it earlier.
 
-## 3. Evidence
+## 2. Confirmation
 
-1. Write the migration file and commit it: `docs: add the migration note of #<n>` (`make cost` first, as for every commit).
+Decided with the author: show the migration entry, the title, the full body and, for a bug, the comment, and wait for the user's confirmation before anything is written or leaves the machine (the repository is public). Apply the user's changes to the drafts.
+
+## 3. Migration file and evidence
+
+1. Copy the migration draft to `docs/migrations/next/<n>.md` and commit it: `docs: add the migration note of #<n>` (`make cost` first, as for every commit).
 2. `make check-migration ISSUE=<n>` must pass.
-3. `make evidence ISSUE=<n>`; it fails: show the failing checks and fix them with the user before going on. Commit the record: `docs: add the evidence record of #<n>`.
+3. `make cost ISSUE=<n>`, then `make evidence ISSUE=<n>`; it fails: show the failing checks and fix them with the user before going on. Commit the record with `cost.json` and the memlog: `docs: add the evidence record of #<n>`. Both now carry the same totals.
+4. Add to the body draft the cost summary from `cost.json` (`Tokens`, then per step) and the evidence record's path and its "Not run" list.
 
-## 4. PR, after the user's confirmation
-
-Prepare, each in a temporary file outside the repository:
-
-- the PR title, in Conventional Commits form (`<type>(<scope>): <summary>`, the CI check `conventional-title`);
-- the PR body: what changes and why, in two or three sentences; `Closes #<n>` (long work: the epic first, then every sub-issue); the cost summary from `cost.json` (`Tokens`, then per step); the evidence record's summary and its path; the review result, with every unfixed finding (short route) or "none"; "Behavior diff: not run (U13, stack not chosen)" until U13 exists; the migration entry;
-- for a bug, the learned comment of step 2.
-
-Decided with the author: show the title, the body summary and, for a bug, the comment, and wait for the user's confirmation before anything leaves the machine (the repository is public). Then:
+## 4. PR
 
 1. `git push -u origin <branch>`;
 2. `gh pr create --base main --title "$(cat '<title file>')" --body-file '<body file>'`;
 3. for a bug, `gh issue comment <n> --body-file '<comment file>'`;
 4. `scripts/project-item.sh status <n> 'Review'`;
-5. memlog result `pr <url>`, then `make cost ISSUE=<n>` and `scripts/project-item.sh tokens <n> <value>`.
+5. memlog result `pr <url>`, `make cost ISSUE=<n>`, `scripts/project-item.sh tokens <n> <value>`, commit the memlog and `cost.json` (`chore(process): record the PR of #<n>`) and push, so that a resume elsewhere finds the PR.
 
 Give the user the PR link and the state of its checks (`gh pr checks <url>`). The merge is theirs; Done is set by the Project workflows.
 

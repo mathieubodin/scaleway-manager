@@ -75,7 +75,7 @@ Work that turns out bigger than expected goes to the long route, on the human's 
 | Release | Milestone, titled with its semver version (for example `v0.3.0`) |
 
 - One branch per work: `{type}/{n}-{slug}`, `type` the Conventional Commits type planned for the PR, `slug` derived from the issue title, kebab-case, at most 4 words. Example: `feat/27-yaml-export`.
-- One PR per work, to `main`. No direct push to `main` (branch protection). Decided with the author: before the push, `sdlc-work` shows the PR title and body summary (and, for a bug, the comment on what was learned) and waits for the human's confirmation; the repository is public.
+- One PR per work, to `main`. No direct push to `main` (branch protection). Decided with the author: before the push, `sdlc-work` shows the migration entry, the PR title, the full PR body (first line `Closes #<n>`) and, for a bug, the comment on what was learned, and waits for the human's confirmation; the repository is public.
 - The PR references every issue it closes: `Closes #<n>`, and for long work the epic first, then every sub-issue (CI reads the issue of the work from the first `Closes`).
 - An issue opened by an external user is triaged with `/sdlc-work <n>`.
 
@@ -374,7 +374,7 @@ sequenceDiagram
 - A bug that only shows against real Scaleway: first try to reproduce it with the fake operator; otherwise a `@manual` scenario that the human plays before and after the fix; if the cause is in the operator, `sdlc-work` proposes moving the issue to `scaleway-operator`.
 - `sdlc-build` in bug mode: after two failures, the human is asked whether to switch to the long route.
 - Review: `sdlc-review` with 1 dry pass, at most 2 rounds.
-- Before the PR: a comment on the issue summarizing what was learned, migration file, `make evidence`.
+- Before the PR: migration file, `make evidence`. With the PR: a comment on the issue summarizing what was learned, confirmed with the PR.
 
 ```mermaid
 sequenceDiagram
@@ -428,10 +428,10 @@ sequenceDiagram
         W->>H: Proposed way out
         H->>W: Chooses
     end
-    W->>G: Comment on the issue: what was learned
     W->>W: Write docs/migrations/next/n.md
     W->>T: make evidence
     W->>G: Open PR, post evidence and behavior diff, status Review
+    W->>G: Comment on the issue: what was learned
 
     rect rgba(255, 180, 80, 0.2)
     Note over H,G: Gate
