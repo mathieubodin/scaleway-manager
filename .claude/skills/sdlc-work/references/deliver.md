@@ -1,6 +1,6 @@
 # Deliver
 
-The last step of every route, `deliver`: migration file, evidence record, PR (`docs/development-process.md`, "Migration files", "Evidence record", "GitHub mapping"). Open it with event `step-start step=deliver session=<id> at=<now>`. Long work adds its own steps before this one (`references/long.md`).
+The last step of every route, `deliver`: migration file, evidence record, PR (`docs/development-process.md`, "Migration files", "Evidence record", "GitHub mapping"). Open it with event `step-start step=deliver session=<id> at=<now>`, unless `references/long.md` already opened it for its own first deliver steps.
 
 If a PR is already open for the branch (`gh pr list --head <branch> --state open --json url`), go to step 5.
 
