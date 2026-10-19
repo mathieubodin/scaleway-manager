@@ -229,7 +229,7 @@ Setup runs once per project, manually, in a separate session with `bmad-architec
 - `sdlc-explore`: parallel readers of the code, practices and frameworks.
 - 2 or 3 approaches with trade-offs; the human chooses. `bmad-architecture` is called only when the choice changes the spine.
 - `sdlc-work` writes `plan.md`: explorations, approaches, choice, contracts at each boundary, sequential trunk and parallel leaves.
-- Story Breakdown of `bmad-spec` writes `stories.yaml`; `bmad-build` then writes one story spec per story, steps 01 and 02 only, up to status `ready-for-dev`.
+- Story Breakdown of `bmad-spec` writes `stories.yaml`; `bmad-build` then writes one story spec per story, steps 01 and 02 only, up to status `ready-for-dev` (`_bmad/custom/bmad-build.toml` forbids its shortcut that would code a small story directly). At its checkpoint `sdlc-work` answers "Approve and stop", except for a story marked `spec_checkpoint: true` in `stories.yaml`, which the human reviews; every story spec is reviewed again at the plan gate. `sdlc-work` commits each story spec before the next one (`bmad-build` stops on uncommitted changes) and passes any question `bmad-build` asks to the human, never answering it itself. It never runs `bmad-build` again on a `ready-for-dev` story during Plan: that would start the implementation.
 - Cold-start loop: `sdlc-cold-start` gives each story spec alone to a fresh agent, which lists what it is missing. Fixes go to `plan.md`, `stories.yaml` or the story specs, with questions to the human when needed. No gate page while it is red; alert after 3 rounds.
 - After the plan gate: one sub-issue per story spec.
 
@@ -490,7 +490,11 @@ sequenceDiagram
 
 ### Frozen tests
 
-Tests are frozen by detection, not by a lock. `make freeze FILES="..."` records the sha256 of the given test files (code tests and Gherkin features) in `frozen-tests.sha256`, replacing their entries and keeping the others. `make check-frozen` fails when a frozen file changed or disappeared. New tests are frozen without a human decision on the long route (by `sdlc-rails`), and after the human confirms their failure reason on the bug route. Changing a frozen test always needs the human's decision, then `make freeze`.
+Tests are frozen by detection, not by a lock. `make freeze FILES="..."` records the sha256 of the given test files (code tests and Gherkin features) in `frozen-tests.sha256`, replacing their entries and keeping the others. `make check-frozen` fails when a frozen file changed or disappeared. New tests are frozen without a human decision on the long route (by `sdlc-rails`, or by a manual `bmad-build`), and after the human confirms their failure reason on the bug route. Changing a frozen test always needs the human's decision, then `make freeze`.
+
+### Manual use of `bmad-build`
+
+Run by hand on one story at `ready-for-dev`, `bmad-build` follows the same order as the workflows: a subagent writes the tests from the story spec without seeing the code, `make freeze` protects them and they are committed, then another subagent writes the code (`sdlc_test_writer_prompt` and `sdlc_builder_prompt` in `_bmad/custom/bmad-build.toml`, shared with `sdlc-rails` and `sdlc-build`; `sdlc_bug_test_writer_prompt` there serves the bug mode of `sdlc-rails`). Its built-in review is off: it stops with "no active review layers", and the review is done with `bmad-code-review`.
 
 ### Two-failure rule
 
@@ -570,6 +574,7 @@ Node tooling (Biome, oxlint, oxfmt, c8, markdownlint-cli2) is pinned in `package
 - Why two tools: a workflow script returns its result with a top-level `return`. Biome cannot parse it and has no option for it; ESLint forces it off for ES modules with its default parser. The oxc parser (oxlint, oxfmt) always accepts it. Hooks provided by Claude Code (`agent`, `parallel`, `pipeline`, `phase`, `log`, `args`, `budget`, `workflow`) are declared as globals in `.oxlintrc.json`, so that `no-undef` catches anything else, Node APIs included. `.oxfmtrc.json` sets the line width to 80, as Biome; the other defaults already match.
 - Harness: `tests/workflows/harness.js` runs a workflow script in a fresh V8 context with fake hooks. `runWorkflow(path, { args, respond, budget, workflow })` calls `respond({ prompt, opts, index })` for each `agent()` call and returns the script's result, its `meta`, the agent calls, phases and logs. A `respond` that throws makes that `agent()` return `null`, as a subagent that died; a thunk or stage that throws yields `null` in `parallel` and `pipeline`. `budget.total` is the `budget` option, nothing is spent; `workflow()` calls the `workflow` option. `Date.now()`, `Math.random()`, `Date()` and `new Date()` without argument throw. The script must begin with `export const meta =`; the harness does not check that `meta` is a pure literal. Result and `meta` must be plain data (cloned with `structuredClone`). Errors and coverage point to the lines of the source file.
 - Saved workflows are read from `.claude/workflows/`: tests and fixtures live in `tests/workflows/`, never there.
+- A workflow saved during a session is found by name only from the next session; until then it is launched by its file path.
 
 ## CI
 

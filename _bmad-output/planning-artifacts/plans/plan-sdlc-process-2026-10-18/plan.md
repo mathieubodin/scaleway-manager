@@ -97,7 +97,7 @@ Status: **ready** or **blocked (stack)**.
 - Depends on: U26, U4.
 - Done on 2026-10-19. Questions and rule validated by the author on a visual page: "Does this criterion say how we will verify that it is met?", "Does this criterion have only one possible reading?", at least 2 "yes" out of 3 per question (`VOTES`, `MIN_YES` in code; a dead agent counts as a missing yes). Questions defined once as the custom key `spec_lint_questions` of `_bmad/custom/bmad-review.toml`, read by the `spec-lint` lens through `{workflow.spec_lint_questions}` and passed to the workflow by `sdlc-work`. Verified: harness tests (missing args, no criterion, dead listing agent, votes, dead voting agent), 100 % coverage; a real run (`wf_a9245a0e-535`, 13 agents, about 450,000 subagent tokens, 34 s) on a two-criterion spec flagged "The export is fast" 0/3 on both questions and also, 0/3 on the second question, the other criterion ("compares the file with a reference file": whole file or only the three named keys?); a manual `bmad-review` with the `spec-lint` lens flagged the first one only. Found: a workflow saved during a session is not found by name until the next session; launch it by `scriptPath` meanwhile (U17). Cost kept as is, 3 votes on the session model (decided with the author after the trial; about 2 million tokens per pass for a ten-criterion spec, to be measured on the first real specs).
 
-### U6. `bmad-build` override: story specs for Plan — ready
+### U6. `bmad-build` override: story specs for Plan — done
 
 - `bmad-build` is used only during Plan: for each story of `stories.yaml`, it runs steps 01 and 02 and stops at status `ready-for-dev`, producing `{spec_folder}/stories/{id}-{slug}.md` (long G17). Check how to stop it there (override, or the way `sdlc-work` invokes it).
 - `review_layers` and `oneshot_review_layers`: empty `instruction`.
@@ -105,6 +105,7 @@ Status: **ready** or **blocked (stack)**.
 - `implementation_handoff` for manual use, one story, sequential: test writer with `sdlc_test_writer_prompt` → `make freeze` → builder with `sdlc_builder_prompt`.
 - Acceptance: on a toy `stories.yaml`, one story spec per story exists in `ready-for-dev` and no code was written; a manual `bmad-build` on one story writes and freezes tests before the code.
 - Depends on: U4.
+- Done on 2026-10-19. Stop at `ready-for-dev`: no option or key exists; `bmad-build` HALTs at its CHECKPOINT 1 and `sdlc-work` answers "Approve and stop" (decided with the author: the assistant approves, the human reviews all story specs at the plan gate; a story with `spec_checkpoint: true` in `stories.yaml` is reviewed by the human). A persistent fact forbids the oneshot route (which would code a small story without checkpoint). `review_layers` and `oneshot_review_layers` disabled by `id` with an empty `instruction`; a manual run then HALTs at step 04 with "no active review layers". Custom keys are not substituted in the skill text, so `implementation_handoff` reads `sdlc_test_writer_prompt` and `sdlc_builder_prompt` through the resolver. Verified on a throwaway branch with a two-story toy spec: both story specs written with `route: 'dispatch'` and `status: 'ready-for-dev'`, no other file changed (without the fact, both stories would have taken the oneshot route); then a manual `bmad-build` on story 1: a context-free test writer wrote `tests/greet/greet.test.sh` while no implementation existed (the test failed), `make freeze` and a commit of the test and manifest, a second context-free builder wrote `scripts/greet.sh` without editing the test, the test and `make check-frozen` passed, HALT at step 04 as expected; branch deleted, never pushed. Independent review: 5 findings, fixed (builder prompt usable for a bug report, a bug-mode test-writer prompt `sdlc_bug_test_writer_prompt`, manual freeze listed in the frozen-tests rule, an old oneshot spec rewritten as dispatch, single quotes around agent-chosen file names and the memlog workspace path in the 8 overrides). Learned for U20: commit each story spec before the next (step 01 HALTs on a dirty tree), pass `bmad-build` questions to the human, never run it again on a `ready-for-dev` story during Plan (it would implement).
 
 ### U7. `bmad-code-review` override and workflow `sdlc-review` — ready
 
@@ -200,6 +201,7 @@ Status: **ready** or **blocked (stack)**.
 - Cost ledger (U31): the memlog records each step's start and end (session id, timestamps) and the id of every workflow run launched; tokens of the same session before triage are attributed to the created issue (step "triage"). Every commit made by `sdlc-work` runs `make cost ISSUE=<n>` first and updates the Project `Tokens` field; this applies to U18, U19 and U20 as well.
 - Acceptance: on a test idea, the issue, label, Project status, branch and memlog exist and agree.
 - Depends on: U3, U1, U2, U30, U31.
+- Launch workflows by name; a workflow saved during the current session is found only by `scriptPath` until the next session (found with U5).
 
 ### U18. Skill `sdlc-work`: resume — ready
 
@@ -223,7 +225,7 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 - Define: `bmad-forge-idea` → workflow `sdlc-parallax` → pre-mortem (`bmad-advanced-elicitation` has no `on_complete`: `sdlc-work` writes the risks to `define-notes.md` and keeps control) → research if proposed and accepted (long G8) → answers in `define-notes.md` (long G7) → `bmad-spec` (inputs `forged-idea.md` and `define-notes.md`) → spec-lint loop (workflow `sdlc-spec-lint` per round, questions in `sdlc-work`, alert after 3 rounds, long G9) → `spec.html`.
 - Gates: `xdg-open` on the page (long G12); on validation, commit the work folder and the folders referenced by the memlog, push, comment with the commit link (long G11); on invalidation, propose a return step, the human chooses (long G10).
 - Setup guard before Plan (long G13).
-- Plan: reread the spine, `docs/solutions/`, previous specs and MemPalace (long G14); workflow `sdlc-explore`; write `work/…/plan.md` (long G15); Story Breakdown of `bmad-spec` (long G16); story specs through U6; cold-start loop (workflow `sdlc-cold-start` per round, questions and fixes in `sdlc-work`, alert after 3 rounds, long G18); `plan.html`; after the plan gate, one sub-issue per story spec.
+- Plan: reread the spine, `docs/solutions/`, previous specs and MemPalace (long G14); workflow `sdlc-explore`; write `work/…/plan.md` (long G15); Story Breakdown of `bmad-spec` (long G16); story specs through U6 ("Approve and stop" at its checkpoint, each story spec committed before the next, its questions passed to the human, never re-run on a `ready-for-dev` story); cold-start loop (workflow `sdlc-cold-start` per round, questions and fixes in `sdlc-work`, alert after 3 rounds, long G18); `plan.html`; after the plan gate, one sub-issue per story spec.
 - Rails: workflow `sdlc-rails` (one test writer per story, blind to the code, then a single `make freeze`), commit by `sdlc-work`, no human check (long G19, G20).
 - Build: workflow `sdlc-build` for the trunk, merge by `sdlc-work`, then `sdlc-build` for the leaves, merge one by one with `make check-frozen` after each (long G21). A "back to Plan" return value sends the work back to Plan and its gate.
 - Review: workflow `sdlc-review` (2 dry passes, at most 5 rounds, result in the memlog); on return at the cap, proposal and human choice (long G23).
@@ -285,7 +287,7 @@ Follows the "Resulting sequence" of `simulation-long.md`:
 
 ### U28. Workflow `sdlc-rails` — ready
 
-- `.claude/workflows/sdlc-rails.js`. `args`: mode (`long` or `bug`), story spec paths or `bug-report.md`, the resolved `sdlc_test_writer_prompt` (U6).
+- `.claude/workflows/sdlc-rails.js`. `args`: mode (`long` or `bug`), story spec paths or `bug-report.md`, the resolved `sdlc_test_writer_prompt` (long mode) or `sdlc_bug_test_writer_prompt` (bug mode, reads the code) (U6).
 - Long mode: one test writer per story with `sdlc_test_writer_prompt`, given the story spec only, never the code; then an agent runs `make freeze` for the written tests.
 - Bug mode: one test writer that reads the code and writes tests only; an agent runs the new tests; no freeze, because the human must first confirm the failure reason (bug G2); `sdlc-work` runs `make freeze` after that confirmation.
 - Returns the test files written and, in bug mode, each test's failure message.
