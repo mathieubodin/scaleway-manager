@@ -14,11 +14,13 @@ const t = (file) => ({ file, covers: "AC1" });
 
 // Scripted answers by label: "write <n>", "write <n> again", "run first",
 // "run second", "freeze". `writes[label]` gives the tests of a writer (a
-// function throws to make it die); `passes` lists files that pass when run.
+// function throws to make it die); `passes[round]` lists files that pass when
+// run in that round, `tracked` files git already tracks.
 const respond =
   ({
     writes = {},
-    passes = [],
+    passes = {},
+    tracked = [],
     freeze = { ok: true, output: "ok" },
     runs = {},
   }) =>
@@ -29,12 +31,14 @@ const respond =
     }
     if (opts.label.startsWith("run")) {
       if (runs[opts.label]) return runs[opts.label]();
+      const pass = passes[opts.label] ?? [];
       const files = prompt.split("\n").slice(1);
       return {
         results: files.map((file) => ({
           file,
-          failed: !passes.includes(file),
-          message: passes.includes(file) ? "passed" : `${file} fails`,
+          failed: !pass.includes(file),
+          message: pass.includes(file) ? "passed" : `${file} fails`,
+          tracked: tracked.includes(file),
         })),
       };
     }
@@ -94,28 +98,73 @@ test("long: one writer per story, all tests fail, one freeze", async () => {
   );
 });
 
-test("long: a passing test goes back once; rewritten and failing, it is frozen", async () => {
+test("long: a passing test is rewritten in place once; failing, it is frozen", async () => {
   const run = await runWorkflow(SCRIPT, {
     args: LONG,
     respond: respond({
       writes: {
         "write 1": [t("tests/a.sh"), t("tests/a2.sh")],
         "write 2": [t("tests/b.sh")],
-        "write 1 again": [t("tests/a3.sh")],
+        "write 1 again": [t("tests/a2.sh"), t("tests/a3.sh")],
       },
-      passes: ["tests/a2.sh"],
+      passes: { "run first": ["tests/a2.sh"] },
     }),
   });
   assert.deepEqual(
     run.result.frozen.map((x) => x.file),
-    ["tests/a.sh", "tests/a3.sh", "tests/b.sh"],
+    ["tests/a.sh", "tests/a2.sh", "tests/a3.sh", "tests/b.sh"],
   );
   assert.deepEqual(run.result.suspect, []);
   const again = run.calls.find((c) => c.opts.label === "write 1 again");
   assert.match(again.prompt, /Your earlier tests tests\/a2\.sh already pass/);
+  assert.match(again.prompt, /Rewrite those same files/);
   assert.ok(again.prompt.endsWith(`Story spec: ${STORIES[0]}`));
   const second = run.calls.find((c) => c.opts.label === "run second");
-  assert.equal(second.prompt.split("\n").slice(1).join(","), "tests/a3.sh");
+  assert.equal(
+    second.prompt.split("\n").slice(1).join(","),
+    "tests/a2.sh,tests/a3.sh",
+  );
+});
+
+test("long: a rewrite that returns nothing keeps the story's files, run again", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: { ...LONG, items: [STORIES[0]] },
+    respond: respond({
+      writes: { "write 1": [t("tests/a.sh")], "write 1 again": [] },
+      passes: { "run first": ["tests/a.sh"], "run second": ["tests/a.sh"] },
+    }),
+  });
+  assert.deepEqual(
+    run.result.suspect.map((x) => [x.item, x.file]),
+    [[STORIES[0], "tests/a.sh"]],
+  );
+});
+
+test("long: two rewriters adding the same file: the first keeps it", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: LONG,
+    respond: respond({
+      writes: {
+        "write 1": [t("tests/a.sh")],
+        "write 2": [t("tests/b.sh")],
+        "write 1 again": [t("tests/n.sh")],
+        "write 2 again": [t("tests/n.sh")],
+      },
+      passes: { "run first": ["tests/a.sh", "tests/b.sh"] },
+    }),
+  });
+  assert.deepEqual(
+    run.result.frozen.map((x) => [x.item, x.file]),
+    [
+      [STORIES[0], "tests/a.sh"],
+      [STORIES[0], "tests/n.sh"],
+      [STORIES[1], "tests/b.sh"],
+    ],
+  );
+  assert.match(
+    run.calls.at(-1).prompt,
+    /FILES='tests\/a\.sh tests\/n\.sh tests\/b\.sh'/,
+  );
 });
 
 test("long: still passing after the rewrite, the test is suspect, not frozen", async () => {
@@ -125,11 +174,10 @@ test("long: still passing after the rewrite, the test is suspect, not frozen", a
       writes: {
         "write 1": [t("tests/a.sh")],
         "write 2": [t("tests/b.sh")],
-        // Same file rewritten in place, plus a file owned by story 2 and a
-        // file name with a space: both ignored.
+        // A file owned by story 2 and a bad name are ignored.
         "write 1 again": [t("tests/a.sh"), t("tests/b.sh"), t("tests/a b.sh")],
       },
-      passes: ["tests/a.sh"],
+      passes: { "run first": ["tests/a.sh"], "run second": ["tests/a.sh"] },
     }),
   });
   assert.deepEqual(
@@ -153,7 +201,7 @@ test("long: a dead rewriter leaves the passing tests suspect", async () => {
           throw new Error("dead");
         },
       },
-      passes: ["tests/a.sh"],
+      passes: { "run first": ["tests/a.sh"] },
     }),
   });
   assert.deepEqual(
@@ -175,7 +223,7 @@ test("long: dead, empty or badly named writers fail their item", async () => {
           throw new Error("dead");
         },
         "write 2": [],
-        "write 3": [t("tests/c d.sh")],
+        "write 3": [t("tests/c d.sh"), t("../x.sh"), t("-c"), t("/etc/x")],
       },
     }),
   });
@@ -186,21 +234,50 @@ test("long: dead, empty or badly named writers fail their item", async () => {
     failed: [
       { item: STORIES[0], reason: "test writer died" },
       { item: STORIES[1], reason: "no test written" },
-      { item: "stories/3-x.md", reason: "unsupported file name: tests/c d.sh" },
+      {
+        item: "stories/3-x.md",
+        reason:
+          "files not taken (bad name, repeated, or another item's): tests/c d.sh, ../x.sh, -c, /etc/x",
+      },
     ],
   });
   assert.equal(run.calls.length, 3);
 });
 
-test("long: one test file written for two stories stops the run", async () => {
-  await assert.rejects(
-    runWorkflow(SCRIPT, {
-      args: LONG,
-      respond: respond({
-        writes: { "write 1": [t("tests/x.sh")], "write 2": [t("tests/x.sh")] },
-      }),
+test("long: valid files kept, repeated or another story's file not taken", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: LONG,
+    respond: respond({
+      writes: {
+        "write 1": [t("tests/x.sh"), t("tests/x.sh"), t("tests/.hidden")],
+        "write 2": [t("tests/x.sh"), t("tests/y.sh")],
+      },
     }),
-    /tests\/x\.sh written for both stories\/1-api\.md and stories\/2-button\.md/,
+  });
+  assert.deepEqual(
+    run.result.frozen.map((x) => [x.item, x.file]),
+    [
+      [STORIES[0], "tests/x.sh"],
+      [STORIES[1], "tests/y.sh"],
+    ],
+  );
+  assert.deepEqual(
+    run.result.failed.map((x) => x.item),
+    STORIES,
+  );
+});
+
+test("long: a test git already tracks is not new: suspect", async () => {
+  const run = await runWorkflow(SCRIPT, {
+    args: { ...LONG, items: [STORIES[0]] },
+    respond: respond({
+      writes: { "write 1": [t("tests/old.sh")], "write 1 again": [] },
+      tracked: ["tests/old.sh"],
+    }),
+  });
+  assert.deepEqual(
+    run.result.suspect.map((x) => x.message),
+    ["already tracked: not a new test"],
   );
 });
 
@@ -270,7 +347,7 @@ test("bug: one writer, tests run with their messages, nothing frozen", async () 
     args: BUG,
     respond: respond({
       writes: { "write 1": [t("tests/bug.sh"), t("tests/bug2.sh")] },
-      passes: ["tests/bug2.sh"],
+      passes: { "run first": ["tests/bug2.sh"] },
     }),
   });
   assert.deepEqual(run.result, {

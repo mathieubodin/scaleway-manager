@@ -3,7 +3,7 @@ export const meta = {
   description:
     "Write the tests of each story before its code (long mode, then freeze them), or the tests that reproduce a bug (bug mode, run but not frozen)",
   whenToUse:
-    "Launched by sdlc-work at Rails (long route) or after the bug tests are confirmed (bug route), with args { mode, items, testWriterPrompt }.",
+    "Launched by sdlc-work at Rails (long route), or once the human has confirmed the proposed bug tests (bug route), with args { mode, items, testWriterPrompt }.",
   phases: [{ title: "Write" }, { title: "Check" }, { title: "Freeze" }],
 };
 
@@ -13,10 +13,13 @@ export const meta = {
 //   sdlc_bug_test_writer_prompt (bug), resolved from the bmad-build override.
 // Long mode, decided with the author on 2026-10-19: every new test is run
 // before the freeze; a test that already passes goes back once to a new writer
-// for its story; if it still passes, it is not frozen and is reported.
+// for its story, who rewrites that same file; if it still passes, it is not
+// frozen and is reported. A test already tracked by git is not new: suspect.
 // Bug mode: the tests are run and returned with their failure messages; no
 // freeze, the human first confirms the failure reason (bug G2).
-const FILE = /^[\w./-]+$/;
+// A path relative to the repository whose segments start with a letter, a
+// digit or "_": no option-like name, no "..", no absolute path, no quoting.
+const FILE = /^\w[\w.-]*(\/\w[\w.-]*)*$/;
 
 const WRITTEN = {
   type: "object",
@@ -43,8 +46,9 @@ const RUN = {
           file: { type: "string" },
           failed: { type: "boolean" },
           message: { type: "string" },
+          tracked: { type: "boolean" },
         },
-        required: ["file", "failed", "message"],
+        required: ["file", "failed", "message", "tracked"],
       },
     },
   },
@@ -78,7 +82,7 @@ if (!prompt) throw new Error("args.testWriterPrompt is required");
 const label = mode === "long" ? "Story spec" : "Bug report";
 const write = (item, i, extra = "") =>
   agent(
-    `${prompt.trim()}\n\nOther test writers may work at the same time on other items: write only new test files for this one, never edit an existing file, and use only file names made of letters, digits, . _ / -.${extra}\n\n${label}: ${item}`,
+    `${prompt.trim()}\n\nOther test writers may work at the same time on other items: write only new test files for this one, never edit an existing file, and use paths relative to the repository root made of letters, digits, . _ / -, each part starting with a letter or a digit. In the structured answer, covers names the acceptance criterion or the reported symptom the test covers.${extra}\n\n${label}: ${item}`,
     {
       schema: WRITTEN,
       phase: "Write",
@@ -87,15 +91,23 @@ const write = (item, i, extra = "") =>
   );
 const runTests = async (files, round) => {
   const r = await agent(
-    `From the repository root, run each of these new test files on its own, with the project's test commands, and change no file. For each, report whether it failed and its failure message (or "passed").\n${files.join("\n")}`,
+    `From the repository root, run each of these new test files on its own, with the project's test commands, and change no file. For each, report whether it failed and its failure message (or "passed"), and whether git already tracks it (git ls-files).\n${files.join("\n")}`,
     { schema: RUN, phase: "Check", label: `run ${round}` },
   );
   if (r == null) throw new Error(`the agent running the tests (${round}) died`);
   // A file the agent did not report counts as passed: it showed no failure.
+  // A file git already tracks is not a new test: it counts as passed too.
   return new Map(
     files.map((f) => {
       const x = r.results.find((y) => y.file === f);
-      return [f, x ?? { file: f, failed: false, message: "not reported" }];
+      if (x == null) return [f, { failed: false, message: "not reported" }];
+      if (x.tracked) {
+        return [
+          f,
+          { failed: false, message: "already tracked: not a new test" },
+        ];
+      }
+      return [f, { failed: x.failed, message: x.message }];
     }),
   );
 };
@@ -103,34 +115,35 @@ const runTests = async (files, round) => {
 phase("Write");
 const written = await parallel(items.map((item, i) => () => write(item, i)));
 const failed = [];
-let byItem = items.map((item, i) => {
-  const tests = written[i]?.tests ?? [];
-  const bad = tests.filter((t) => !FILE.test(t.file));
-  if (written[i] == null || tests.length === 0 || bad.length > 0) {
+// Each file belongs to the first item that lists it; a later claim is dropped.
+const owners = new Map();
+const claim = (item, tests) => {
+  const mine = [];
+  for (const t of tests) {
+    if (!FILE.test(t.file) || (owners.get(t.file) ?? item) !== item) continue;
+    if (mine.some((m) => m.file === t.file)) continue;
+    owners.set(t.file, item);
+    mine.push(t);
+  }
+  return mine;
+};
+const byItem = items.map((item, i) => {
+  if (written[i] == null) {
+    failed.push({ item, reason: "test writer died" });
+    return { item, tests: [] };
+  }
+  const tests = claim(item, written[i].tests);
+  const dropped = written[i].tests.filter((t) => !tests.includes(t));
+  if (dropped.length > 0) {
     failed.push({
       item,
-      reason:
-        written[i] == null
-          ? "test writer died"
-          : tests.length === 0
-            ? "no test written"
-            : `unsupported file name: ${bad.map((t) => t.file).join(", ")}`,
+      reason: `files not taken (bad name, repeated, or another item's): ${dropped.map((t) => t.file).join(", ")}`,
     });
-    return { item, tests: [] };
+  } else if (tests.length === 0) {
+    failed.push({ item, reason: "no test written" });
   }
   return { item, tests };
 });
-const owners = new Map();
-for (const { item, tests } of byItem) {
-  for (const t of tests) {
-    if (owners.has(t.file)) {
-      throw new Error(
-        `${t.file} written for both ${owners.get(t.file)} and ${item}`,
-      );
-    }
-    owners.set(t.file, item);
-  }
-}
 
 if (owners.size === 0) {
   log("no test written");
@@ -150,7 +163,9 @@ if (mode === "bug") {
   return { mode, tests, failed };
 }
 
-// Long mode: one rewrite for the items whose tests already pass.
+// Long mode: one rewrite for the items whose tests already pass. The rewriter
+// rewrites those same files and may add new ones; nothing is deleted, so every
+// file stays listed and is run again.
 const passing = byItem.filter((x) =>
   x.tests.some((t) => !results.get(t.file).failed),
 );
@@ -165,35 +180,26 @@ if (passing.length > 0) {
       return write(
         x.item,
         items.indexOf(x.item),
-        ` Your earlier tests ${list} already pass although the story is not implemented: they check nothing new. Delete those files (they are yours to delete) and write tests that fail until the story is implemented.`,
+        ` Your earlier tests ${list} already pass although the story is not implemented: they check nothing new. Rewrite those same files (they are yours to edit) so that they fail until the story is implemented; you may add new test files.`,
       );
     }),
   );
-  byItem = byItem.map((x) => {
-    const k = passing.indexOf(x);
+  const rerun = [];
+  passing.forEach((x, k) => {
     // A dead rewriter leaves the item as it was: its passing tests are suspect.
-    if (k < 0 || again[k] == null) return x;
-    // The failing tests of the first writer are kept; new ones are added
-    // unless another item already owns their file.
-    const kept = x.tests.filter((t) => results.get(t.file).failed);
-    const added = again[k].tests.filter(
-      (t) =>
-        FILE.test(t.file) &&
-        !kept.some((y) => y.file === t.file) &&
-        (owners.get(t.file) ?? x.item) === x.item,
+    if (again[k] == null) return;
+    const before = new Set(x.tests.map((t) => t.file));
+    const added = claim(x.item, again[k].tests).filter(
+      (t) => !before.has(t.file),
     );
-    return { item: x.item, tests: [...kept, ...added] };
+    x.tests.push(...added);
+    for (const t of x.tests) {
+      if (!results.get(t.file)?.failed) rerun.push(t.file);
+    }
   });
-  const rewritten = byItem
-    .filter((x) => {
-      const k = passing.findIndex((p) => p.item === x.item);
-      return k >= 0 && again[k] != null;
-    })
-    .flatMap((x) => x.tests.map((t) => t.file))
-    .filter((f) => !results.has(f) || !results.get(f).failed);
   phase("Check");
-  if (rewritten.length > 0) {
-    const second = await runTests(rewritten, "second");
+  if (rerun.length > 0) {
+    const second = await runTests(rerun, "second");
     results = new Map([...results, ...second]);
   }
 }
