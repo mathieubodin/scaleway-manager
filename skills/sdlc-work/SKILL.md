@@ -13,7 +13,7 @@ Drives one piece of work from an idea to its PR, following `{project-root}/docs/
 - An issue number `n`:
   - a work folder `_bmad-output/work/issue-<n>-*/` exists locally, or the issue carries a `route:*` label: resume it, `references/resume.md`.
   - otherwise the issue was opened outside the process: triage it, `references/start.md`, section "External issue".
-- After triage, or at the step chosen on resume, the route goes on with its own steps: short and bug routes, `references/short-bug.md`, then `references/deliver.md`; long route (unit U20), not available yet: tell the user the route, that its next steps are not implemented, and stop.
+- After triage, or at the step chosen on resume, the route goes on with its own steps: short and bug routes, `references/short-bug.md`, then `references/deliver.md`; long route, `references/long.md`, which ends with `references/deliver.md` too.
 
 ## Rules for every step
 

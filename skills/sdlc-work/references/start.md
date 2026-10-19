@@ -62,7 +62,7 @@ Ask one clickable question: confirm all of it, or change the route, the title, t
 
 - Bug: go on with the bug route.
 - Long work and short work: go on with the route.
-- Short work and bugs: `references/short-bug.md`. Long work: unit U20 of epic #2; until it exists, tell the user the route, the issue link, the branch and the work folder, say that the next steps are not implemented yet, and stop.
+- Short work and bugs: `references/short-bug.md`. Long work: `references/long.md`.
 
 ## External issue
 
