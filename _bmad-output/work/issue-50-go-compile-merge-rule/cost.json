@@ -1,15 +1,23 @@
 {
   "issue": 50,
   "route": "short",
-  "tokens": 185391,
+  "tokens": 463303,
   "totals": {
     "steps": {
       "change": {
         "claude-opus-5-5": {
-          "input": 6,
-          "output": 2700,
-          "cacheCreation": 3912,
-          "cacheRead": 490495
+          "input": 8,
+          "output": 3585,
+          "cacheCreation": 4946,
+          "cacheRead": 656781
+        }
+      },
+      "review": {
+        "claude-opus-5-5": {
+          "input": 78,
+          "output": 5297,
+          "cacheCreation": 270616,
+          "cacheRead": 2146162
         }
       },
       "triage": {
@@ -23,10 +31,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 62,
-        "output": 10099,
-        "cacheCreation": 175230,
-        "cacheRead": 2484504
+        "input": 142,
+        "output": 16281,
+        "cacheCreation": 446880,
+        "cacheRead": 4796952
       }
     },
     "unattributed": {
@@ -40,14 +48,22 @@
   },
   "sessions": {
     "6910fa0e-7637-41b7-b12e-83ea28963359": {
-      "computedAt": "2026-10-20T17:44:27Z",
+      "computedAt": "2026-10-20T17:49:00Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
-            "input": 6,
-            "output": 2700,
-            "cacheCreation": 3912,
-            "cacheRead": 490495
+            "input": 8,
+            "output": 3585,
+            "cacheCreation": 4946,
+            "cacheRead": 656781
+          }
+        },
+        "review": {
+          "claude-opus-5-5": {
+            "input": 12,
+            "output": 4072,
+            "cacheCreation": 12077,
+            "cacheRead": 856972
           }
         },
         "triage": {
@@ -73,13 +89,26 @@
     "wf_0200eebf-95d": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "triage",
-      "computedAt": "2026-10-20T17:44:27Z",
+      "computedAt": "2026-10-20T17:49:00Z",
       "models": {
         "claude-opus-5-5": {
           "input": 30,
           "output": 580,
           "cacheCreation": 157247,
           "cacheRead": 156937
+        }
+      }
+    },
+    "wf_c44b58c6-5f9": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "review",
+      "computedAt": "2026-10-20T17:49:00Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 66,
+          "output": 1225,
+          "cacheCreation": 258539,
+          "cacheRead": 1289190
         }
       }
     }
