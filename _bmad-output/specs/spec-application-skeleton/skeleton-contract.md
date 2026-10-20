@@ -29,8 +29,9 @@ What each part must be, field by field. `SPEC.md` holds the capabilities and the
   - a second signal during shutdown is ignored;
   - a shutdown over 10 s writes one ERROR line instead of the stop line and exits 1;
   - a bind failure writes one ERROR line, no start line, and exits 1;
+  - `Serve` stopping with an error before any signal writes one ERROR line (`msg` `serve failed`) and exits 1;
   - a clean stop exits 0; the 10 s run from the first signal to the end of `Shutdown`.
-- **Logs:** every line is one `log/slog` JSON object on stdout: start (INFO, `msg` `"listening"`, field `addr`, written once after listening succeeds), stop (INFO, `msg` `"stopped"`), and the two ERROR lines. A second signal and a request write no line. `http.Server.ErrorLog` writes the internal errors of `net/http` as slog JSON on stdout at level WARN.
+- **Logs:** every line is one `log/slog` JSON object on stdout: start (INFO, `msg` `"listening"`, field `addr`, written once after listening succeeds), stop (INFO, `msg` `"stopped"`), and the three ERROR lines. A second signal and a request write no line. `http.Server.ErrorLog` writes the internal errors of `net/http` as slog JSON on stdout at level WARN.
 
 ## Page
 

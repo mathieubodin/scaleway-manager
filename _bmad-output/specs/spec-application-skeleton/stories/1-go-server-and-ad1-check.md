@@ -42,6 +42,7 @@ context:
 | Address | `LISTEN_ADDR` unset or `""` | listens on `:8080` | N/A |
 | Start | listen succeeds | one INFO line, `msg` `listening`, field `addr` = the bound address `ln.Addr().String()` (so `127.0.0.1:0` logs the real port) | N/A |
 | Bind failure | address in use | one ERROR line, `msg` `listen failed`, field `error`; no `listening` line | exit 1 |
+| Serve failure | `Serve` returns an error other than `http.ErrServerClosed` before any signal | one ERROR line, `msg` `serve failed`, field `error`; no `stopped` line | exit 1 |
 | Stop | first SIGTERM or SIGINT, a request in flight | the request completes; INFO `stopped` | exit 0 |
 | Slow stop | `Shutdown` not done after the delay | one ERROR line, `msg` `shutdown timed out`; then `srv.Close()`; no `stopped` line | exit 1 |
 | Second signal | signal during shutdown | no line, no change | same exit code |
@@ -66,7 +67,7 @@ context:
 - [ ] `internal/server/server.go` -- `New(index []byte) http.Handler`: mux with `GET /healthz` and `GET /{$}` (bytes written directly), wrapped by the header middleware.
 - [ ] `internal/server/server_test.go` -- `httptest` cases of the matrix rows Health to Unknown, headers on each, and on a 405 (`POST /healthz`).
 - [ ] `cmd/scaleway-manager/main.go` -- `main` calls `os.Exit(run(os.Getenv, os.Stdout, sigs, server.New(scalewaymanager.IndexHTML), shutdownTimeout))` with `const shutdownTimeout = 10 * time.Second` and `sigs` from `signal.Notify(SIGTERM, SIGINT)`, never stopped; `run` does `net.Listen`, the `listening` line, `Serve`, and on the first signal `Shutdown` with a fresh `context.WithTimeout(context.Background(), delay)`; later signals are drained and ignored.
-- [ ] `cmd/scaleway-manager/main_test.go` -- drives `run` with a signal channel, a slow test handler and a short delay: matrix rows Address to Second signal, every stdout line parsed as JSON, ERROR count per case, and `shutdownTimeout == 10*time.Second`.
+- [ ] `cmd/scaleway-manager/main_test.go` -- drives `run` with a signal channel, a slow test handler and a short delay: matrix rows Address to Second signal (Serve failure: the test closes the listener `run` uses, through an injected `net.Listener` factory or by passing a listener), every stdout line parsed as JSON, ERROR count per case, and `shutdownTimeout == 10*time.Second`.
 - [ ] `cmd/check-go-mod/main.go` -- `check(dir string) error` runs `go mod edit -json <dir>/go.mod` (`os/exec`), fails on any `Require` with `go.mod: require found`, fails when `<dir>/go.sum` exists with size > 0 with `go.sum: not empty`; `main` checks `.`, prints the error, exits 1.
 - [ ] `cmd/check-go-mod/main_test.go` and `cmd/check-go-mod/testdata/{require-line,require-block,gosum,clean}/` -- the AD-1 row; each fixture `go.mod` has `module example.com/fixture` and `go 1.27.2`.
 - [ ] `Makefile`, `prek.toml`, `.github/workflows/pr-checks.yml` -- per Code Map; `lint-go` = `test -z "$$(gofmt -l $$(git ls-files '*.go'))"` (tracked files only, so other worktrees and `node_modules` are skipped; print the list on failure) then `go vet ./...`; `test-go` = `go test ./...`; `check-go-mod` = `go run ./cmd/check-go-mod`.
