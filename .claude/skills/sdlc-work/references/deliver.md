@@ -34,6 +34,8 @@ Decided with the author: show the migration entry, the title, the full body and,
 
 Give the user the PR link and the state of its checks (`gh pr checks <url>`). The merge is theirs; Done is set by the Project workflows.
 
+When the PR adds a job to `.github/workflows/pr-checks.yml`, remind the user that after the merge each new job name must be added to the required status checks of `main`, with admin rights: `gh api -X POST repos/{owner}/{repo}/branches/main/protection/required_status_checks/contexts --input -` with the body `{"contexts":[<job names>]}`. Record memlog result `required-checks reminder: <job names>`.
+
 ## 5. After the PR
 
 Fixes after the PR stay in the `deliver` step: `make cost` before each commit, push, and `make evidence` again when a check changed. When this session stops working on the PR, append the `step-end` of `deliver`.

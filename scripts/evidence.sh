@@ -17,11 +17,11 @@ dirs=(_bmad-output/work/issue-"$issue"-*/)
 work=${dirs[0]%/}
 out=$work/evidence.md
 
-# Checks available today. U12 to U14 add code tests, coverage, mutation and the behavior diff.
-checks=(lint-docs lint-workflows test-workflows check-frozen "check-migration ISSUE=$issue")
+# Checks available today. #14 adds coverage and mutation testing, #15 the behavior diff.
+checks=(lint-docs lint-workflows test-workflows check-frozen lint-go test-go check-go-mod lint-chart build-image "check-migration ISSUE=$issue")
 not_run=(
-  "Code tests, coverage, mutation testing: no target yet (U12, stack not chosen)"
-  "Behavior diff: no target yet (U13, stack not chosen)"
+  "Coverage, mutation testing: no target yet (#14)"
+  "Behavior diff: no target yet (#15)"
 )
 
 # Colors out; durations (a number standing alone, minutes included), make's
