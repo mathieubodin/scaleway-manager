@@ -1,7 +1,7 @@
 {
   "issue": 41,
   "route": "long",
-  "tokens": 5851144,
+  "tokens": 6073876,
   "totals": {
     "steps": {
       "build": {
@@ -18,6 +18,14 @@
           "output": 93360,
           "cacheCreation": 2024826,
           "cacheRead": 23961951
+        }
+      },
+      "deliver": {
+        "claude-opus-5-5": {
+          "input": 74,
+          "output": 9649,
+          "cacheCreation": 210488,
+          "cacheRead": 8260321
         }
       },
       "plan": {
@@ -38,10 +46,10 @@
       },
       "review": {
         "claude-opus-5-5": {
-          "input": 522,
-          "output": 19880,
-          "cacheCreation": 1502687,
-          "cacheRead": 20303504
+          "input": 524,
+          "output": 21130,
+          "cacheCreation": 1503956,
+          "cacheRead": 20774151
         }
       },
       "triage": {
@@ -55,10 +63,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 2108,
-        "output": 223232,
-        "cacheCreation": 5625804,
-        "cacheRead": 108890615
+        "input": 2184,
+        "output": 234131,
+        "cacheCreation": 5837561,
+        "cacheRead": 117621583
       }
     },
     "unattributed": {
@@ -72,7 +80,7 @@
   },
   "sessions": {
     "bfe2b9df-6453-425f-819b-fdf500b45bba": {
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "steps": {
         "build": {
           "claude-opus-5-5": {
@@ -88,6 +96,14 @@
             "output": 83151,
             "cacheCreation": 531606,
             "cacheRead": 18789666
+          }
+        },
+        "deliver": {
+          "claude-opus-5-5": {
+            "input": 74,
+            "output": 9649,
+            "cacheCreation": 210488,
+            "cacheRead": 8260321
           }
         },
         "plan": {
@@ -108,10 +124,10 @@
         },
         "review": {
           "claude-opus-5-5": {
-            "input": 32,
-            "output": 12442,
-            "cacheCreation": 29067,
-            "cacheRead": 6846021
+            "input": 34,
+            "output": 13692,
+            "cacheCreation": 30336,
+            "cacheRead": 7316668
           }
         },
         "triage": {
@@ -137,7 +153,7 @@
     "wf_108fecd2-ab2": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "triage",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
@@ -150,7 +166,7 @@
     "wf_2710e115-d98": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "review",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 490,
@@ -163,7 +179,7 @@
     "wf_2be9c3e6-f48": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 38,
@@ -176,7 +192,7 @@
     "wf_3017d28b-290": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "plan",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 34,
@@ -189,7 +205,7 @@
     "wf_332b5a19-2d8": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 84,
@@ -202,7 +218,7 @@
     "wf_4df14257-2b4": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "plan",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 38,
@@ -215,7 +231,7 @@
     "wf_4ef327c6-39d": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "plan",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
@@ -228,7 +244,7 @@
     "wf_515cf625-fd5": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "build",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 70,
@@ -241,7 +257,7 @@
     "wf_534a49b9-08f": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 68,
@@ -254,7 +270,7 @@
     "wf_72a9fa80-fbc": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "build",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 106,
@@ -267,7 +283,7 @@
     "wf_74fadcf8-205": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "build",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 72,
@@ -280,7 +296,7 @@
     "wf_c48b1917-7b7": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "build",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 66,
@@ -293,7 +309,7 @@
     "wf_ca1e55b6-3e3": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 80,
@@ -306,7 +322,7 @@
     "wf_e7fd965c-a74": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "rails",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 144,
@@ -319,7 +335,7 @@
     "wf_f6f01e4a-3c0": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 76,
@@ -332,7 +348,7 @@
     "wf_fc97b61f-618": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "plan",
-      "computedAt": "2026-10-20T15:52:53Z",
+      "computedAt": "2026-10-20T15:58:09Z",
       "models": {
         "claude-opus-5-5": {
           "input": 112,
