@@ -1,4 +1,5 @@
-{{- $gateway := .Values.httpRoute.gateway | default dict }}
+{{- $httpRoute := .Values.httpRoute | default dict }}
+{{- $gateway := $httpRoute.gateway | default dict }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -12,7 +13,7 @@ spec:
       {{- with $gateway.sectionName }}
       sectionName: {{ . | quote }}
       {{- end }}
-  {{- with .Values.httpRoute.hostnames }}
+  {{- with $httpRoute.hostnames }}
   hostnames:
     {{- toYaml . | nindent 4 }}
   {{- end }}

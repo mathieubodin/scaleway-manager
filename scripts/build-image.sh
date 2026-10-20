@@ -22,8 +22,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-container=$(docker run -d --rm --read-only --cap-drop ALL --user 65532 -p 127.0.0.1::8080 "$image")
-hostport=$(docker port "$container" 8080/tcp | head -n 1)
+# No --rm: logs stay readable if the binary exits at start; cleanup removes it.
+container=$(docker run -d --read-only --cap-drop ALL --user 65532 -p 127.0.0.1::8080 "$image")
+hostport=$(docker port "$container" 8080/tcp 2>/dev/null | head -n 1 || true)
+if [[ -z $hostport ]]; then
+	docker logs "$container" 2>&1 || true
+	echo "healthz: status=000 body="
+	exit 1
+fi
 url="http://$hostport/healthz"
 echo "Probing $url"
 

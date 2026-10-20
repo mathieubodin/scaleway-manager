@@ -42,7 +42,7 @@ Then `references/deliver.md`.
 
 1. The session makes the change itself on the work branch, without a subagent.
 2. A frozen test that must change: explain why and ask the user; only after a yes, change it and `make freeze FILES='<file>'`.
-3. `make check`. The behavior diff (U13) does not exist yet: nothing to compare; the evidence record says it was not run.
+3. `make check`. The behavior diff (#15) does not exist yet: nothing to compare; the evidence record says it was not run.
 4. Commit with the type planned for the PR (the branch type): `<type>: <short title>`.
 5. The change turns out bigger than expected (new behavior, adoption keys, exports or Secrets touched): propose rerouting (`start.md`, "Rerouting").
 

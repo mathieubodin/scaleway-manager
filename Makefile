@@ -90,7 +90,9 @@ check-go:
 		exit 1; }
 
 lint-go: check-go ## Go format check (gofmt, tracked files) and go vet
-	@unformatted="$$(gofmt -l $$(git ls-files '*.go'))"; \
+	@files="$$(git ls-files '*.go')" || { echo "git ls-files failed"; exit 1; }; \
+	if [ -z "$$files" ]; then echo "No tracked .go file"; exit 1; fi; \
+	unformatted="$$(gofmt -l $$files)" || { echo "gofmt failed"; exit 1; }; \
 	if [ -n "$$unformatted" ]; then echo "Not formatted (gofmt -w):"; echo "$$unformatted"; exit 1; fi
 	go vet ./...
 
