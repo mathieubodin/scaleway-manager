@@ -22,3 +22,6 @@ config:
     siblings_only: true
   MD025:
     front_matter_title: ""
+  # bmad-build story specs wrap their human-owned intent in this element.
+  MD033:
+    allowed_elements: [frozen-after-approval]
