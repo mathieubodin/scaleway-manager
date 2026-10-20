@@ -17,7 +17,7 @@ export MUTATION
 BASE ?= origin/main
 export BASE
 
-.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod
+.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod check-docker check-curl build-image
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -99,6 +99,20 @@ test-go: check-go ## Run the Go tests
 
 check-go-mod: check-go ## Fail if go.mod has a require or go.sum is not empty (AD-1)
 	go run ./cmd/check-go-mod
+
+# Container image: kept out of check (needs docker; builds and runs the image).
+check-docker:
+	@command -v docker >/dev/null || { \
+		echo "Error: docker not found. Install with: https://docs.docker.com/engine/install/"; \
+		exit 1; }
+
+check-curl:
+	@command -v curl >/dev/null || { \
+		echo "Error: curl not found. Install with: https://curl.se/download.html"; \
+		exit 1; }
+
+build-image: check-docker check-curl ## Check the Dockerfile, build scaleway-manager:local, probe /healthz (CAP-3)
+	scripts/build-image.sh
 
 check: lint-docs lint-workflows test-workflows check-frozen lint-go test-go check-go-mod ## Run the checks that need no issue number (used by the sdlc-review fixer)
 

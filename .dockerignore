@@ -1,0 +1,14 @@
+# Only what `go build ./cmd/scaleway-manager` needs reaches the build context:
+# go.mod, embed.go, web/, internal/, cmd/.
+.git
+node_modules
+_bmad
+_bmad-output
+.claude
+coverage
+docs
+tests
+charts
+scripts
+skills
+*.md
