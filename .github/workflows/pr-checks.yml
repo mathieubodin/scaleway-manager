@@ -100,6 +100,24 @@ jobs:
           cache: false
       - run: make check-go-mod
 
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: make build-image
+      # Every image test runs; the job fails when one of them fails.
+      - name: Run the image tests
+        run: |
+          failed=0
+          for t in tests/image/*.test.sh; do
+            echo "::group::$t"
+            "$t" || { echo "FAILED: $t"; failed=1; }
+            echo "::endgroup::"
+          done
+          exit "$failed"
+
   check-migration:
     runs-on: ubuntu-latest
     steps:
