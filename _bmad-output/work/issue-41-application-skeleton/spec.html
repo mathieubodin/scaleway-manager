@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec gate: #41 Application skeleton: Go binary, Dockerfile, minimal chart</title>
+<style>
+:root {
+  --bg: #f5f6f4; --ink: #1f2421; --muted: #5d6762; --line: #d3d9d4;
+  --panel: #ffffff; --accent: #2f6f5e; --open: #a3620f;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816; --ink: #e2e7e3; --muted: #9ba59f; --line: #2c3430;
+    --panel: #1b201d; --accent: #7cc4ad; --open: #e0a24f;
+    color-scheme: dark;
+  }
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); padding: 0 16px; }
+main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 0 4rem; display: grid; gap: 1.8rem; }
+h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.25rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: grid; gap: .3rem; }
+section { display: grid; gap: .7rem; }
+.meta { color: var(--muted); font-size: .92rem; }
+.verdict { background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; padding: 1rem 1.2rem; display: grid; gap: .4rem; }
+.verdict strong { color: var(--accent); }
+.open { color: var(--open); font-weight: 600; }
+.wide { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
+.flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .2rem .6rem; }
+</style>
+</head>
+<body>
+<main>
+<header style="display: grid; gap: .5rem">
+  <h1>Spec gate: #41 Application skeleton: Go binary, Dockerfile, minimal chart</h1>
+  <p class="meta">Branch <code>feat/41-application-skeleton</code>. Reference: <code>_bmad-output/specs/spec-application-skeleton/SPEC.md</code>, <code>_bmad-output/specs/spec-application-skeleton/skeleton-contract.md</code>.</p>
+</header>
+<div class="verdict">
+  <strong>What you validate</strong>
+  <p>The spec of the smallest runnable scaleway-manager: a Go server, its image and its chart, under the spine's rules (AD-1, AD-3, AD-8, AD-11, AD-12), with the checks that keep those rules true from the first commit.</p>
+  <p class="meta">This page helps you understand; the reference files are what you validate or invalidate.</p>
+</div>
+<section><h2>What changes for the user</h2><ul><li>Today the repository has no application code. After this work, there is a server you can run that answers <code>/healthz</code> and shows a placeholder page saying no feature exists yet.</li><li>An image runs that server read-only, without any capability, as uid 65532.</li><li>A Helm chart installs it as exactly one pod behind a Gateway you name; the pod has no Kubernetes API rights.</li><li>Every PR gets five new checks (<code>lint-go</code>, <code>test-go</code>, <code>check-go-mod</code>, <code>lint-chart</code>, <code>build-image</code>), which become required checks of <code>main</code> right after the merge.</li><li>#14, #16 and #42 can then start from <code>main</code>.</li></ul></section>
+<section><h2>Scope and non-goals</h2><p>In scope: <code>go.mod</code> (Go 1.27.1, no <code>require</code>), <code>cmd/scaleway-manager</code>, <code>cmd/check-go-mod</code>, <code>web/index.html</code>, the Dockerfile, the chart <code>charts/scaleway-manager</code>, the make targets, prek hooks and CI jobs. Field-by-field contract: <code>_bmad-output/specs/spec-application-skeleton/skeleton-contract.md</code>.</p><p>Not in scope:</p><ul><li>Coverage, mutation testing and thresholds (#14).</li><li>A kind cluster or any in-cluster run (#16).</li><li>Multi-arch builds, cosign signing, provenance attestation, publication to ghcr.io, release versions (#18); the chart stays at <code>0.0.0</code>.</li><li>The <code>scaleway-manager-credentials</code> Role in <code>scaleway-system</code> (first feature that writes a Secret).</li><li>The <code>/api/events</code> HTTPRoute rule (stream feature).</li><li>Any rule in the two ClusterRoles; any binding.</li><li>Any Kubernetes API call, login, session or Scaleway readiness check.</li><li>Rejecting a port below 1024 in the chart.</li><li>The Go race detector.</li></ul></section>
+<section><h2>Acceptance criteria</h2><p>Full wording in <code>_bmad-output/specs/spec-application-skeleton/SPEC.md</code>. No <code>@manual</code> scenario.</p><div class="wide"><table><thead><tr><th>Id</th><th>Criterion (summary)</th><th>Verified by</th></tr></thead><tbody><tr><td>CAP-1</td><td>Health check and placeholder page: <code>GET /healthz</code> gives 200 and <code>ok</code> (no newline), <code>HEAD</code> gives 200 and an empty body, <code>GET /</code> gives <code>web/index.html</code>, unknown paths give 404; all four carry the AD-8 CSP and <code>nosniff</code> headers.</td><td>Automated: Go tests, <code>make test-go</code></td></tr><tr><td>CAP-2</td><td>Start and stop: <code>LISTEN_ADDR</code> (default <code>:8080</code>); INFO <code>listening</code> line after listening succeeds; on SIGTERM or SIGINT in-flight requests complete, INFO <code>stopped</code>, exit 0; over 10 s, one ERROR line and exit 1; second signal changes nothing; bind failure, one ERROR line and exit 1; slog JSON on stdout, no per-request line.</td><td>Automated: Go tests, <code>make test-go</code></td></tr><tr><td>CAP-3</td><td>Image: the Dockerfile has exactly the two pinned <code>FROM</code> lines and cross-compiles with <code>GOOS=$TARGETOS GOARCH=$TARGETARCH go build</code>; the image runs <code>--read-only --cap-drop ALL --user 65532</code> and answers <code>/healthz</code> with 200 <code>ok</code> within 30 s.</td><td>Automated: <code>make build-image</code>, locally and as a CI job</td></tr><tr><td>CAP-4</td><td>Chart: every row of the contract's Objects table at its exact value; port named <code>http</code>; rendering fails naming the key for a missing Gateway or a bad <code>listenAddr</code> port; <code>image.tag</code> override; <code>helm lint</code> passes.</td><td>Automated: helm-unittest tests and <code>helm lint</code>, <code>make lint-chart</code></td></tr><tr><td>CAP-5</td><td>Checks: five green CI jobs; <code>make check</code> runs four of them; the AD-1 check program fails on a <code>require</code> (line or block) or a non-empty <code>go.sum</code>; install hints per tool; Helm exactly <code>v4.3.0</code>; after the merge, the five jobs are required checks.</td><td>Automated: CI jobs, Go tests on <code>testdata</code>; after the merge, a <code>gh api</code> read of the required checks</td></tr></tbody></table></div></section>
+<section><h2>Decisions taken during Define</h2><p>Source: <code>_bmad-output/work/issue-41-application-skeleton/define-notes.md</code>.</p><ul><li>Forge: #41 ships the minimum executable checks plus CI; coverage and mutation stay in #14.</li><li>Forge: two empty, unbound ClusterRoles; the credentials Role waits for the first feature that writes a Secret.</li><li>Forge: HTTPRoute with one rule on <code>/</code>; Gateway name and namespace required.</li><li>Forge: no capability added; port 8080 needs none (the Service maps 80 to 8080 outside the pod).</li><li>P1: values keys <code>httpRoute.gateway.{name,namespace,sectionName}</code>, <code>httpRoute.hostnames</code>, <code>listenAddr</code>.</li><li>P2: <code>make check</code> runs the Go, AD-1 and chart targets, not the image build.</li><li>P3: prek runs <code>lint-go</code> and <code>lint-chart</code> at commit (against the parallax proposal, to follow the <code>prek.toml</code> convention).</li><li>P4: <code>ReadHeaderTimeout</code> 10 s, no <code>WriteTimeout</code>.</li><li>P5: the AD-1 check fails on any <code>require</code> and on a non-empty <code>go.sum</code>.</li><li>P6: <code>make build-image</code> runs the container read-only, all capabilities dropped, uid 65532, and checks <code>/healthz</code>.</li><li>P7: Go from the <code>go 1.27.1</code> line; Helm exactly 4.3.0 from <code>HELM_VERSION</code>, checked by <code>lint-chart</code>.</li><li>D1 to D16: all 16 detail proposals validated together (target names, one CI job per target, no <code>-race</code>, <code>ci/test-values.yaml</code>, <code>go:embed</code> file at the module root, exit codes, page sentence, defaults).</li><li>R1: the new jobs become required checks right after the merge; the human runs the <code>gh api</code> command.</li><li>R2: chart tests use the helm-unittest plugin in <code>charts/scaleway-manager/tests/</code>.</li><li>R3: Deployment strategy <code>Recreate</code>: never two pods.</li><li>R4 to R9: cross-compilable Dockerfile, images pinned by digest, IPv6 port parsing, <code>0.0.0</code> documented, Go install hint, fixed ClusterRole names accepted.</li><li>Research: skipped; helm-unittest support for Helm 4.3.0 is settled in Plan.</li><li>Spec-lint rounds 1 to 4: each criterion rewritten to one reading (HEAD body, signals, log lines, exact <code>FROM</code> lines, port rules, tool hints); the AD-1 check is a tested Go program.</li><li>Process: markdownlint ignores <code>.memlog.md</code> files.</li></ul></section>
+<section><h2>Risks and open points</h2><ul><li><span class="open">Open:</span> does helm-unittest support Helm 4.3.0, and from which version? Settled in Plan; if not, the chart test tool is chosen again with you.</li><li><span class="open">Open:</span> the numbers of the default resource requests and limits: set in Plan.</li><li><span class="open">Open:</span> spec-lint stayed red after 4 rounds on CAP-2, CAP-3 and CAP-4; you chose to come to this gate. Remarks left from round 4: "first fails unless" could be read as "the first run fails" (now "exits non-zero before building unless"); whether a start line is written "only after" or "a single time" (now: once, after listening succeeds).</li><li>Assumption: SIGINT stops the server like SIGTERM.</li><li>Assumption: the AD-1 check program lives at <code>cmd/check-go-mod</code>, not built into the image.</li><li>Assumption: <code>image.pullPolicy</code> defaults to <code>IfNotPresent</code>.</li><li>Risk accepted (R9): fixed ClusterRole names allow one install per cluster.</li><li>Risk (R7): until #18 publishes an image, an install needs an <code>image.tag</code> override.</li></ul></section>
+</main>
+</body>
+</html>
