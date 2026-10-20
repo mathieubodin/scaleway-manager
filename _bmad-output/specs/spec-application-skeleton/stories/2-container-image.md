@@ -62,7 +62,7 @@ context:
 - [ ] `tests/image/check-dockerfile.test.sh` and `tests/image/fixtures/*.Dockerfile` -- runs the checker on one passing fixture and one failing fixture per checker row, asserting each exit code; exits 1 on any mismatch.
 - [ ] `scripts/build-image.sh` -- runs the fixture test, then the checker on `Dockerfile`, then `DOCKER_BUILDKIT=1 docker build -t scaleway-manager:local .`, then `docker run -d --rm --read-only --cap-drop ALL --user 65532 -p 127.0.0.1::8080`, reads the port with `docker port`, polls `/healthz` with `curl` once per second for up to 30 s, compares status and exact body, removes the container through a `trap`.
 - [ ] `Makefile` -- `build-image: check-docker check-curl ## …` runs `scripts/build-image.sh`.
-- [ ] `.github/workflows/pr-checks.yml` -- job `build-image`: checkout, `make build-image`.
+- [ ] `.github/workflows/pr-checks.yml` -- job `build-image`: checkout, `make build-image`, then each `tests/image/*.test.sh` in turn (frozen at Rails; one of them runs `make build-image` itself), failing the job when one fails.
 
 **Acceptance Criteria:**
 

@@ -1,0 +1,74 @@
+suite: ClusterRoles
+templates:
+  - templates/clusterroles.yaml
+release:
+  name: scaleway-manager
+set:
+  httpRoute:
+    gateway:
+      name: gw
+      namespace: gw-ns
+tests:
+  - it: renders exactly two ClusterRoles
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: ClusterRole
+      - isAPIVersion:
+          of: rbac.authorization.k8s.io/v1
+
+  - it: renders scaleway-manager-namespace with no rule and no aggregation
+    documentSelector:
+      path: metadata.name
+      value: scaleway-manager-namespace
+    asserts:
+      - isKind:
+          of: ClusterRole
+      - notExists:
+          path: rules[0]
+      - notExists:
+          path: aggregationRule
+
+  - it: renders scaleway-manager-cluster with no rule and no aggregation
+    documentSelector:
+      path: metadata.name
+      value: scaleway-manager-cluster
+    asserts:
+      - isKind:
+          of: ClusterRole
+      - notExists:
+          path: rules[0]
+      - notExists:
+          path: aggregationRule
+
+  - it: keeps the fixed names whatever the release name
+    release:
+      name: demo
+    documentSelector:
+      path: metadata.name
+      value: scaleway-manager-namespace
+    asserts:
+      - isKind:
+          of: ClusterRole
+
+  - it: keeps the fixed cluster name whatever the release name
+    release:
+      name: demo
+    documentSelector:
+      path: metadata.name
+      value: scaleway-manager-cluster
+    asserts:
+      - isKind:
+          of: ClusterRole
+
+  - it: carries the common labels on both ClusterRoles
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            helm.sh/chart: scaleway-manager-0.0.0
+            app.kubernetes.io/name: scaleway-manager
+            app.kubernetes.io/instance: scaleway-manager
+            app.kubernetes.io/version: "0.0.0"
+            app.kubernetes.io/managed-by: Helm

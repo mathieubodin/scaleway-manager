@@ -1,0 +1,62 @@
+suite: Service
+templates:
+  - templates/service.yaml
+release:
+  name: scaleway-manager
+set:
+  httpRoute:
+    gateway:
+      name: gw
+      namespace: gw-ns
+tests:
+  - it: renders one ClusterIP Service named scaleway-manager
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: metadata.name
+          value: scaleway-manager
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: exposes port 80 to the container port named http
+    asserts:
+      - equal:
+          path: spec.ports
+          value:
+            - name: http
+              port: 80
+              targetPort: http
+              protocol: TCP
+
+  - it: keeps targetPort http whatever the listenAddr port
+    set:
+      listenAddr: "[::]:9090"
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: http
+
+  - it: selects the pods by the selector labels only
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: scaleway-manager
+            app.kubernetes.io/instance: scaleway-manager
+
+  - it: carries the common labels
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            helm.sh/chart: scaleway-manager-0.0.0
+            app.kubernetes.io/name: scaleway-manager
+            app.kubernetes.io/instance: scaleway-manager
+            app.kubernetes.io/version: "0.0.0"
+            app.kubernetes.io/managed-by: Helm
