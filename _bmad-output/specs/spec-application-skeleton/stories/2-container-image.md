@@ -27,7 +27,7 @@ context:
   - `FROM gcr.io/distroless/static-debian13:nonroot@sha256:516757106de35205efb70b91ba03f6f1298424a0678c603255cf2852a7000087`
 - Build stage: `ARG TARGETOS` and `ARG TARGETARCH`; `ENV GOTOOLCHAIN=local`; a `RUN` line containing `CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build` of `./cmd/scaleway-manager` only.
 - Runtime stage: the binary at `/scaleway-manager`, `USER 65532`, `ENTRYPOINT ["/scaleway-manager"]`.
-- `make build-image` follows story 1's Makefile pattern (`##` comment, `.PHONY`, tool guards `check-docker` and `check-curl` printing `Error: <tool> not found. Install with: <url>` and exiting 1) and stays out of `make check`; CI job `build-image` follows story 1's jobs (checkout pinned, `persist-credentials: false`), with no extra action: plain `docker build` under BuildKit.
+- `make build-image` follows story 1's Makefile pattern (`##` comment, `.PHONY`, tool guards `check-docker` and `check-curl` printing exactly `Error: docker not found. Install with: https://docs.docker.com/engine/install/` or `Error: curl not found. Install with: https://curl.se/download.html` and exiting 1) and stays out of `make check`; CI job `build-image` follows story 1's jobs (checkout pinned, `persist-credentials: false`), with no extra action: plain `docker build` under BuildKit.
 - The container is always removed, on success or failure.
 
 **Never:** multi-arch build, push, signing or attestation (#18); `cmd/check-go-mod` in the image; a shell, `curl` or `HEALTHCHECK` inside the image; `--privileged` on the probe run.
@@ -41,7 +41,7 @@ context:
 | Wrong order or count | runtime `FROM` first, or a third `FROM` | checker fails | exit 1, no build |
 | No BUILDPLATFORM | build `FROM` without `--platform=$BUILDPLATFORM` | checker fails | exit 1, no build |
 | No cross-compile | no `RUN` with `GOOS=$TARGETOS GOARCH=$TARGETARCH go build` in the build stage | checker fails | exit 1, no build |
-| Not healthy | no 200 with body exactly `ok` (no newline) within 30 s | container stopped and removed | exit 1, last body and status printed |
+| Not healthy | no 200 with body exactly `ok` (no newline) within 30 s | container stopped and removed | exit 1, prints `healthz: status=<code> body=<body>` of the last attempt |
 
 </frozen-after-approval>
 
@@ -58,7 +58,7 @@ context:
 
 - [ ] `Dockerfile` -- per Always; `WORKDIR /src`, `COPY . .`, output `/out/scaleway-manager`, `-trimpath`.
 - [ ] `.dockerignore` -- exclude `.git`, `node_modules`, `_bmad`, `_bmad-output`, `.claude`, `coverage`, `docs`, `tests`, `charts`, `scripts`, `skills`, `*.md`; keep what `go build ./cmd/scaleway-manager` needs (`go.mod`, `embed.go`, `web/`, `internal/`, `cmd/`).
-- [ ] `scripts/check-dockerfile.sh` -- `check-dockerfile.sh <file>`, exit 0 or 1: the checks of the matrix rows Missing digest to No cross-compile, each failure printing the rule and the line; bash with `set -euo pipefail`. The `FROM` lines are matched case-sensitively against the two exact lines of Always, with any 64-lowercase-hex digest; the `RUN` substring is matched on a single physical line.
+- [ ] `scripts/check-dockerfile.sh` -- `check-dockerfile.sh <file>`, exit 0 or 1: the checks of the matrix rows Missing digest to No cross-compile, each failure printing the rule and the line; bash with `set -euo pipefail`. Every line matching `^[[:space:]]*[Ff][Rr][Oo][Mm][[:space:]]` counts as a `FROM` line; there must be exactly two, matched case-sensitively against the two exact lines of Always, with any 64-lowercase-hex digest; the `RUN` substring is matched on a single physical line.
 - [ ] `tests/image/check-dockerfile.test.sh` and `tests/image/fixtures/*.Dockerfile` -- runs the checker on one passing fixture and one failing fixture per checker row, asserting each exit code; exits 1 on any mismatch.
 - [ ] `scripts/build-image.sh` -- runs the fixture test, then the checker on `Dockerfile`, then `DOCKER_BUILDKIT=1 docker build -t scaleway-manager:local .`, then `docker run -d --rm --read-only --cap-drop ALL --user 65532 -p 127.0.0.1::8080`, reads the port with `docker port`, polls `/healthz` with `curl` once per second for up to 30 s, compares status and exact body, removes the container through a `trap`.
 - [ ] `Makefile` -- `build-image: check-docker check-curl ## …` runs `scripts/build-image.sh`.
