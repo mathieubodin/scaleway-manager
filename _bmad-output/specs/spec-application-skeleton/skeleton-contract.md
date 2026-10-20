@@ -6,14 +6,17 @@ What each part must be, field by field. `SPEC.md` holds the capabilities and the
 
 | Path | Holds |
 | --- | --- |
-| `go.mod` | `module`, `go 1.27.1`, nothing else |
-| `cmd/scaleway-manager/` | `main`: configuration, server, signals, logs |
+| `go.mod` | `module`, `go 1.27.2`, nothing else |
+| `internal/server/` | Handler: AD-8 header middleware around the whole mux, routes |
+| `cmd/scaleway-manager/` | `main`: configuration, listening, signals, logs, through a testable `run` function whose shutdown delay is injected (10 s in production) |
 | `cmd/check-go-mod/` | AD-1 check program, standard library, with `testdata/` fixtures; not in the image |
 | Module root, one Go file | `go:embed` of `web/` (so `web/` holds no Go file) |
 | `web/index.html` | Placeholder page |
 | `Dockerfile`, `.dockerignore` | Image |
 | `charts/scaleway-manager/` | Chart, `ci/test-values.yaml`, `tests/` (helm-unittest), `.helmignore`, `README.md` |
 | `Makefile`, `prek.toml`, `.github/workflows/pr-checks.yml` | Checks |
+| `docs/development-process.md`, `scripts/evidence.sh`, `skills/sdlc-work/references/deliver.md` (and its installed copy) | Process files that list the checks |
+| `docs/migrations/next/41.md` | `Migration: no impact` |
 
 ## Server
 
@@ -27,7 +30,7 @@ What each part must be, field by field. `SPEC.md` holds the capabilities and the
   - a shutdown over 10 s writes one ERROR line instead of the stop line and exits 1;
   - a bind failure writes one ERROR line, no start line, and exits 1;
   - a clean stop exits 0; the 10 s run from the first signal to the end of `Shutdown`.
-- **Logs:** every line is one `log/slog` JSON object on stdout: start (INFO, `msg` `"listening"`, field `addr`, written once after listening succeeds), stop (INFO, `msg` `"stopped"`), and the two ERROR lines. A second signal and a request write no line.
+- **Logs:** every line is one `log/slog` JSON object on stdout: start (INFO, `msg` `"listening"`, field `addr`, written once after listening succeeds), stop (INFO, `msg` `"stopped"`), and the two ERROR lines. A second signal and a request write no line. `http.Server.ErrorLog` writes the internal errors of `net/http` as slog JSON on stdout at level WARN.
 
 ## Page
 
@@ -36,7 +39,7 @@ What each part must be, field by field. `SPEC.md` holds the capabilities and the
 ## Image
 
 - **Stages:** exactly two, build then runtime.
-- **Build stage:** `FROM --platform=$BUILDPLATFORM golang:1.27.1@sha256:<digest> AS build`. The static binary (`CGO_ENABLED=0`) is built by a `RUN` line containing `GOOS=$TARGETOS GOARCH=$TARGETARCH go build`.
+- **Build stage:** `FROM --platform=$BUILDPLATFORM golang:1.27.2@sha256:<digest> AS build`, with `ARG TARGETOS` and `ARG TARGETARCH`. The static binary (`CGO_ENABLED=0`) is built by a `RUN` line containing `GOOS=$TARGETOS GOARCH=$TARGETARCH go build`.
 - **Runtime stage:** `FROM gcr.io/distroless/static-debian13:nonroot@sha256:<digest>`.
 - **Local build:** host architecture only, unsigned.
 - **`.dockerignore`:** excludes everything the build does not need, for example `.git`, `node_modules`, `_bmad*`, `.claude`, `coverage`, `docs`, `tests/workflows`.
@@ -60,7 +63,9 @@ httpRoute:
     namespace: ""          # required
     sectionName: ""        # optional: the HTTPS listener
   hostnames: []            # optional
-resources:                 # modest default requests and limits, overridable; numbers set in Plan
+resources:
+  requests: {cpu: 10m, memory: 32Mi}
+  limits: {memory: 64Mi}   # no CPU limit: GOMAXPROCS follows it
 ```
 
 Rendering fails with a message naming the key in either of these cases:
@@ -100,8 +105,8 @@ Each target fails with an install hint naming its own tool when it is missing, l
 | `build-image` | First checks the Dockerfile: every `FROM` carries `tag@sha256:`, the build stage carries `--platform=$BUILDPLATFORM` and uses `TARGETOS`/`TARGETARCH`. Then builds the image, runs it `--read-only --cap-drop ALL --user 65532` with a published port, waits up to 30 s for `200 ok` on `/healthz` from the host (distroless has no curl), stops it, fails without that answer. Digests are 64 lowercase hex characters | no |
 
 - **Go version:** comes from the `go 1.27.1` line. Locally, `GOTOOLCHAIN=auto` fetches it, which needs network on the first run; the install hint names Go 1.27.1.
-- **Helm version:** comes from `HELM_VERSION` only.
-- **helm-unittest:** the plugin is pinned at one version.
+- **Helm version:** comes from `HELM_VERSION` only; CI reads it through `make -s print-helm-version`.
+- **helm-unittest:** pinned at `HELM_UNITTEST_VERSION` (1.2.1).
 
 ### prek
 
@@ -113,7 +118,7 @@ Each target fails with an install hint naming its own tool when it is missing, l
 ### CI (`pr-checks.yml`)
 
 - One job per target above.
-- Go: `actions/setup-go`, pinned by SHA, with `go-version-file: go.mod`.
+- Go: `actions/setup-go`, pinned by SHA, with `go-version-file: go.mod` and `cache: false` (no `go.sum`).
 - Helm: exactly `HELM_VERSION`, plus the pinned helm-unittest.
 - Each action pinned by SHA, `persist-credentials: false`, as the existing jobs.
 
