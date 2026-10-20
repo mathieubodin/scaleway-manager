@@ -23,3 +23,4 @@ b09a528db80a7e569daa03cbb8bbc194fae23ec27766078383fdbac1446fc434  internal/serve
 6d99d4df686e338eeafbe902ba1c8e66ce899ae97cdb6896e7c56a911b6850c5  tests/make/wiring_test.go
 e90a4fab13cbbe96c39b82aaba087915081ec713d4e2e3077ded8b5cbab64ace  tests/workflows/lint-chart.test.js
 5557e6e7ab9ffe137c5f509f4fbb219b04a37af2f40c37fe8070c15a30bf41e8  tests/workflows/process-files-new-checks.test.js
+d91dda7889d4cc4fe9b8a2fc5cedc52c5e59b0791058b7cceba238801c60a748  tests/workflows/trunk-merge-runner-map.test.js

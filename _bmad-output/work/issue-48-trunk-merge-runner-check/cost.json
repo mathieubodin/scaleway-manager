@@ -1,0 +1,174 @@
+{
+  "issue": 48,
+  "route": "bug",
+  "tokens": 1021323,
+  "totals": {
+    "steps": {
+      "build": {
+        "claude-opus-5-5": {
+          "input": 68,
+          "output": 4067,
+          "cacheCreation": 117539,
+          "cacheRead": 1943343
+        }
+      },
+      "deliver": {
+        "claude-opus-5-5": {
+          "input": 18,
+          "output": 5492,
+          "cacheCreation": 16382,
+          "cacheRead": 1209572
+        }
+      },
+      "rails": {
+        "claude-opus-5-5": {
+          "input": 58,
+          "output": 6458,
+          "cacheCreation": 121673,
+          "cacheRead": 1697061
+        }
+      },
+      "review": {
+        "claude-opus-5-5": {
+          "input": 168,
+          "output": 14868,
+          "cacheCreation": 541605,
+          "cacheRead": 4743177
+        }
+      },
+      "triage": {
+        "claude-opus-5-5": {
+          "input": 68,
+          "output": 7859,
+          "cacheCreation": 185000,
+          "cacheRead": 1113393
+        }
+      }
+    },
+    "models": {
+      "claude-opus-5-5": {
+        "input": 380,
+        "output": 38744,
+        "cacheCreation": 982199,
+        "cacheRead": 10706546
+      }
+    },
+    "unattributed": {
+      "claude-opus-5-5": {
+        "input": 12,
+        "output": 2751,
+        "cacheCreation": 8356,
+        "cacheRead": 529755
+      }
+    }
+  },
+  "sessions": {
+    "6910fa0e-7637-41b7-b12e-83ea28963359": {
+      "computedAt": "2026-10-20T17:26:33Z",
+      "steps": {
+        "build": {
+          "claude-opus-5-5": {
+            "input": 16,
+            "output": 2430,
+            "cacheCreation": 8510,
+            "cacheRead": 665583
+          }
+        },
+        "deliver": {
+          "claude-opus-5-5": {
+            "input": 18,
+            "output": 5492,
+            "cacheCreation": 16382,
+            "cacheRead": 1209572
+          }
+        },
+        "rails": {
+          "claude-opus-5-5": {
+            "input": 28,
+            "output": 5375,
+            "cacheCreation": 14140,
+            "cacheRead": 1046193
+          }
+        },
+        "review": {
+          "claude-opus-5-5": {
+            "input": 30,
+            "output": 9625,
+            "cacheCreation": 25986,
+            "cacheRead": 1632121
+          }
+        },
+        "triage": {
+          "claude-opus-5-5": {
+            "input": 32,
+            "output": 6867,
+            "cacheCreation": 43587,
+            "cacheRead": 863707
+          }
+        }
+      },
+      "unattributed": {
+        "claude-opus-5-5": {
+          "input": 12,
+          "output": 2751,
+          "cacheCreation": 8356,
+          "cacheRead": 529755
+        }
+      }
+    }
+  },
+  "runs": {
+    "wf_54ebfe5d-880": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "review",
+      "computedAt": "2026-10-20T17:26:33Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 138,
+          "output": 5243,
+          "cacheCreation": 515619,
+          "cacheRead": 3111056
+        }
+      }
+    },
+    "wf_74481293-c7b": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "rails",
+      "computedAt": "2026-10-20T17:26:33Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 30,
+          "output": 1083,
+          "cacheCreation": 107533,
+          "cacheRead": 650868
+        }
+      }
+    },
+    "wf_a7d21464-cbb": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "triage",
+      "computedAt": "2026-10-20T17:26:33Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 36,
+          "output": 992,
+          "cacheCreation": 141413,
+          "cacheRead": 249686
+        }
+      }
+    },
+    "wf_d836331d-438": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "build",
+      "computedAt": "2026-10-20T17:26:33Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 52,
+          "output": 1637,
+          "cacheCreation": 109029,
+          "cacheRead": 1277760
+        }
+      }
+    }
+  }
+}

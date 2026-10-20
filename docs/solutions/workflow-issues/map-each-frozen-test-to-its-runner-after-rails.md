@@ -34,11 +34,11 @@ On the long route, `sdlc-rails` writes and freezes the tests of every story befo
 Right after Rails, before the build, write one map: each file of `frozen-tests.sha256`, the runner that reaches it, and the story that makes it pass. It serves two checks.
 
 1. **Orphans.** Every frozen file has a runner. When a story introduces a new kind of test, its spec names the runner (make target or CI job), or the test writer is told the runners that exist: `make test-workflows` for `tests/workflows/**/*.test.js`, `make test-go`, `helm unittest` through `make lint-chart`, the `build-image` CI job for `tests/image/*.test.sh`.
-2. **Trunk merges.** A trunk story merges when `make check-frozen` passes and every `make check` failure is a frozen test of a story not built yet, according to the map.
+2. **Merges.** A trunk story or a leaf merges when `make check-frozen` passes and every `make -k check` failure is a frozen test of a story not built yet, according to the map (a leaf not merged yet counts as not built yet; `-k`, so that a failing target does not hide the targets after it).
    - List those expected failures in the memlog result line of the merge.
    - Name them in the builder prompt, so the builder neither stops nor touches them.
    - A failure outside the list blocks the merge, as before.
-   - After the last story, `make check` is fully green.
+   - After the last story (the last leaf, or the last trunk story without leaves), `make check` is fully green.
 
 ## Why This Matters
 
