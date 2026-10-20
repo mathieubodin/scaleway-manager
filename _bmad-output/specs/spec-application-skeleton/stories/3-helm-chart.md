@@ -25,7 +25,7 @@ context:
 - Every object, field and value of the contract's "Chart" section; `Chart.yaml`: `apiVersion: v2`, `name: scaleway-manager`, `type: application`, `version: 0.0.0`, `appVersion: "0.0.0"`.
 - Render failures through `required` (Gateway keys: absent, `null` and `""` all fail) and `fail` (`listenAddr`), each message starting with the key path without `.Values`.
 - Port of `listenAddr`: the text after its last `:`, matched by `^[1-9][0-9]*$` and at most 65535.
-- Makefile, following story 1's pattern: `HELM_VERSION := 4.3.0`, `HELM_UNITTEST_VERSION := 1.2.1`; guard `check-helm` fails with a hint naming `helm` 4.3.0 when `helm` is missing or `helm version --template '{{.Version}}'` is not exactly `v$(HELM_VERSION)`, and with a hint naming helm-unittest `$(HELM_UNITTEST_VERSION)` and its install command when the plugin is missing; `print-helm-version` (no `##`) prints `$(HELM_VERSION)`; `lint-chart` joins `make check`.
+- Makefile, following story 1's pattern: `HELM_VERSION := 4.3.0`, `HELM_UNITTEST_VERSION := 1.2.1`; guard `check-helm` fails with a hint naming `helm` 4.3.0 when `helm` is missing or `helm version --template '{{.Version}}'` is not exactly `v$(HELM_VERSION)`, and with a hint naming helm-unittest `$(HELM_UNITTEST_VERSION)` and its install command when `helm plugin list` shows no `unittest` plugin at exactly that version; `print-helm-version` (no `##`) prints `$(HELM_VERSION)`; `lint-chart` joins `make check`.
 - CI job `lint-chart`: checkout as story 1; `azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1` with `version: v` + the output of `make -s print-helm-version` (from a previous step); the plugin installed with the same command as the hint; `make lint-chart`.
 - prek: builtin `check-yaml` gets `exclude = "^charts/[^/]+/templates/"`; local hook `lint-chart` with `files = "^charts/"`, like story 1's `lint-go`.
 
@@ -58,8 +58,8 @@ context:
 **Execution:**
 
 - [ ] `charts/scaleway-manager/Chart.yaml`, `values.yaml` -- per Always and the contract values block, with comments: `listenAddr` port ≥ 1024, `image.tag` needs an override until #18 publishes, no CPU limit.
-- [ ] `charts/scaleway-manager/templates/_helpers.tpl` -- standard `fullname`, `name`, labels and selector labels; the `listenAddr` port helper with its `fail`.
-- [ ] `charts/scaleway-manager/templates/{serviceaccount,deployment,service,httproute,clusterroles}.yaml` -- one file per object kind of the Objects table.
+- [ ] `charts/scaleway-manager/templates/_helpers.tpl` -- `fullname` and `name` as `helm create`; labels `helm.sh/chart`, `app.kubernetes.io/name`, `app.kubernetes.io/instance`, `app.kubernetes.io/version`, `app.kubernetes.io/managed-by`, selector labels `name` and `instance`; the `listenAddr` port helper with its `fail`.
+- [ ] `charts/scaleway-manager/templates/{serviceaccount,deployment,service,httproute,clusterroles}.yaml` -- one file per object kind of the Objects table; container name `scaleway-manager`; Service port `name: http`, `protocol: TCP`; `parentRefs` carry only `name`, `namespace` and `sectionName` when set; `backendRefs` only `name` and `port: 80`.
 - [ ] `charts/scaleway-manager/.helmignore` -- excludes `tests/` and `ci/`.
 - [ ] `charts/scaleway-manager/ci/test-values.yaml` -- Gateway `name` and `namespace` only.
 - [ ] `charts/scaleway-manager/tests/*_test.yaml` -- one suite per template, `release.name: scaleway-manager`, covering every matrix row and every Objects table row at its exact value (`equal`, `notExists`, `failedTemplate` with `errorPattern`).

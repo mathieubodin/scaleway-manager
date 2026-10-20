@@ -40,10 +40,10 @@ context:
 | Page | `GET /` | 200, bytes of `web/index.html` | N/A |
 | Unknown | `GET /nope` | 404 with both headers | N/A |
 | Address | `LISTEN_ADDR` unset or `""` | listens on `:8080` | N/A |
-| Start | listen succeeds | one INFO line, `msg` `listening`, field `addr` | N/A |
-| Bind failure | address in use | one ERROR line, no `listening` line | exit 1 |
+| Start | listen succeeds | one INFO line, `msg` `listening`, field `addr` = the bound address `ln.Addr().String()` (so `127.0.0.1:0` logs the real port) | N/A |
+| Bind failure | address in use | one ERROR line, `msg` `listen failed`, field `error`; no `listening` line | exit 1 |
 | Stop | first SIGTERM or SIGINT, a request in flight | the request completes; INFO `stopped` | exit 0 |
-| Slow stop | `Shutdown` not done after the delay | one ERROR line, no `stopped` line | exit 1 |
+| Slow stop | `Shutdown` not done after the delay | one ERROR line, `msg` `shutdown timed out`; then `srv.Close()`; no `stopped` line | exit 1 |
 | Second signal | signal during shutdown | no line, no change | same exit code |
 | AD-1 | fixture with a `require` line, a `require` block, a non-empty `go.sum`, a clean module | fails naming `go.mod`, `go.mod`, `go.sum`; passes | exit 1 on failure |
 
@@ -52,7 +52,7 @@ context:
 ## Code Map
 
 - `Makefile` -- add `check-go`, `lint-go`, `test-go`, `check-go-mod`; extend `check` and `.PHONY`; follow `check-node` for the guard.
-- `prek.toml` -- add local hook `lint-go` (`entry = "make lint-go"`, `files = "(\\.go|^go\\.mod)$"`, `language = "system"`, `pass_filenames = false`), like `fix-workflows`.
+- `prek.toml` -- add local hook `lint-go` (`name = "Go lint"`, `entry = "make lint-go"`, `files = "(\\.go|^go\\.mod)$"`, `language = "system"`, `pass_filenames = false`), like `fix-workflows`.
 - `.github/workflows/pr-checks.yml` -- add three jobs, one per target, like `check-frozen`.
 - `.gitignore` -- add the binary name `/scaleway-manager` if `go build` writes it at the root.
 
@@ -61,7 +61,7 @@ context:
 **Execution:**
 
 - [ ] `go.mod` -- module and `go 1.27.2` only.
-- [ ] `web/index.html` -- title `scaleway-manager`, viewport meta, the sentence `scaleway-manager is running; no feature is available yet.`, no script, no inline style.
+- [ ] `web/index.html` -- `<html lang="en">`, title `scaleway-manager`, `<meta name="viewport" content="width=device-width, initial-scale=1">`, the sentence `scaleway-manager is running; no feature is available yet.`, no script, no inline style.
 - [ ] `embed.go` (module root, package `scalewaymanager`) -- `//go:embed web/index.html` into `var IndexHTML []byte`.
 - [ ] `internal/server/server.go` -- `New(index []byte) http.Handler`: mux with `GET /healthz` and `GET /{$}` (bytes written directly), wrapped by the header middleware.
 - [ ] `internal/server/server_test.go` -- `httptest` cases of the matrix rows Health to Unknown, headers on each, and on a 405 (`POST /healthz`).
@@ -69,7 +69,7 @@ context:
 - [ ] `cmd/scaleway-manager/main_test.go` -- drives `run` with a signal channel, a slow test handler and a short delay: matrix rows Address to Second signal, every stdout line parsed as JSON, ERROR count per case, and `shutdownTimeout == 10*time.Second`.
 - [ ] `cmd/check-go-mod/main.go` -- `check(dir string) error` runs `go mod edit -json <dir>/go.mod` (`os/exec`), fails on any `Require`, fails when `<dir>/go.sum` exists with size > 0; `main` checks `.`, prints the error naming the file, exits 1.
 - [ ] `cmd/check-go-mod/main_test.go` and `cmd/check-go-mod/testdata/{require-line,require-block,gosum,clean}/` -- the AD-1 row.
-- [ ] `Makefile`, `prek.toml`, `.github/workflows/pr-checks.yml` -- per Code Map; `lint-go` = `test -z "$$(gofmt -l .)"` (print the list on failure) then `go vet ./...`; `test-go` = `go test ./...`; `check-go-mod` = `go run ./cmd/check-go-mod`.
+- [ ] `Makefile`, `prek.toml`, `.github/workflows/pr-checks.yml` -- per Code Map; `lint-go` = `test -z "$$(gofmt -l $$(git ls-files '*.go'))"` (tracked files only, so other worktrees and `node_modules` are skipped; print the list on failure) then `go vet ./...`; `test-go` = `go test ./...`; `check-go-mod` = `go run ./cmd/check-go-mod`.
 
 **Acceptance Criteria:**
 

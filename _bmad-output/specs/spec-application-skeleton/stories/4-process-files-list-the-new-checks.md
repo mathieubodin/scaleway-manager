@@ -45,8 +45,8 @@ context:
 
 **Execution:**
 
-- [ ] `docs/development-process.md` -- line 305: code tests run with `make test-go`; coverage and mutation testing come with #14. Line 566: list the five new checks with the old ones; coverage, mutation and behavior diff once #14 and #15 are done. Section "CI": the eleven checks of `pr-checks.yml` (ten jobs plus `conventional-title`), the prek hooks, `make check` with its eight checks, and that a new CI job becomes a required check after its PR merges.
-- [ ] `scripts/evidence.sh` -- `checks` gains the five targets in this order after `check-frozen`: `lint-go test-go check-go-mod lint-chart build-image`; `not_run` becomes coverage and mutation testing (#14) and the behavior diff (#15); the comment above names #14 and #15.
+- [ ] `docs/development-process.md` -- line 305: code tests run with `make test-go`; coverage and mutation testing come with #14. Line 566: list the five new checks with the old ones; coverage, mutation and behavior diff once #14 and #15 are done. Section "CI": the ten jobs of `pr-checks.yml` and `conventional-title` (`pr-title.yml`), the prek hooks, `make check` with its eight checks, and that a new CI job becomes a required check after its PR merges.
+- [ ] `scripts/evidence.sh` -- `checks` gains the five targets in this order after `check-frozen`: `lint-go test-go check-go-mod lint-chart build-image`; `not_run` becomes `Coverage, mutation testing: no target yet (#14)` and `Behavior diff: no target yet (#15)`; the comment above names #14 and #15.
 - [ ] `skills/sdlc-work/references/deliver.md` -- in section 4, after the PR link line: when the PR adds a job to `.github/workflows/pr-checks.yml`, remind the user that after the merge each new job name must be added to the required status checks of `main` (`gh api -X POST repos/<owner>/<repo>/branches/main/protection/required_status_checks/contexts`, admin rights), and record the reminder in the memlog.
 - [ ] Reinstall the module -- per Always; commit `.claude/skills/sdlc-work/references/deliver.md` and whatever else the installer changed.
 - [ ] `docs/migrations/next/41.md` -- exactly `Migration: no impact`.

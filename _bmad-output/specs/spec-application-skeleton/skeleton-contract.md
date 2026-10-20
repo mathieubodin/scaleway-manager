@@ -104,7 +104,7 @@ Each target fails with an install hint naming its own tool when it is missing, l
 | `lint-chart` | Checks `helm version --template '{{.Version}}'` is exactly `v` + `HELM_VERSION` (`v4.3.0`), else a hint naming `helm` 4.3.0; checks the helm-unittest plugin, else a hint naming it and its pinned version; `helm lint` with `ci/test-values.yaml`; helm-unittest tests | yes |
 | `build-image` | First checks the Dockerfile: every `FROM` carries `tag@sha256:`, the build stage carries `--platform=$BUILDPLATFORM` and uses `TARGETOS`/`TARGETARCH`. Then builds the image, runs it `--read-only --cap-drop ALL --user 65532` with a published port, waits up to 30 s for `200 ok` on `/healthz` from the host (distroless has no curl), stops it, fails without that answer. Digests are 64 lowercase hex characters | no |
 
-- **Go version:** comes from the `go 1.27.1` line. Locally, `GOTOOLCHAIN=auto` fetches it, which needs network on the first run; the install hint names Go 1.27.1.
+- **Go version:** comes from the `go 1.27.2` line. Locally, `GOTOOLCHAIN=auto` fetches it, which needs network on the first run; the install hint names Go 1.27.2.
 - **Helm version:** comes from `HELM_VERSION` only; CI reads it through `make -s print-helm-version`.
 - **helm-unittest:** pinned at `HELM_UNITTEST_VERSION` (1.2.1).
 
