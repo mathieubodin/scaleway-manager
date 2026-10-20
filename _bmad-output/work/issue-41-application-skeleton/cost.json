@@ -1,7 +1,7 @@
 {
   "issue": 41,
   "route": "long",
-  "tokens": 2937202,
+  "tokens": 2949086,
   "totals": {
     "steps": {
       "define": {
@@ -14,10 +14,10 @@
       },
       "plan": {
         "claude-opus-5-5": {
-          "input": 206,
-          "output": 43353,
-          "cacheCreation": 595271,
-          "cacheRead": 17079720
+          "input": 212,
+          "output": 46541,
+          "cacheCreation": 603961,
+          "cacheRead": 18098731
         }
       },
       "triage": {
@@ -31,10 +31,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 852,
-        "output": 143222,
-        "cacheCreation": 2793128,
-        "cacheRead": 42127740
+        "input": 858,
+        "output": 146410,
+        "cacheCreation": 2801818,
+        "cacheRead": 43146751
       }
     },
     "unattributed": {
@@ -48,7 +48,7 @@
   },
   "sessions": {
     "bfe2b9df-6453-425f-819b-fdf500b45bba": {
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "steps": {
         "define": {
           "claude-opus-5-5": {
@@ -60,10 +60,10 @@
         },
         "plan": {
           "claude-opus-5-5": {
-            "input": 94,
-            "output": 42550,
-            "cacheCreation": 346204,
-            "cacheRead": 13302434
+            "input": 100,
+            "output": 45738,
+            "cacheCreation": 354894,
+            "cacheRead": 14321445
           }
         },
         "triage": {
@@ -89,7 +89,7 @@
     "wf_108fecd2-ab2": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "triage",
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
@@ -102,7 +102,7 @@
     "wf_2be9c3e6-f48": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 38,
@@ -115,7 +115,7 @@
     "wf_332b5a19-2d8": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 84,
@@ -128,7 +128,7 @@
     "wf_534a49b9-08f": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 68,
@@ -141,7 +141,7 @@
     "wf_ca1e55b6-3e3": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 80,
@@ -154,7 +154,7 @@
     "wf_f6f01e4a-3c0": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "define",
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 76,
@@ -167,7 +167,7 @@
     "wf_fc97b61f-618": {
       "session": "bfe2b9df-6453-425f-819b-fdf500b45bba",
       "step": "plan",
-      "computedAt": "2026-10-20T14:28:09Z",
+      "computedAt": "2026-10-20T14:28:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 112,
