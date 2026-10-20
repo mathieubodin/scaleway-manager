@@ -10,7 +10,7 @@ What each part must be, field by field. `SPEC.md` holds the capabilities and the
 | `internal/server/` | Handler: AD-8 header middleware around the whole mux, routes |
 | `cmd/scaleway-manager/` | `main`: configuration, listening, signals, logs, through a testable `run` function whose shutdown delay is injected (10 s in production) |
 | `cmd/check-go-mod/` | AD-1 check program, standard library, with `testdata/` fixtures; not in the image |
-| Module root, one Go file | `go:embed` of `web/` (so `web/` holds no Go file) |
+| Module root, one Go file | `go:embed` of `web/index.html` (so `web/` holds no Go file) |
 | `web/index.html` | Placeholder page |
 | `Dockerfile`, `.dockerignore` | Image |
 | `charts/scaleway-manager/` | Chart, `ci/test-values.yaml`, `tests/` (helm-unittest), `.helmignore`, `README.md` |
@@ -21,7 +21,7 @@ What each part must be, field by field. `SPEC.md` holds the capabilities and the
 ## Server
 
 - **Configuration:** one environment variable, `LISTEN_ADDR`; unset or empty gives `:8080`.
-- **Routes:** `GET /healthz` → `200`, body `ok` (no trailing newline); `HEAD /healthz` → `200`, empty body. `GET /` → `web/index.html`, embedded. Anything else → `404`.
+- **Routes:** `GET /healthz` → `200`, body `ok` (no trailing newline); `HEAD /healthz` → `200`, empty body. `GET /` → `web/index.html`, embedded. A known path with another method → `405`; anything else → `404`.
 - **Headers on every response,** `/healthz` and `404` included: `Content-Security-Policy: default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'` and `X-Content-Type-Options: nosniff`.
 - **Timeouts:** `ReadHeaderTimeout` 10 s; no `WriteTimeout` (the future SSE stream).
 - **Stop:**
@@ -40,10 +40,10 @@ What each part must be, field by field. `SPEC.md` holds the capabilities and the
 ## Image
 
 - **Stages:** exactly two, build then runtime.
-- **Build stage:** `FROM --platform=$BUILDPLATFORM golang:1.27.2@sha256:<digest> AS build`, with `ARG TARGETOS` and `ARG TARGETARCH`. The static binary (`CGO_ENABLED=0`) is built by a `RUN` line containing `GOOS=$TARGETOS GOARCH=$TARGETARCH go build`.
+- **Build stage:** `FROM --platform=$BUILDPLATFORM golang:1.27.2@sha256:<digest> AS build`, with `ARG TARGETOS` and `ARG TARGETARCH`. The static binary is built by a `RUN` line containing `CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build`.
 - **Runtime stage:** `FROM gcr.io/distroless/static-debian13:nonroot@sha256:<digest>`.
 - **Local build:** host architecture only, unsigned.
-- **`.dockerignore`:** excludes everything the build does not need, for example `.git`, `node_modules`, `_bmad*`, `.claude`, `coverage`, `docs`, `tests/workflows`.
+- **`.dockerignore`:** an allowlist: everything is excluded except `go.mod`, `embed.go`, `web/`, `internal/`, `cmd/`.
 
 ## Chart
 
@@ -95,7 +95,7 @@ The chart contains no Role in `scaleway-system`, no RoleBinding and no ClusterRo
 
 ### Make targets
 
-Each target fails with an install hint naming its own tool when it is missing, like `check-node`: `go` for `lint-go`, `test-go`, `check-go-mod`; `helm` at `HELM_VERSION` and the helm-unittest plugin for `lint-chart`; `docker` for `build-image`.
+Each target fails with an install hint naming its own tool when it is missing, like `check-node`: `go` for `lint-go`, `test-go`, `check-go-mod`; `helm` at `HELM_VERSION` and the helm-unittest plugin for `lint-chart`; `docker` and `curl` for `build-image`.
 
 | Target | Does | In `make check` |
 | --- | --- | --- |

@@ -1,0 +1,19 @@
+suite: HTTPRoute with a null parent key
+templates:
+  - templates/httproute.yaml
+release:
+  name: scaleway-manager
+tests:
+  - it: fails naming httpRoute.gateway.name when httpRoute is null
+    set:
+      httpRoute: null
+    asserts:
+      - failedTemplate:
+          errorPattern: "httpRoute\\.gateway\\.name is required"
+
+  - it: fails naming httpRoute.gateway.name when httpRoute.gateway is null
+    set:
+      httpRoute.gateway: null
+    asserts:
+      - failedTemplate:
+          errorPattern: "httpRoute\\.gateway\\.name is required"
