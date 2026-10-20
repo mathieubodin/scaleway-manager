@@ -1,0 +1,4 @@
+httpRoute:
+  gateway:
+    name: gateway
+    namespace: gateway-system

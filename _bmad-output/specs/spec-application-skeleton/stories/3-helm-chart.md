@@ -76,6 +76,8 @@ context:
 
 ## Implementation Notes
 
+- E1 install method: neither OCI nor git. The OCI install failed on the author's machine with a 403 caused by local ghcr.io credentials; the author installed from the release archive, verified with a keyring: `helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v1.2.1/unittest-1.2.1.tgz --keyring .github/keys/helm-unittest.asc`. The keyring is the project key from `https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/public-key.asc` (fingerprint `853008CD0B0A5A2DA04FF8A5616AD47F65B54AC7`, expires 2028-05-06), committed armored: Helm 4.3.0 reads it as is. Real runs: the install succeeds with that key and fails with another key (`openpgp: signature made by unknown entity`). The hint and the CI job use this command; CI writes the version literally, and `tests/workflows/lint-chart.test.js` fails if it drifts from the hint.
+
 ## Spec Change Log
 
 ## Review Triage Log

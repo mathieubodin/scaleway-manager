@@ -1,0 +1,29 @@
+# Address the server listens on (LISTEN_ADDR). The port, after the last ":", must be
+# from 1024 to 65535: a lower port is unsupported, as no capability is added.
+listenAddr: ":8080"
+
+image:
+  repository: ghcr.io/mathieubodin/scaleway-manager
+  # Empty: the chart appVersion. No image is published before #18, so an install
+  # needs an image.tag override until then.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+httpRoute:
+  gateway:
+    # Required: the Gateway the HTTPRoute attaches to.
+    name: ""
+    # Required: the namespace of that Gateway.
+    namespace: ""
+    # Optional: the HTTPS listener of the Gateway.
+    sectionName: ""
+  # Optional: the hostnames the HTTPRoute matches.
+  hostnames: []
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  # No CPU limit: GOMAXPROCS follows it.
+  limits:
+    memory: 64Mi

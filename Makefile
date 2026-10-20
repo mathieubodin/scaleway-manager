@@ -17,7 +17,7 @@ export MUTATION
 BASE ?= origin/main
 export BASE
 
-.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod check-docker check-curl build-image
+.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod check-docker check-curl build-image check-helm print-helm-version lint-chart
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -114,7 +114,32 @@ check-curl:
 build-image: check-docker check-curl ## Check the Dockerfile, build scaleway-manager:local, probe /healthz (CAP-3)
 	scripts/build-image.sh
 
-check: lint-docs lint-workflows test-workflows check-frozen lint-go test-go check-go-mod ## Run the checks that need no issue number (used by the sdlc-review fixer)
+# Helm chart: helm at exactly HELM_VERSION (CI reads it through print-helm-version) and
+# the helm-unittest plugin at exactly HELM_UNITTEST_VERSION, installed from its release
+# archive and verified against the project key kept in HELM_UNITTEST_KEYRING. CI runs
+# the same install command as the hint.
+HELM_VERSION := 4.3.0
+HELM_UNITTEST_VERSION := 1.2.1
+HELM_UNITTEST_KEYRING := .github/keys/helm-unittest.asc
+HELM_UNITTEST_INSTALL := helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v$(HELM_UNITTEST_VERSION)/unittest-$(HELM_UNITTEST_VERSION).tgz --keyring $(HELM_UNITTEST_KEYRING)
+CHART := charts/scaleway-manager
+
+check-helm:
+	@command -v helm >/dev/null && [ "$$(helm version --template '{{.Version}}' 2>/dev/null)" = "v$(HELM_VERSION)" ] || { \
+		echo "Error: helm $(HELM_VERSION) required. Install with: https://helm.sh/docs/intro/install/"; \
+		exit 1; }
+	@helm plugin list 2>/dev/null | awk '$$1 == "unittest" && $$2 == "$(HELM_UNITTEST_VERSION)" { found = 1 } END { exit !found }' || { \
+		echo "Error: helm-unittest $(HELM_UNITTEST_VERSION) required. Install with: $(HELM_UNITTEST_INSTALL)"; \
+		exit 1; }
+
+print-helm-version:
+	@echo $(HELM_VERSION)
+
+lint-chart: check-helm ## Lint the Helm chart (helm lint, ci/test-values.yaml) and run its helm-unittest tests
+	helm lint $(CHART) --values $(CHART)/ci/test-values.yaml
+	helm unittest $(CHART)
+
+check: lint-docs lint-workflows test-workflows check-frozen lint-go test-go check-go-mod lint-chart ## Run the checks that need no issue number (used by the sdlc-review fixer)
 
 check-migration: ## Check docs/migrations/next/ISSUE.md: changed by the branch since BASE (origin/main), valid format
 	@scripts/check-migration.sh "$${ISSUE:-}" "$$BASE"

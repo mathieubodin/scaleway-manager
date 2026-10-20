@@ -7,7 +7,8 @@ exclude = { glob = [".claude/skills/bmad-*/**", "_bmad/**"] }
 [[repos]]
 repo = "builtin"
 hooks = [
-    { id = "check-yaml", args = ["--allow-multiple-documents"] },
+    # Chart templates are Go templates, not YAML: make lint-chart checks them.
+    { id = "check-yaml", args = ["--allow-multiple-documents"], exclude = "^charts/[^/]+/templates/" },
     { id = "check-toml" },
     { id = "mixed-line-ending", args = ["--fix", "lf"] },
     { id = "check-executables-have-shebangs" },
@@ -20,5 +21,6 @@ hooks = [
     { id = "fix-docs", name = "Markdown lint", entry = "make fix-docs", language = "system", files = "\\.md$", pass_filenames = false },
     { id = "fix-workflows", name = "Workflows and JSON", entry = "make fix-workflows", language = "system", files = "\\.(js|json)$", pass_filenames = false },
     { id = "lint-go", name = "Go lint", entry = "make lint-go", language = "system", files = "(\\.go|^go\\.mod)$", pass_filenames = false },
+    { id = "lint-chart", name = "Chart lint", entry = "make lint-chart", language = "system", files = "^charts/", pass_filenames = false },
     { id = "check-frozen", name = "Frozen tests", entry = "make check-frozen", language = "system", pass_filenames = false, always_run = true },
 ]
