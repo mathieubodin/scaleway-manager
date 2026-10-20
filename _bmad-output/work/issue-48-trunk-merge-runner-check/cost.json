@@ -1,0 +1,100 @@
+{
+  "issue": 48,
+  "route": "bug",
+  "tokens": 321116,
+  "totals": {
+    "steps": {
+      "rails": {
+        "claude-opus-5-5": {
+          "input": 58,
+          "output": 6458,
+          "cacheCreation": 121673,
+          "cacheRead": 1697061
+        }
+      },
+      "triage": {
+        "claude-opus-5-5": {
+          "input": 68,
+          "output": 7859,
+          "cacheCreation": 185000,
+          "cacheRead": 1113393
+        }
+      }
+    },
+    "models": {
+      "claude-opus-5-5": {
+        "input": 126,
+        "output": 14317,
+        "cacheCreation": 306673,
+        "cacheRead": 2810454
+      }
+    },
+    "unattributed": {
+      "claude-opus-5-5": {
+        "input": 2,
+        "output": 293,
+        "cacheCreation": 3620,
+        "cacheRead": 70364
+      }
+    }
+  },
+  "sessions": {
+    "6910fa0e-7637-41b7-b12e-83ea28963359": {
+      "computedAt": "2026-10-20T17:07:31Z",
+      "steps": {
+        "rails": {
+          "claude-opus-5-5": {
+            "input": 28,
+            "output": 5375,
+            "cacheCreation": 14140,
+            "cacheRead": 1046193
+          }
+        },
+        "triage": {
+          "claude-opus-5-5": {
+            "input": 32,
+            "output": 6867,
+            "cacheCreation": 43587,
+            "cacheRead": 863707
+          }
+        }
+      },
+      "unattributed": {
+        "claude-opus-5-5": {
+          "input": 2,
+          "output": 293,
+          "cacheCreation": 3620,
+          "cacheRead": 70364
+        }
+      }
+    }
+  },
+  "runs": {
+    "wf_74481293-c7b": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "rails",
+      "computedAt": "2026-10-20T17:07:31Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 30,
+          "output": 1083,
+          "cacheCreation": 107533,
+          "cacheRead": 650868
+        }
+      }
+    },
+    "wf_a7d21464-cbb": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "triage",
+      "computedAt": "2026-10-20T17:07:31Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 36,
+          "output": 992,
+          "cacheCreation": 141413,
+          "cacheRead": 249686
+        }
+      }
+    }
+  }
+}
