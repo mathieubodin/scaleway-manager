@@ -1,0 +1,256 @@
+suite: Deployment
+templates:
+  - templates/deployment.yaml
+release:
+  name: scaleway-manager
+set:
+  httpRoute:
+    gateway:
+      name: gw
+      namespace: gw-ns
+tests:
+  - it: renders one Deployment named scaleway-manager with one replica and the Recreate strategy
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - isAPIVersion:
+          of: apps/v1
+      - equal:
+          path: metadata.name
+          value: scaleway-manager
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+
+  - it: carries the common labels and selects by the selector labels
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            helm.sh/chart: scaleway-manager-0.0.0
+            app.kubernetes.io/name: scaleway-manager
+            app.kubernetes.io/instance: scaleway-manager
+            app.kubernetes.io/version: "0.0.0"
+            app.kubernetes.io/managed-by: Helm
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: scaleway-manager
+            app.kubernetes.io/instance: scaleway-manager
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app.kubernetes.io/name: scaleway-manager
+            app.kubernetes.io/instance: scaleway-manager
+
+  - it: runs under the dedicated service account without its token
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: scaleway-manager
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+
+  - it: sets the pod securityContext
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+
+  - it: has one container named scaleway-manager with the restricted securityContext
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: scaleway-manager
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.capabilities.add
+
+  - it: defaults to port 8080 named http and LISTEN_ADDR :8080
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: http
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8080
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LISTEN_ADDR
+            value: ":8080"
+
+  - it: takes the port after the last colon of an IPv6 listenAddr
+    set:
+      listenAddr: "[::]:8080"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8080
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LISTEN_ADDR
+            value: "[::]:8080"
+
+  - it: takes the port of a host:port listenAddr
+    set:
+      listenAddr: "0.0.0.0:9090"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 9090
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LISTEN_ADDR
+            value: "0.0.0.0:9090"
+
+  - it: accepts a port below 1024 (no check rejects it)
+    set:
+      listenAddr: ":80"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 80
+
+  - it: accepts the lowest port 1
+    set:
+      listenAddr: ":1"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 1
+
+  - it: accepts the highest port 65535
+    set:
+      listenAddr: ":65535"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 65535
+
+  - it: probes /healthz on port http with no timing field
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe
+          value:
+            httpGet:
+              path: /healthz
+              port: http
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            httpGet:
+              path: /healthz
+              port: http
+
+  - it: takes resources from values, without a CPU limit
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      - notExists:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+
+  - it: uses the chart appVersion when image.tag is empty
+    set:
+      image:
+        tag: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/mathieubodin/scaleway-manager:0.0.0
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+
+  - it: uses image.tag when set
+    set:
+      image:
+        tag: x
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/mathieubodin/scaleway-manager:x
+
+  - it: 'fails on listenAddr "8080"'
+    set:
+      listenAddr: "8080"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'
+
+  - it: 'fails on listenAddr "host:"'
+    set:
+      listenAddr: "host:"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'
+
+  - it: 'fails on listenAddr ":08080"'
+    set:
+      listenAddr: ":08080"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'
+
+  - it: 'fails on listenAddr ":+80"'
+    set:
+      listenAddr: ":+80"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'
+
+  - it: 'fails on listenAddr ": 8080"'
+    set:
+      listenAddr: ": 8080"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'
+
+  - it: 'fails on listenAddr ":0"'
+    set:
+      listenAddr: ":0"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'
+
+  - it: 'fails on listenAddr ":65536"'
+    set:
+      listenAddr: ":65536"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'
+
+  - it: 'fails on listenAddr ":http"'
+    set:
+      listenAddr: ":http"
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )listenAddr'

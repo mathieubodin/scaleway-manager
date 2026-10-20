@@ -259,7 +259,7 @@ flowchart LR
 
 | Name | Version |
 | --- | --- |
-| Go (server, fake operator) | 1.27.1 |
+| Go (server, fake operator) | 1.27.2 |
 | Browser platform (ES modules, custom elements, `fetch`, `EventSource`) | evergreen browsers; Chromium through Playwright in tests |
 | Gateway API (`HTTPRoute` v1, installed by Envoy Gateway on project clusters) | v1.6.1 |
 | Operator CRD chart `scaleway-operator-crds` | 0.1.14 |

@@ -1,0 +1,27 @@
+{{- $httpRoute := .Values.httpRoute | default dict }}
+{{- $gateway := $httpRoute.gateway | default dict }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "scaleway-manager.fullname" . }}
+  labels:
+    {{- include "scaleway-manager.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ required "httpRoute.gateway.name is required: the Gateway the HTTPRoute attaches to" $gateway.name | quote }}
+      namespace: {{ required "httpRoute.gateway.namespace is required: the namespace of that Gateway" $gateway.namespace | quote }}
+      {{- with $gateway.sectionName }}
+      sectionName: {{ . | quote }}
+      {{- end }}
+  {{- with $httpRoute.hostnames }}
+  hostnames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ include "scaleway-manager.fullname" . }}
+          port: 80

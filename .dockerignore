@@ -1,0 +1,8 @@
+# Allowlist: only what `go build ./cmd/scaleway-manager` needs reaches the build
+# context.
+*
+!go.mod
+!embed.go
+!web/
+!internal/
+!cmd/

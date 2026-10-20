@@ -1,0 +1,15 @@
+# Fixed names (AD-12): one install per cluster. Neither role has a rule nor a binding
+# in this chart.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: scaleway-manager-namespace
+  labels:
+    {{- include "scaleway-manager.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: scaleway-manager-cluster
+  labels:
+    {{- include "scaleway-manager.labels" . | nindent 4 }}

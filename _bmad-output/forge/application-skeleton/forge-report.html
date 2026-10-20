@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge report: application skeleton (#41)</title>
+<style>
+  :root { --ink:#1f2328; --muted:#59636e; --bg:#fbf8f2; --card:#fff; --line:#e3ddd0; --seal:#8f1d1d; --ok:#1a7f37; --warn:#9a6700; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#e6edf3; --muted:#9198a1; --bg:#14161a; --card:#1c1f24; --line:#30363d; --seal:#d4544f; --ok:#3fb950; --warn:#d29922; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui, sans-serif; padding:2rem 1rem; }
+  main { max-width:860px; margin:0 auto; }
+  header { display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; }
+  h1 { margin:0; font-size:1.6rem; }
+  .sub { color:var(--muted); }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1rem 1.25rem; margin-top:1.25rem; }
+  h2 { margin:0 0 .5rem; font-size:1.1rem; }
+  li { margin:.25rem 0; }
+  code { font-size:.9em; background:color-mix(in srgb, var(--line) 50%, transparent); padding:0 .25em; border-radius:4px; }
+  .who { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:.75rem; }
+  .who div { border:1px solid var(--line); border-radius:8px; padding:.6rem .8rem; }
+  .tag { color:var(--warn); font-weight:600; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <svg width="130" height="130" viewBox="0 0 130 130" role="img" aria-label="Seal: hardened">
+    <circle cx="65" cy="65" r="58" fill="var(--seal)" opacity=".92"/>
+    <circle cx="65" cy="65" r="48" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 3" opacity=".8"/>
+    <text x="65" y="60" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="17" font-weight="700" letter-spacing="1">HARDENED</text>
+    <text x="65" y="80" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="11">#41 · 2026-10-20</text>
+  </svg>
+  <div>
+    <h1>Application skeleton</h1>
+    <p class="sub">Go binary, Dockerfile, minimal chart. Issue #41, forge session for Mathieu.</p>
+    <p class="sub">Handoff: <code>forged-idea.md</code> → <code>bmad-spec</code> via <code>sdlc-work</code>.</p>
+  </div>
+</header>
+
+<section>
+  <h2>Locked decisions</h2>
+  <ul>
+    <li>#41 ships the minimum executable verification: make targets (<code>go vet</code> + <code>go test</code>, <code>helm lint</code> + <code>template</code>, <code>docker build</code>), a CI job, and the AD-1 <code>require</code> check. Coverage, mutation, thresholds stay in #14.</li>
+    <li>Two ClusterRoles without rules, unbound: <code>scaleway-manager-namespace</code>, <code>scaleway-manager-cluster</code>.</li>
+    <li>HTTPRoute: one rule on <code>/</code>; Gateway name and namespace required; <code>sectionName</code> and <code>hostnames</code> optional.</li>
+    <li>Server: <code>LISTEN_ADDR</code> (default <code>:8080</code>), <code>/healthz</code> → 200 <code>ok</code>, static placeholder page, AD-8 headers on every response, 10 s graceful shutdown, slog JSON.</li>
+    <li>Image built locally for the host architecture, unsigned; chart version <code>0.0.0</code>.</li>
+    <li>Restricted securityContext, <code>drop: [ALL]</code> with no capability added; dedicated ServiceAccount without token or binding.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Rejected, and why</h2>
+  <ul>
+    <li><b>Credentials Role now</b>: <code>scaleway-system</code> exists only after the real operator's install; the test cluster would fail.</li>
+    <li><b>Default Gateway</b>: a route attached to no listener fails silently.</li>
+    <li><b><code>/api/events</code> rule now</b>: the stream does not exist yet.</li>
+    <li><b><code>NET_BIND_SERVICE</code></b>: not needed for port 8080; the Service maps 80 → 8080 outside the pod (challenged by Mathieu, kept).</li>
+    <li><b>Make targets without CI</b>: Go code would merge unchecked.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Weak points that survived</h2>
+  <ul>
+    <li><span class="tag">crack</span> prek <code>check-yaml</code> rejects Helm templates: exclude <code>charts/*/templates/</code>.</li>
+    <li><span class="tag">crack</span> <code>pr-checks.yml</code> has no Go job today.</li>
+    <li><span class="tag">accepted</span> A port below 1024 in <code>LISTEN_ADDR</code> is only documented, not rejected.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Voices</h2>
+  <div class="who">
+    <div>🏛️ <b>Winston</b>, architect<br><span class="sub">"Ship the names now, let features add the rules."</span></div>
+    <div>🛠️ <b>Brigitte Marchal</b>, SRE (generated)<br><span class="sub">"An install that breaks on a missing namespace is a day-one ticket."</span></div>
+  </div>
+</section>
+</main>
+</body>
+</html>

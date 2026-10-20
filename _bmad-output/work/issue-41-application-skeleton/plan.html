@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan gate: #41 Application skeleton: Go binary, Dockerfile, minimal chart</title>
+<style>
+:root {
+  --bg: #f5f6f4; --ink: #1f2421; --muted: #5d6762; --line: #d3d9d4;
+  --panel: #ffffff; --accent: #2f6f5e; --open: #a3620f;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816; --ink: #e2e7e3; --muted: #9ba59f; --line: #2c3430;
+    --panel: #1b201d; --accent: #7cc4ad; --open: #e0a24f;
+    color-scheme: dark;
+  }
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); padding: 0 16px; }
+main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 0 4rem; display: grid; gap: 1.8rem; }
+h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.25rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: grid; gap: .3rem; }
+section { display: grid; gap: .7rem; }
+.meta { color: var(--muted); font-size: .92rem; }
+.verdict { background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; padding: 1rem 1.2rem; display: grid; gap: .4rem; }
+.verdict strong { color: var(--accent); }
+.open { color: var(--open); font-weight: 600; }
+.wide { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
+.flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .2rem .6rem; }
+</style>
+</head>
+<body>
+<main>
+<header style="display: grid; gap: .5rem">
+  <h1>Plan gate: #41 Application skeleton: Go binary, Dockerfile, minimal chart</h1>
+  <p class="meta">Branch <code>feat/41-application-skeleton</code>. Reference: <code>_bmad-output/work/issue-41-application-skeleton/plan.md</code>, <code>_bmad-output/specs/spec-application-skeleton/stories.yaml</code>, the story specs in <code>_bmad-output/specs/spec-application-skeleton/stories/</code>.</p>
+</header>
+<div class="verdict">
+  <strong>What you validate</strong>
+  <p>How #41 is built: the spine layout for the Go code, four stories built as a trunk of three (server, image, chart) then one leaf (process files), with the contracts each story relies on.</p>
+  <p class="meta">This page helps you understand; the reference files are what you validate or invalidate.</p>
+</div>
+<section><h2>Chosen approach</h2><p>Spine layout: <code>internal/server</code> holds the handler (AD-8 header middleware around the whole mux, and the routes); <code>cmd/scaleway-manager</code> holds configuration, listening, signals and logs through a <code>run</code> function whose shutdown delay is injected (10 s in production), so Go tests drive the lifecycle in-process. Later features add routes to <code>internal/server</code> without moving code.</p><p>Set aside:</p><ul><li>Everything in <code>cmd/</code>: fewer files now, but the first feature would move the handler to <code>internal/server</code>, a refactor planned from the start.</li><li>Process-level lifecycle tests (real binary, real signals): the shutdown-timeout test would last over 10 s.</li></ul><p>Decisions taken in Plan with the author:</p><ul><li>Go 1.27.2 instead of 1.27.1, for its <code>net/http</code> security fixes; the spec and the spine Stack table follow.</li><li><code>net/http</code> internal errors (<code>ErrorLog</code>) go to slog JSON on stdout at level WARN.</li><li>Default resources: requests <code>cpu: 10m</code>, <code>memory: 32Mi</code>; limits <code>memory: 64Mi</code>; no CPU limit (GOMAXPROCS follows it).</li><li><code>docs/development-process.md</code>, <code>scripts/evidence.sh</code> and the <code>sdlc-work</code> deliver reference are updated in #41.</li><li>helm-unittest 1.2.1 supports Helm 4.3.0: the spec's open question is closed.</li><li>E1 to E12 (tool pins, routes, signals, Dockerfile args, <code>gofmt</code> check, migration note, no extra linter): validated together, listed in <code>plan.md</code>.</li></ul></section>
+<section><h2>Build order</h2><p>Trunk, one story at a time (each edits <code>Makefile</code>, <code>pr-checks.yml</code> and <code>prek.toml</code>; story 2 needs story 1&#x27;s binary), then the leaf:</p><div class="flow"><span class="step">1 Go server and AD-1 check</span> → <span class="step">2 Container image</span> → <span class="step">3 Helm chart</span> → <span class="step">4 Process files (leaf)</span></div><p>Story 1 has <code>spec_checkpoint</code> (reviewed by the author) and <code>done_checkpoint</code>: the build pauses after it for the author to look at it.</p></section>
+<section><h2>Stories</h2><div class="wide"><table><thead><tr><th>#</th><th>Title</th><th>Delivers</th><th>Path</th></tr></thead><tbody><tr><td>1</td><td>Go server and AD-1 check</td><td>Module, server (CAP-1, CAP-2), AD-1 check program, targets <code>lint-go</code>, <code>test-go</code>, <code>check-go-mod</code>, CI jobs, prek Go hook</td><td><code>_bmad-output/specs/spec-application-skeleton/stories/1-go-server-and-ad1-check.md</code></td></tr><tr><td>2</td><td>Container image</td><td>Two-stage cross-compiling Dockerfile on distroless; <code>make build-image</code> checks the Dockerfile and probes <code>/healthz</code> read-only, no capability, uid 65532 (CAP-3)</td><td><code>_bmad-output/specs/spec-application-skeleton/stories/2-container-image.md</code></td></tr><tr><td>3</td><td>Helm chart</td><td>Chart per the contract, helm-unittest tests, <code>make lint-chart</code>, CI job, prek chart hook, <code>check-yaml</code> exclude (CAP-4)</td><td><code>_bmad-output/specs/spec-application-skeleton/stories/3-helm-chart.md</code></td></tr><tr><td>4</td><td>Process files list the new checks</td><td><code>development-process.md</code>, <code>evidence.sh</code>, deliver reference (required-check reminder), migration note <code>no impact</code></td><td><code>_bmad-output/specs/spec-application-skeleton/stories/4-process-files-list-the-new-checks.md</code></td></tr></tbody></table></div><p>Order and checkpoints: <code>_bmad-output/specs/spec-application-skeleton/stories.yaml</code>.</p></section>
+<section><h2>Contracts at each boundary</h2><ul><li>Story 1 → story 2: <code>go build ./cmd/scaleway-manager</code> from the module root produces the static server binary; it embeds <code>web/index.html</code>, reads only <code>LISTEN_ADDR</code>, answers <code>GET /healthz</code> with 200 <code>ok</code>. The Dockerfile builds that package only, not <code>cmd/check-go-mod</code>.</li><li>Story 1 → stories 2, 3: the Makefile pattern of story 1 (a tool guard per tool, a <code>##</code> comment on each public target, every target in <code>.PHONY</code>, <code>check</code> extended); one <code>pr-checks.yml</code> job per target, named exactly as the target.</li><li>Story 2 → story 3: the image listens on the port of <code>LISTEN_ADDR</code> and runs as uid 65532 with a read-only root and no capability; the chart's securityContext matches what <code>build-image</code> exercised.</li><li>Stories 1 to 3 → story 4: the five target names <code>lint-go</code>, <code>test-go</code>, <code>check-go-mod</code>, <code>lint-chart</code>, <code>build-image</code>; <code>make check</code> runs the first four; <code>build-image</code> needs Docker and runs in CI; the required-check <code>gh api</code> command of the contract.</li></ul></section>
+<section><h2>Useful items of the last cold-start round</h2><p>Round 3 (<code>wf_4ef327c6-39d</code>) was green; rounds 1 and 2 each had one blocking item, fixed. Source: <code>_bmad-output/work/issue-41-application-skeleton/cold-start.md</code>.</p><p><strong>Story 1</strong></p><ul><li>What <code>run</code> does when <code>Serve</code> returns an error other than <code>http.ErrServerClosed</code> before any signal: closed after the round, with the author (one ERROR line <code>serve failed</code>, exit 1).</li><li>How <code>cmd/check-go-mod</code> reports a module with both a <code>require</code> and a non-empty <code>go.sum</code>, and whether it prints to stdout or stderr.</li><li>The unformatted file of the <code>lint-go</code> criterion must be tracked by git, since <code>lint-go</code> checks <code>git ls-files '*.go'</code>; with no tracked <code>.go</code> file, <code>gofmt -l</code> with no argument reads stdin.</li><li>The process files and <code>docs/migrations/next/41.md</code> belong to story 4.</li></ul><p><strong>Story 2</strong></p><ul><li>What <code>healthz: status=&lt;code&gt; body=&lt;body&gt;</code> prints when no response ever arrived (for example <code>status=000</code> from curl).</li><li>The success line of <code>scripts/build-image.sh</code>.</li><li><code>tests/image/check-dockerfile.test.sh</code> and its fixtures are written and frozen at Rails; the builder follows them.</li><li>A per-attempt curl timeout, so polling stays within 30 s.</li><li><code>.dockerignore</code>: <code>*.md</code> or <code>**/*.md</code>; the build works with either.</li></ul><p><strong>Story 3</strong></p><ul><li>The exact wording of the missing-plugin hint of <code>check-helm</code>.</li><li>Whether the ClusterRoles render <code>rules: []</code> or no <code>rules</code> key.</li><li>Story 1's tool guard and prek hook are the pattern to copy once story 1 is merged.</li></ul><p><strong>Story 4</strong></p><ul><li>The job names added by stories 1 to 3 are the five target names; the builder checks <code>pr-checks.yml</code> once the trunk is merged.</li></ul></section>
+<section><h2>Risks and open points</h2><ul><li>Closed with the author before the gate: when <code>Serve</code> fails without a signal, one ERROR line <code>serve failed</code> and exit 1 (CAP-2, story 1).</li><li><span class="open">Open:</span> helm-unittest install method (verified OCI, or git with <code>--verify=false</code>): chosen during the build of story 3 on a real run and stated in the PR (E1).</li><li>Go 1.27.3 (2026-10-19, <code>crypto/x509</code> fix) is not used: one day old at planning time.</li><li>The five new CI jobs become required checks only after the merge, by the author with the <code>gh api</code> command (R1).</li><li>Story 1's spec is about 1800 tokens, over the 1600 target; the author kept it whole.</li><li>MemPalace was not searched during Plan: its MCP server was disconnected.</li></ul></section>
+</main>
+</body>
+</html>

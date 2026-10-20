@@ -1,0 +1,155 @@
+suite: HTTPRoute
+templates:
+  - templates/httproute.yaml
+release:
+  name: scaleway-manager
+tests:
+  - it: renders with ci/test-values.yaml (Gateway name and namespace set)
+    values:
+      - ../ci/test-values.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HTTPRoute
+      - isAPIVersion:
+          of: gateway.networking.k8s.io/v1
+      - equal:
+          path: metadata.name
+          value: scaleway-manager
+      - exists:
+          path: spec.parentRefs[0].name
+      - exists:
+          path: spec.parentRefs[0].namespace
+
+  - it: refers to the Gateway by name and namespace only when sectionName and hostnames are unset
+    set:
+      httpRoute:
+        gateway:
+          name: gw
+          namespace: gw-ns
+          sectionName: ""
+        hostnames: []
+    asserts:
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: gw
+              namespace: gw-ns
+      - notExists:
+          path: spec.parentRefs[0].sectionName
+      - notExists:
+          path: spec.hostnames
+
+  - it: renders sectionName and hostnames when set
+    set:
+      httpRoute:
+        gateway:
+          name: gw
+          namespace: gw-ns
+          sectionName: https
+        hostnames:
+          - a.example
+    asserts:
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: gw
+              namespace: gw-ns
+              sectionName: https
+      - equal:
+          path: spec.hostnames
+          value:
+            - a.example
+
+  - it: has one PathPrefix / rule to the Service on port 80
+    set:
+      httpRoute:
+        gateway:
+          name: gw
+          namespace: gw-ns
+    asserts:
+      - equal:
+          path: spec.rules
+          value:
+            - matches:
+                - path:
+                    type: PathPrefix
+                    value: /
+              backendRefs:
+                - name: scaleway-manager
+                  port: 80
+
+  - it: carries the common labels
+    set:
+      httpRoute:
+        gateway:
+          name: gw
+          namespace: gw-ns
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            helm.sh/chart: scaleway-manager-0.0.0
+            app.kubernetes.io/name: scaleway-manager
+            app.kubernetes.io/instance: scaleway-manager
+            app.kubernetes.io/version: "0.0.0"
+            app.kubernetes.io/managed-by: Helm
+
+  - it: fails when httpRoute.gateway.name is absent (chart default)
+    set:
+      httpRoute:
+        gateway:
+          namespace: gw-ns
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )httpRoute\.gateway\.name'
+
+  - it: fails when httpRoute.gateway.name is null
+    set:
+      httpRoute:
+        gateway:
+          name: null
+          namespace: gw-ns
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )httpRoute\.gateway\.name'
+
+  - it: fails when httpRoute.gateway.name is an empty string
+    set:
+      httpRoute:
+        gateway:
+          name: ""
+          namespace: gw-ns
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )httpRoute\.gateway\.name'
+
+  - it: fails when httpRoute.gateway.namespace is absent (chart default)
+    set:
+      httpRoute:
+        gateway:
+          name: gw
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )httpRoute\.gateway\.namespace'
+
+  - it: fails when httpRoute.gateway.namespace is null
+    set:
+      httpRoute:
+        gateway:
+          name: gw
+          namespace: null
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )httpRoute\.gateway\.namespace'
+
+  - it: fails when httpRoute.gateway.namespace is an empty string
+    set:
+      httpRoute:
+        gateway:
+          name: gw
+          namespace: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: '(^|\): )httpRoute\.gateway\.namespace'

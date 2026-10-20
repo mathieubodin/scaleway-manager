@@ -1,0 +1,23 @@
+- id: "1"
+  title: Go server and AD-1 check
+  description: >-
+    The server of CAP-1 and CAP-2 (internal/server, cmd/scaleway-manager, embedded web/index.html) and the
+    AD-1 check program of CAP-5 (cmd/check-go-mod), with the lint-go, test-go and check-go-mod targets,
+    their CI jobs, make check and the prek Go hook.
+  spec_checkpoint: true
+  done_checkpoint: true
+- id: "2"
+  title: Container image
+  description: >-
+    The Dockerfile, .dockerignore and make build-image of CAP-3, with its CI job; builds on the binary of
+    story 1.
+- id: "3"
+  title: Helm chart
+  description: >-
+    The chart of CAP-4 with its helm-unittest tests, the lint-chart target, its CI job, make check, the prek
+    chart hook and the check-yaml exclude of the templates.
+- id: "4"
+  title: Process files list the new checks
+  description: >-
+    docs/development-process.md, scripts/evidence.sh and the sdlc-work deliver reference (with its installed
+    copy) match the five new checks; docs/migrations/next/41.md says no impact.

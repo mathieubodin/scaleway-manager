@@ -1,5 +1,6 @@
 # Markdown lint for every file written for this project.
-# Excluded: files of the BMad modules (core, bmm, bmb), overwritten on each install.
+# Excluded: files of the BMad modules (core, bmm, bmb), overwritten on each install,
+# and .memlog.md files: append-only logs whose lines carry bare paths (#41).
 # Checks only by default; `make fix-docs` passes --fix.
 gitignore: true
 noBanner: true
@@ -9,6 +10,7 @@ globs:
 ignores:
   - ".claude/skills/bmad-*/**"
   - "_bmad/**"
+  - "**/.memlog.md"
 config:
   # One paragraph per line is allowed: BMad skills write that way and --fix cannot wrap.
   MD013: false
@@ -20,3 +22,6 @@ config:
     siblings_only: true
   MD025:
     front_matter_title: ""
+  # bmad-build story specs wrap their human-owned intent in this element.
+  MD033:
+    allowed_elements: [frozen-after-approval]
