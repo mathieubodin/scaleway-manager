@@ -1,9 +1,17 @@
 {
   "issue": 48,
   "route": "bug",
-  "tokens": 321116,
+  "tokens": 441669,
   "totals": {
     "steps": {
+      "build": {
+        "claude-opus-5-5": {
+          "input": 66,
+          "output": 3748,
+          "cacheCreation": 116739,
+          "cacheRead": 1843260
+        }
+      },
       "rails": {
         "claude-opus-5-5": {
           "input": 58,
@@ -23,25 +31,33 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 126,
-        "output": 14317,
-        "cacheCreation": 306673,
-        "cacheRead": 2810454
+        "input": 192,
+        "output": 18065,
+        "cacheCreation": 423412,
+        "cacheRead": 4653714
       }
     },
     "unattributed": {
       "claude-opus-5-5": {
-        "input": 2,
-        "output": 293,
-        "cacheCreation": 3620,
-        "cacheRead": 70364
+        "input": 10,
+        "output": 2058,
+        "cacheCreation": 7869,
+        "cacheRead": 428872
       }
     }
   },
   "sessions": {
     "6910fa0e-7637-41b7-b12e-83ea28963359": {
-      "computedAt": "2026-10-20T17:07:31Z",
+      "computedAt": "2026-10-20T17:11:50Z",
       "steps": {
+        "build": {
+          "claude-opus-5-5": {
+            "input": 14,
+            "output": 2111,
+            "cacheCreation": 7710,
+            "cacheRead": 565500
+          }
+        },
         "rails": {
           "claude-opus-5-5": {
             "input": 28,
@@ -61,10 +77,10 @@
       },
       "unattributed": {
         "claude-opus-5-5": {
-          "input": 2,
-          "output": 293,
-          "cacheCreation": 3620,
-          "cacheRead": 70364
+          "input": 10,
+          "output": 2058,
+          "cacheCreation": 7869,
+          "cacheRead": 428872
         }
       }
     }
@@ -73,7 +89,7 @@
     "wf_74481293-c7b": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "rails",
-      "computedAt": "2026-10-20T17:07:31Z",
+      "computedAt": "2026-10-20T17:11:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 30,
@@ -86,13 +102,26 @@
     "wf_a7d21464-cbb": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "triage",
-      "computedAt": "2026-10-20T17:07:31Z",
+      "computedAt": "2026-10-20T17:11:50Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
           "output": 992,
           "cacheCreation": 141413,
           "cacheRead": 249686
+        }
+      }
+    },
+    "wf_d836331d-438": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "build",
+      "computedAt": "2026-10-20T17:11:50Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 52,
+          "output": 1637,
+          "cacheCreation": 109029,
+          "cacheRead": 1277760
         }
       }
     }

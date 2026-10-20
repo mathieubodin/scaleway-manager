@@ -300,8 +300,8 @@ sequenceDiagram
 
 ### Rails, build, review, delivery gate
 
-- Rails: `sdlc-rails` starts one test writer per story, given the story spec only, never the code; every new test is then run: it must fail, since the code does not exist yet. A test that already passes, or a file git already tracks, goes back once to a new writer for its story, who rewrites that same file; if it still passes, it is not frozen and is reported. Then a single `make freeze` of the failing tests and a commit on the work branch, for all stories before any build. `sdlc-work` shows the suspect tests and the stories left without tests to the human, who decides before the build. No other human check of the tests: a wrong test shows during the build or at the delivery gate.
-- Build: the trunk stories are built one at a time, in order, each merged before the next starts; then the leaves. `sdlc-build` starts one builder per story in its own worktree, with the story spec and the frozen tests, at most 3 at the same time; each builder commits on its worktree branch and returns the branch and commit, which another agent checks (commit at the tip of the branch, descending from the work branch SHA, no frozen test changed). `sdlc-work` merges each branch with `make check-frozen` and `make check` after it. A story improved after a failure (`ticketImproved`, or a failed story) has its story spec edited in the work tree: `sdlc-work` commits it before merging. A builder that did not start from the work branch SHA returns `wrong base`, without the two-failure rule. Failed builders' worktrees are named in the result and kept for inspection.
+- Rails: `sdlc-rails` starts one test writer per story, given the story spec only, never the code; every new test is then run: it must fail, since the code does not exist yet. A test that already passes, or a file git already tracks, goes back once to a new writer for its story, who rewrites that same file; if it still passes, it is not frozen and is reported. Then a single `make freeze` of the failing tests and a commit on the work branch, for all stories before any build. `sdlc-work` shows the suspect tests and the stories left without tests to the human, who decides before the build. Right after Rails, `sdlc-work` writes the work folder's `runner-map.md`, which maps each file of `frozen-tests.sha256` to the runner that reaches it (a make target run by `make check`, or a CI job) and to the story whose code makes it pass. A frozen file with no runner is reported to the human before the build, who names its runner or drops the file. No other human check of the tests: a wrong test shows during the build or at the delivery gate.
+- Build: the trunk stories are built one at a time, in order, each merged before the next starts; then the leaves. `sdlc-build` starts one builder per story in its own worktree, with the story spec and the frozen tests, at most 3 at the same time; each builder commits on its worktree branch and returns the branch and commit, which another agent checks (commit at the tip of the branch, descending from the work branch SHA, no frozen test changed). `sdlc-work` merges each branch with `make check-frozen` and `make check` after it. Trunk merge rule: `make check-frozen` passes, and every `make check` failure is a frozen test of a story not built yet according to the runner map. Those expected failures are named in the builder prompt, so that the builder neither stops on them nor touches them, and listed in the memlog result line of the merge. Any other failure blocks the merge. After the last story `make check` is fully green. A story improved after a failure (`ticketImproved`, or a failed story) has its story spec edited in the work tree: `sdlc-work` commits it before merging. A builder that did not start from the work branch SHA returns `wrong base`, without the two-failure rule. Failed builders' worktrees are named in the result and kept for inspection.
 - Verification: `make check` runs the checks and the frozen-test fingerprints. Code tests run with `make test-go`. Coverage measured by a tool and mutation testing on the changed code (`MUTATION=0` switches it off) come with #14.
 - Review: `sdlc-review`, see [Review loop](#review-loop).
 - Before the PR: `/ce-compound` records the lessons; MemPalace is updated; `sdlc-work` creates a `route:short` issue "simplify after #n" with the leads seen in review and, when recurring lessons exist, a "distill lessons" issue, both in Backlog; migration file; `make evidence`; behavior diff once it exists.
@@ -326,7 +326,9 @@ sequenceDiagram
     F->>A: Run each new test: it must fail; one rewrite if it passes
     F->>A: Run make freeze, no human check
     F-->>W: Tests frozen, suspect tests, failed stories
-    W->>W: Commit tests and fingerprint manifest
+    W->>W: Map each frozen test to its runner and story
+    W->>H: Frozen tests with no runner, before the build
+    W->>W: Commit tests, fingerprint manifest and runner map
     W->>G: Sub-issues In Progress
     loop Each trunk story in order, then one run for all leaves
         W->>F: sdlc-build, mode long (story specs, work branch SHA)
@@ -335,6 +337,7 @@ sequenceDiagram
         Note over F,A: In script, on a failure: improve the story spec, new builder. Fails again: back to Plan
         F-->>W: Finished branches, failed stories
         W->>T: Merge one by one, make check-frozen and make check after each
+        Note over W,T: make check failures accepted only for frozen tests of stories not built yet
     end
     W->>F: sdlc-review (dryPasses 2, maxRounds 5)
     loop In script: until two dry passes with 3 lenses, at most 5 rounds
