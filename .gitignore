@@ -9,3 +9,6 @@ _bmad/config.user.toml
 # Node tooling (npm ci).
 node_modules/
 coverage/
+
+# Go build output (go build ./cmd/scaleway-manager).
+/scaleway-manager

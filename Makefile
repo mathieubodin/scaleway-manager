@@ -17,7 +17,7 @@ export MUTATION
 BASE ?= origin/main
 export BASE
 
-.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note
+.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -82,7 +82,25 @@ fix-workflows: check-node ## Fix lint and format in place, then lint
 test-workflows: check-node ## Run the workflow tests under the harness, with coverage (c8)
 	$(NODE_BIN)/c8 node --test 'tests/workflows/**/*.test.js'
 
-check: lint-docs lint-workflows test-workflows check-frozen ## Run the checks that need no issue number (used by the sdlc-review fixer)
+# Go: standard library only (AD-1). gofmt checks tracked files only, so other
+# worktrees and node_modules are skipped.
+check-go:
+	@command -v go >/dev/null || { \
+		echo "Error: go not found. Install Go 1.27.2: https://go.dev/dl/"; \
+		exit 1; }
+
+lint-go: check-go ## Go format check (gofmt, tracked files) and go vet
+	@unformatted="$$(gofmt -l $$(git ls-files '*.go'))"; \
+	if [ -n "$$unformatted" ]; then echo "Not formatted (gofmt -w):"; echo "$$unformatted"; exit 1; fi
+	go vet ./...
+
+test-go: check-go ## Run the Go tests
+	go test ./...
+
+check-go-mod: check-go ## Fail if go.mod has a require or go.sum is not empty (AD-1)
+	go run ./cmd/check-go-mod
+
+check: lint-docs lint-workflows test-workflows check-frozen lint-go test-go check-go-mod ## Run the checks that need no issue number (used by the sdlc-review fixer)
 
 check-migration: ## Check docs/migrations/next/ISSUE.md: changed by the branch since BASE (origin/main), valid format
 	@scripts/check-migration.sh "$${ISSUE:-}" "$$BASE"
