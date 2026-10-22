@@ -1,0 +1,150 @@
+{
+  "issue": 50,
+  "route": "short",
+  "tokens": 660112,
+  "totals": {
+    "steps": {
+      "change": {
+        "claude-opus-5-5": {
+          "input": 8,
+          "output": 3585,
+          "cacheCreation": 4946,
+          "cacheRead": 656781
+        }
+      },
+      "deliver": {
+        "claude-opus-5-5": {
+          "input": 44,
+          "output": 10919,
+          "cacheCreation": 15724,
+          "cacheRead": 4318680
+        }
+      },
+      "review": {
+        "<synthetic>": {
+          "input": 0,
+          "output": 0,
+          "cacheCreation": 0,
+          "cacheRead": 0
+        },
+        "claude-opus-5-5": {
+          "input": 88,
+          "output": 11575,
+          "cacheCreation": 434450,
+          "cacheRead": 2909159
+        }
+      },
+      "triage": {
+        "claude-opus-5-5": {
+          "input": 56,
+          "output": 7399,
+          "cacheCreation": 171318,
+          "cacheRead": 1994009
+        }
+      }
+    },
+    "models": {
+      "claude-opus-5-5": {
+        "input": 196,
+        "output": 33478,
+        "cacheCreation": 626438,
+        "cacheRead": 9878629
+      },
+      "<synthetic>": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      }
+    },
+    "unattributed": {
+      "claude-opus-5-5": {
+        "input": 12,
+        "output": 2751,
+        "cacheCreation": 8356,
+        "cacheRead": 529755
+      }
+    }
+  },
+  "sessions": {
+    "6910fa0e-7637-41b7-b12e-83ea28963359": {
+      "computedAt": "2026-10-22T17:32:38Z",
+      "steps": {
+        "change": {
+          "claude-opus-5-5": {
+            "input": 8,
+            "output": 3585,
+            "cacheCreation": 4946,
+            "cacheRead": 656781
+          }
+        },
+        "deliver": {
+          "claude-opus-5-5": {
+            "input": 44,
+            "output": 10919,
+            "cacheCreation": 15724,
+            "cacheRead": 4318680
+          }
+        },
+        "review": {
+          "<synthetic>": {
+            "input": 0,
+            "output": 0,
+            "cacheCreation": 0,
+            "cacheRead": 0
+          },
+          "claude-opus-5-5": {
+            "input": 22,
+            "output": 10350,
+            "cacheCreation": 175911,
+            "cacheRead": 1619969
+          }
+        },
+        "triage": {
+          "claude-opus-5-5": {
+            "input": 26,
+            "output": 6819,
+            "cacheCreation": 14071,
+            "cacheRead": 1837072
+          }
+        }
+      },
+      "unattributed": {
+        "claude-opus-5-5": {
+          "input": 12,
+          "output": 2751,
+          "cacheCreation": 8356,
+          "cacheRead": 529755
+        }
+      }
+    }
+  },
+  "runs": {
+    "wf_0200eebf-95d": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "triage",
+      "computedAt": "2026-10-22T17:32:38Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 30,
+          "output": 580,
+          "cacheCreation": 157247,
+          "cacheRead": 156937
+        }
+      }
+    },
+    "wf_c44b58c6-5f9": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "review",
+      "computedAt": "2026-10-22T17:32:38Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 66,
+          "output": 1225,
+          "cacheCreation": 258539,
+          "cacheRead": 1289190
+        }
+      }
+    }
+  }
+}

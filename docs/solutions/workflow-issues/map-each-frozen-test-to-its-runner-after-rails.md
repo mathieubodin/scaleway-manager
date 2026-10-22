@@ -37,6 +37,7 @@ Right after Rails, before the build, write one map: each file of `frozen-tests.s
 2. **Merges.** A trunk story or a leaf merges when `make check-frozen` passes and every `make -k check` failure is a frozen test of a story not built yet, according to the map (a leaf not merged yet counts as not built yet; `-k`, so that a failing target does not hide the targets after it).
    - List those expected failures in the memlog result line of the merge.
    - Name them in the builder prompt, so the builder neither stops nor touches them.
+   - Go: a frozen `*_test.go` that refers to symbols not written yet breaks the compilation of its whole package, which hides the tests of built stories in it, the builder's own included. Its `go vet` and `go test` failures are expected; check the package with the frozen files of unbuilt stories set aside (renamed to `<file>.aside`, then renamed back before `make check-frozen` and any commit), and have the builder do the same to run its own tests (#50).
    - A failure outside the list blocks the merge, as before.
    - After the last story (the last leaf, or the last trunk story without leaves), `make check` is fully green.
 
