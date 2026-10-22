@@ -104,7 +104,7 @@ done
       "",
       "| Model | Input | Output | Cache creation | Cache read | Tokens |",
       "| --- | --- | --- | --- | --- | --- |",
-      (.totals.models | to_entries[] | row(.key; .value)),
+      (.totals.models | to_entries[] | row("`\(.key)`"; .value)),
       "",
       (if (.totals.unattributed | length) == 0 then "Unattributed: none."
        else "Unattributed (outside `Tokens`): \(sumcat(.totals.unattributed) | tok) tokens, \(sumcat(.totals.unattributed).cacheRead) cache reads." end)

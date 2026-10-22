@@ -1,7 +1,7 @@
 {
   "issue": 50,
   "route": "short",
-  "tokens": 644173,
+  "tokens": 657410,
   "totals": {
     "steps": {
       "change": {
@@ -14,10 +14,10 @@
       },
       "deliver": {
         "claude-opus-5-5": {
-          "input": 18,
-          "output": 4498,
-          "cacheCreation": 6232,
-          "cacheRead": 1724961
+          "input": 40,
+          "output": 9508,
+          "cacheCreation": 14437,
+          "cacheRead": 3910760
         }
       },
       "review": {
@@ -45,10 +45,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 170,
-        "output": 27057,
-        "cacheCreation": 616946,
-        "cacheRead": 7284910
+        "input": 192,
+        "output": 32067,
+        "cacheCreation": 625151,
+        "cacheRead": 9470709
       },
       "<synthetic>": {
         "input": 0,
@@ -68,7 +68,7 @@
   },
   "sessions": {
     "6910fa0e-7637-41b7-b12e-83ea28963359": {
-      "computedAt": "2026-10-22T17:28:38Z",
+      "computedAt": "2026-10-22T17:31:48Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -80,10 +80,10 @@
         },
         "deliver": {
           "claude-opus-5-5": {
-            "input": 18,
-            "output": 4498,
-            "cacheCreation": 6232,
-            "cacheRead": 1724961
+            "input": 40,
+            "output": 9508,
+            "cacheCreation": 14437,
+            "cacheRead": 3910760
           }
         },
         "review": {
@@ -123,7 +123,7 @@
     "wf_0200eebf-95d": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "triage",
-      "computedAt": "2026-10-22T17:28:38Z",
+      "computedAt": "2026-10-22T17:31:48Z",
       "models": {
         "claude-opus-5-5": {
           "input": 30,
@@ -136,7 +136,7 @@
     "wf_c44b58c6-5f9": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "review",
-      "computedAt": "2026-10-22T17:28:38Z",
+      "computedAt": "2026-10-22T17:31:48Z",
       "models": {
         "claude-opus-5-5": {
           "input": 66,
