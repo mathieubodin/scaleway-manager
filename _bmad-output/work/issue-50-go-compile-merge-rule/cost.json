@@ -1,7 +1,7 @@
 {
   "issue": 50,
   "route": "short",
-  "tokens": 631755,
+  "tokens": 644173,
   "totals": {
     "steps": {
       "change": {
@@ -12,6 +12,14 @@
           "cacheRead": 656781
         }
       },
+      "deliver": {
+        "claude-opus-5-5": {
+          "input": 18,
+          "output": 4498,
+          "cacheCreation": 6232,
+          "cacheRead": 1724961
+        }
+      },
       "review": {
         "<synthetic>": {
           "input": 0,
@@ -20,10 +28,10 @@
           "cacheRead": 0
         },
         "claude-opus-5-5": {
-          "input": 86,
-          "output": 11074,
-          "cacheCreation": 433283,
-          "cacheRead": 2721289
+          "input": 88,
+          "output": 11575,
+          "cacheCreation": 434450,
+          "cacheRead": 2909159
         }
       },
       "triage": {
@@ -37,10 +45,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 150,
-        "output": 22058,
-        "cacheCreation": 609547,
-        "cacheRead": 5372079
+        "input": 170,
+        "output": 27057,
+        "cacheCreation": 616946,
+        "cacheRead": 7284910
       },
       "<synthetic>": {
         "input": 0,
@@ -60,7 +68,7 @@
   },
   "sessions": {
     "6910fa0e-7637-41b7-b12e-83ea28963359": {
-      "computedAt": "2026-10-22T17:23:05Z",
+      "computedAt": "2026-10-22T17:28:38Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -68,6 +76,14 @@
             "output": 3585,
             "cacheCreation": 4946,
             "cacheRead": 656781
+          }
+        },
+        "deliver": {
+          "claude-opus-5-5": {
+            "input": 18,
+            "output": 4498,
+            "cacheCreation": 6232,
+            "cacheRead": 1724961
           }
         },
         "review": {
@@ -78,10 +94,10 @@
             "cacheRead": 0
           },
           "claude-opus-5-5": {
-            "input": 20,
-            "output": 9849,
-            "cacheCreation": 174744,
-            "cacheRead": 1432099
+            "input": 22,
+            "output": 10350,
+            "cacheCreation": 175911,
+            "cacheRead": 1619969
           }
         },
         "triage": {
@@ -107,7 +123,7 @@
     "wf_0200eebf-95d": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "triage",
-      "computedAt": "2026-10-22T17:23:05Z",
+      "computedAt": "2026-10-22T17:28:38Z",
       "models": {
         "claude-opus-5-5": {
           "input": 30,
@@ -120,7 +136,7 @@
     "wf_c44b58c6-5f9": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "review",
-      "computedAt": "2026-10-22T17:23:05Z",
+      "computedAt": "2026-10-22T17:28:38Z",
       "models": {
         "claude-opus-5-5": {
           "input": 66,
