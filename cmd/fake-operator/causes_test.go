@@ -853,3 +853,74 @@ func TestCausesAnnotationNeverRemoved(t *testing.T) {
 		t.Errorf("annotations = %v, want outcome kept", a)
 	}
 }
+
+// A source-version lower than current_version is not applied: the lifecycle
+// runs and leaves current_version unchanged.
+func TestCausesSourceVersionLowerLeavesVersion(t *testing.T) {
+	e := causesSetup(t)
+	e.put(t, scalewaySecretKind, causesObject(scalewaySecretKind, "sec", 1, map[string]string{causesSourceKey: "1"}, true, causesSyncedSecret()))
+
+	causesNoPatch(t, e.passPatches(t))
+	causesWant(t, e.status(t, scalewaySecretKind, "sec"), causesSyncedSecret())
+}
+
+// After a spec change, source-version "2" does not take current_version back
+// from 3 to 2 on the next pass.
+func TestCausesSourceVersionSpecChangeThenNoFlip(t *testing.T) {
+	e := causesSetup(t)
+	e.put(t, scalewaySecretKind, causesObject(scalewaySecretKind, "sec", 2, map[string]string{causesSourceKey: "2"}, true, causesSyncedSecret()))
+	want := causesWith(causesSyncedSecret(), "current_version", 3, "observed_generation", 2)
+
+	e.pass(t)
+	causesWant(t, e.status(t, scalewaySecretKind, "sec"), want)
+
+	causesNoPatch(t, e.passPatches(t))
+	causesWant(t, e.status(t, scalewaySecretKind, "sec"), want)
+}
+
+// source-version is bounded by the operator's u32 current_version.
+func TestCausesSourceVersionU32(t *testing.T) {
+	t.Run("max", func(t *testing.T) {
+		e := causesSetup(t)
+		e.put(t, scalewaySecretKind, causesObject(scalewaySecretKind, "sec", 1, map[string]string{causesSourceKey: "4294967295"}, true, causesSyncedSecret()))
+
+		e.pass(t)
+		causesWant(t, e.status(t, scalewaySecretKind, "sec"), causesWith(causesSyncedSecret(), "current_version", 4294967295))
+	})
+	t.Run("above", func(t *testing.T) {
+		e := causesSetup(t)
+		e.put(t, scalewaySecretKind, causesObject(scalewaySecretKind, "sec", 1, map[string]string{causesSourceKey: "4294967296"}, true, causesSyncedSecret()))
+
+		e.pass(t)
+		got := e.status(t, scalewaySecretKind, "sec")
+		want := "fake-operator: source-version '4294967296' is not a positive integer"
+		if got["sync_state"] != "Error" || got["error_message"] != want {
+			t.Errorf("sync_state %v, error_message %v; want Error, %q", got["sync_state"], got["error_message"], want)
+		}
+	})
+}
+
+// NotFound on an object with no status writes the NotFound status, even
+// though it equals defaultStatus.
+func TestCausesNotFoundWithoutStatus(t *testing.T) {
+	for _, tc := range []struct {
+		k    kind
+		want map[string]any
+	}{
+		{instanceKind, map[string]any{"state": "unknown", "sync_state": "Syncing"}},
+		{loadBalancerKind, map[string]any{"state": "", "sync_state": "Pending"}},
+	} {
+		t.Run(tc.k.name, func(t *testing.T) {
+			e := causesSetup(t)
+			e.put(t, tc.k, causesObject(tc.k, "obj", 1, causesOutcome("NotFound"), true, nil))
+
+			e.pass(t)
+			if _, ok := e.get(t, tc.k, "obj")["status"]; !ok {
+				t.Fatal("no status written")
+			}
+			causesWant(t, e.status(t, tc.k, "obj"), tc.want)
+
+			causesNoPatch(t, e.passPatches(t))
+		})
+	}
+}

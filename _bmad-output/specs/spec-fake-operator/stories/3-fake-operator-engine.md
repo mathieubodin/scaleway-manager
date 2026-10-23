@@ -12,6 +12,8 @@ context:
   - '{project-root}/_bmad-output/work/issue-42-fake-operator/plan.md'
 ---
 
+Behavior: `fake-operator-contract.md` is the only description of the fake operator's behavior; where this story spec differs from it, the contract wins.
+
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
 
 ## Intent

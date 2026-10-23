@@ -2,6 +2,8 @@
 
 The behavior `cmd/fake-operator` must reproduce, per kind. Source: `scaleway-operator-v0.1.15` (`src/reconcilers.rs`, `src/resources.rs`, `src/error.rs`, `src/context.rs`, `src/scaleway.rs`), CRDs `scaleway-operator-crds` `0.1.14`. Read the operator only at that tag. AD-9 of the architecture spine is the rule; this file is its detail.
 
+This file is the only description of the fake's behavior. `go-interfaces.md` holds the Go signatures and points here; the behavior lines of the story specs of #42 are superseded by this file.
+
 ## Kinds
 
 | Kind | Group/version | Plural | Scope | Finalizer |
@@ -19,7 +21,7 @@ JSON keys are snake_case. Every write sends the whole struct; an absent value is
 | --- | --- | --- |
 | `Instance` | `scaleway_id`, `public_ip`, `state`, `project_id`, `created_at`, `error_message`, `sync_state` | `state: "unknown"`, `sync_state: "Syncing"` |
 | `LoadBalancer` | `scaleway_id`, `vip_address`, `state`, `project_id`, `created_at` (never set), `error_message`, `sync_state` | `state: ""`, `sync_state: "Pending"` |
-| `ScalewaySecret` | `scaleway_id`, `current_version`, `last_synced_resource_version` (never written by the fake), `observed_generation`, `sync_state`, `error_message` | `sync_state: "Syncing"` |
+| `ScalewaySecret` | `scaleway_id`, `current_version`, `last_synced_resource_version` (always `null`: the fake never holds a value), `observed_generation`, `sync_state`, `error_message` | `sync_state: "Syncing"` |
 
 ## Pass order
 
@@ -41,8 +43,8 @@ One pass moves an object at most one step. The fake evaluates, in this order:
 
 | Step | `Instance` | `LoadBalancer` | `ScalewaySecret` |
 | --- | --- | --- | --- |
-| Creation pass | `Syncing`, `state: "creating"`, `scaleway_id` (random UUID), `project_id` (namespace annotation), `created_at` (now, with chrono's fraction of a second: none, 3, 6 or 9 digits), `error_message: null` | `Syncing`, `state: "pending"`, `scaleway_id`, `project_id`, `error_message: null` | `Syncing` then `Synced` in the same pass, as two patches. The first carries `scaleway_id`, with `current_version` and `last_synced_resource_version` null. The second carries `current_version: 1` and `observed_generation` |
-| Next pass | `Synced`, `state: "running"`, `public_ip: 192.0.2.<x>`, `error_message: null` | `Synced`, `state: "ready"`, `vip_address: 198.51.100.<x>`, `error_message: null` | steady: no write |
+| Creation pass | `Syncing`, `state: "creating"`, `scaleway_id` (random UUID), `project_id` (namespace annotation), `created_at` (now, with chrono's fraction of a second: none, 3, 6 or 9 digits), `error_message: null` | `Syncing`, `state: "pending"`, `scaleway_id`, `project_id`, `error_message: null` | `Syncing` then `Synced` in the same pass, as two patches. The first carries `scaleway_id`, with `current_version`, `last_synced_resource_version`, `observed_generation` and `error_message` null. The second carries `current_version: 1`, `observed_generation` = `metadata.generation` and `error_message: null` |
+| Next pass (any `sync_state` other than `Synced`, with a `scaleway_id`) | `Synced`, `state: "running"`, `public_ip: 192.0.2.<x>`, `error_message: null` | `Synced`, `state: "ready"`, `vip_address: 198.51.100.<x>`, `error_message: null` | `Synced`, `current_version` kept (1 when null), `observed_generation` = `metadata.generation`, `error_message: null`; once `Synced`: no write |
 
 - Generated values (`scaleway_id`, IPs) are kept once written.
 - A `Synced` ScalewaySecret with a `scaleway_id` and a null `status.observed_generation` records `observed_generation` = `metadata.generation` without a version push, as the operator does (`decide_next_action_secret` step 7bis).
@@ -56,7 +58,7 @@ Each check uses the operator's message, with `<ns>`, `<r>` and `<pid>` filled in
 | Kind | Order | Check | Before or after finalizer | Message |
 | --- | --- | --- | --- | --- |
 | `ScalewaySecret` | first, deletion included | `spec.region` in `fr-par`, `nl-ams`, `pl-waw` | before; a failure on delete keeps the finalizer | `Configuration error: Invalid region '<r>'. Use one of: fr-par, nl-ams, pl-waw.` |
-| all three | 1 | `NamespaceRole` named `<ns>` exists | before | `Configuration error: No NamespaceRole found for namespace '<ns>'. Create a NamespaceRole resource with name '<ns>' to assign a Scaleway role.`; any other read error: `Kubernetes API error` |
+| all three | 1 | `NamespaceRole` named `<ns>` exists | before | `Configuration error: No NamespaceRole found for namespace '<ns>'. Create a NamespaceRole resource with name '<ns>' to assign a Scaleway role.`; any other read error: `Kubernetes API error`, that exact text with nothing appended |
 | `ScalewaySecret` | 2 | role is `Editor`, `Admin` or `OrganizationOwner` | before | `Configuration error: Role '<r>' is read-only and cannot sync secrets. Use 'Editor' or 'Admin'.` |
 | `Instance`, `LoadBalancer` | 2 | namespace annotation `scaleway.mathieubodin.io/project-id` present | before | `Configuration error: Namespace '<ns>' must have annotation 'scaleway.mathieubodin.io/project-id'`; namespace read error: `Configuration error: Cannot access namespace <ns>: <error>` |
 | `Instance`, `LoadBalancer` | 3 | annotation is a UUID | before | `Configuration error: Annotation 'scaleway.mathieubodin.io/project-id' must be a valid UUID, got: '<pid>'` |
@@ -68,6 +70,10 @@ Each check uses the operator's message, with `<ns>`, `<r>` and `<pid>` filled in
 
 The exact field names of the spec lists and the instance-type list are read from `src/scaleway.rs` at the tag.
 
+- **At creation** means `status.scaleway_id` is null or absent.
+- **UUID:** the forms Rust's `Uuid::parse_str` accepts, in any case: hyphenated 8-4-4-4-12, 32 hex digits, braced `{…}`, `urn:uuid:` prefixed.
+- **Role:** a NamespaceRole without `spec.scaleway_role` counts as the read-only role `''`.
+
 **Not mimicked** (they need Secret reads): the source Secret, its opt-in label and annotation, its key, `scaleway-ns-creds-<ns>`, `FinalizerRemovedWithoutScalewayDelete`, and the circuit breaker.
 
 ## Causes
@@ -77,43 +83,51 @@ The annotation `fake.scaleway-manager.test/outcome` applies on every pass while 
 | Cause | `Instance` | `LoadBalancer` | `ScalewaySecret` |
 | --- | --- | --- | --- |
 | `NotFound` | `Syncing`, `state: "unknown"`; `scaleway_id`, `public_ip`, `project_id`, `created_at`, `error_message` null. Re-created once removed | `Pending`, `state: ""`; `scaleway_id`, `vip_address`, `project_id`, `error_message` null. Re-created once removed | refused |
-| `Error` | `Error`, `Scaleway API error: 500 Internal Server Error`, other fields kept; on delete: finalizer kept with a `scaleway_id`, removed without | same | at creation only, same message; a synced secret is unchanged; on delete as `Instance` |
+| `Error` | `Error`, `Scaleway API error: 500 Internal Server Error`, other fields kept; on delete: finalizer kept with a `scaleway_id`, removed without | same | at creation only, same message; with a `scaleway_id` it has no effect, whatever its `sync_state`; on delete as `Instance` |
 | `Locked` | refused | on delete with a `scaleway_id`: `TerminationBlocked`, `Load balancer is locked — deletion blocked by Scaleway`, finalizer kept; on delete without `scaleway_id`: finalizer removed; outside deletion: no effect | refused |
-| `Revoked` | refused | refused | with `scaleway_id`: `Revoked`, `Source Secret opt-in revoked — Scaleway version disabled. Re-add label/annotation to re-sync.`, `scaleway_id` and `current_version` kept, `last_synced_resource_version` null; without `scaleway_id`: `Error`, `Source Secret unavailable (see operator logs)`, no finalizer (checked before it) |
+| `Revoked` | refused | refused | with `scaleway_id`: `Revoked`, `Source Secret opt-in revoked — Scaleway version disabled. Re-add label/annotation to re-sync.`, `scaleway_id`, `current_version` and `observed_generation` kept, `last_synced_resource_version` null; without `scaleway_id`: `Error`, `Source Secret unavailable (see operator logs)`, no finalizer (checked before it) |
 
 Other annotations and values:
 
 - **Refused cause:** `Error` with `fake-operator: cause '<v>' is not supported for <Kind>`.
 - **Empty `outcome`:** treated as absent.
-- **`fake.scaleway-manager.test/message`:** replaces the message of a cause that writes one (`Error`, `Locked`, `Revoked`). It is ignored otherwise: no cause, `NotFound`, or a refused cause.
-- **`fake.scaleway-manager.test/source-version: "<n>"`**, without a cause, on a synced ScalewaySecret: sets `current_version` to `n` and writes `Synced`, only when `n` is greater than `current_version`.
+- **`fake.scaleway-manager.test/message`:** replaces the message of a cause that writes one (`Error`, `Locked`, `Revoked`, including `Source Secret unavailable (see operator logs)`). It is ignored otherwise: no cause, `NotFound`, or a refused cause.
+- **`fake.scaleway-manager.test/source-version: "<n>"`**, without a cause, on a ScalewaySecret: once it is `Synced`, sets `current_version` to `n`, `observed_generation` to `metadata.generation` and `error_message` to null, and writes `Synced`, only when `n` is greater than `current_version`.
   - When `n` is equal or lower, it has no effect and the lifecycle runs.
+  - It is ignored on `Instance` and `LoadBalancer`.
+  - A cause takes precedence over `source-version`, and `source-version` takes precedence over a generation change in the same pass.
   - On a new secret, the fake writes `current_version: 1` first, then `n` on the next pass.
-  - A value that is not a positive integer up to 4294967295 (the operator's `current_version` is a `u32`) gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
+  - A value that is not a positive integer up to 4294967295 (the operator's `current_version` is a `u32`) gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`, on a ScalewaySecret with no cause, whatever its state.
 
 ## Runtime
 
-- **Polling:** the delay is `FAKE_OPERATOR_STEP_DELAY` (Go duration, default `2s`; an invalid or non-positive value exits 1 at start). The next pass starts one delay after the previous one ends. A failed list skips only that kind.
+- **Polling:** the delay is `FAKE_OPERATOR_STEP_DELAY` (Go duration, default `2s`; an invalid or non-positive value exits 1 at start). The first pass starts at once; the next one starts one delay after the previous one ends.
+- **Pass:** the token file is read first; an unreadable or empty token ends the pass with an error before any list, and that pass does not count as ended. A failed list is logged (`msg` `list failed`, attributes `kind`, `error`) and skips only that kind. An error on one object is logged (`msg` `object failed`, attributes `kind`, `namespace`, `name`, `error`) and ends only that object's pass; the others go on.
 - **Token:** read at each pass from `/var/run/secrets/kubernetes.io/serviceaccount/token`. The CA comes from `ca.crt` in the same directory, an explicit projected volume of the token and `kube-root-ca.crt`. `main` hardcodes these two paths and passes them to `run`, so tests inject their own.
 - **Exit 1 at start:**
   - when `KUBERNETES_SERVICE_HOST` or `KUBERNETES_SERVICE_PORT` is missing;
+  - when the token is unreadable: the guard reads it first and logs one ERROR;
   - when a Deployment labelled `app.kubernetes.io/name: scaleway-operator` exists in `scaleway-system`.
+- **Start-up logs:** `msg` `start failed` with attribute `error`; the guard logs `msg` `real operator found` with attribute `deployment` (`<namespace>/<name>`).
 - **`GET /healthz`** on `HEALTH_ADDR` (default `:8081`): 503 until the first pass ends; then 200 while the last pass ended less than 3 × the delay ago, 503 otherwise. A failed list still counts as an ended pass. It is used by a liveness probe.
-- **SIGTERM or SIGINT:** the pass stops between two objects: the in-flight object finishes, the next one is not started. Then `run` returns 0. A request is never canceled by the signal; each pass stays bounded by 30 s.
+  - 200 has `Content-Type: text/plain; charset=utf-8` and body `ok`; 503 has an empty body.
+  - Other methods get 405 and other paths 404.
+  - `ReadHeaderTimeout` 10 s, `Shutdown` timeout 5 s.
+- **SIGTERM or SIGINT:** the pass stops between two objects: the in-flight object finishes, the next one is not started. Then `run` returns 0. A request is never canceled by the signal; each pass stays bounded by 30 s. A second signal is ignored.
 
 ## Writes
 
-- **Finalizer:** JSON merge patch on the object, `{"metadata":{"finalizers":[<whole list>]}}`.
+- **Finalizer:** JSON merge patch on the object, `{"metadata":{"finalizers":[<whole list>]}}`, keeping the other finalizers.
 - **Status:** JSON merge patch on `/status`, `{"status":{<whole struct>}}`.
 - **Patch rules:**
   - No `resourceVersion` in either patch.
-  - A patch is sent only when the result differs from the object read.
+  - A patch is sent only when the result differs from the object read. A missing status always differs, even from the Rust default.
 - **Never written:** `NamespaceRole`, annotations, labels, events.
 
 ## Packaging and RBAC
 
-- **Image:** `cmd/fake-operator/Dockerfile`, on the release bases, passes `scripts/check-dockerfile.sh`. `make build-fake-operator-image` builds `scaleway-manager-fake-operator:local`, which is never pushed.
-- **Manifests:** JSON files in `tests/cluster/fake-operator/`, `imagePullPolicy: Never`.
+- **Image:** `cmd/fake-operator/Dockerfile`, on the release bases, passes `scripts/check-dockerfile.sh`. `make build-fake-operator-image` builds `scaleway-manager-fake-operator:local`, which is never pushed. In CI, its build step comes right after `make build-image`, before "Run the image tests".
+- **Manifests:** JSON files in `tests/cluster/fake-operator/`, `imagePullPolicy: Never`, 2-space indent, passing `biome ci .` (run by `make check` through `lint-workflows`). Every object is named `fake-operator`; only the Deployment and its pod template carry the label `app.kubernetes.io/name: fake-operator`, which the Deployment's selector matches.
   - Namespace `fake-operator`.
   - ServiceAccount.
   - ClusterRole and ClusterRoleBinding: `get` and `list` on `namespaces` and `namespaceroles`; `list` and `patch` on `instances`, `loadbalancers` and `scalewaysecrets`; `patch` only on their `/status`.
