@@ -30,7 +30,7 @@ Show the user, in plain language, starting with a TL;DR (the proposed route and 
 - the branch `<type>/<n>-<slug>`: `type` the Conventional Commits type planned for the PR (usually `feat` for long work and `fix` for a bug), `slug` from the title, matching `[a-z0-9]+(-[a-z0-9]+){0,3}`; `<n>` is known once the issue exists;
 - a milestone: the open ones (`gh api repos/{owner}/{repo}/milestones --jq '.[].title'`), a new one, or none.
 
-Ask one clickable question: confirm all of it, or change the route, the title, the slug or the milestone. Decided with the author: this one confirmation covers every GitHub write of steps 5 to 7; do not ask again before each.
+Ask one clickable question: confirm all of it, or change the route, the title, the slug or the milestone. For `undecided` there is nothing to confirm: the question offers short or long instead of confirm, along with the title, slug and milestone changes, and the route chosen is `<route>` from here on. Decided with the author: this one confirmation covers every GitHub write of steps 5 to 7; do not ask again before each.
 
 ## 5. Milestone (only when a new one was chosen)
 

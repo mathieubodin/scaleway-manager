@@ -50,6 +50,6 @@ Then `references/deliver.md`.
 
 1. Launch `sdlc-review` as in the bug route, with `specPath` the issue text written to a temporary file outside the repository, and `singlePass: true` instead of `dryPasses` and `maxRounds`.
 2. A single pass converges only when it finds nothing: here `converged` false is normal, and there is no way out to propose. Memlog result and commit as in the bug route, steps 2 and 3.
-3. The findings left unfixed (`unfixed`) and the fixes no round reviewed (`unreviewedFixes`) go to the PR body.
+3. The findings left unfixed (`unfixed`) and the fixes no round reviewed (`unreviewedFixes`) go to the PR body. A finding that contradicts the issue text or a frozen test is never fixed by hand and never changes a frozen test: the user dismisses it, or it is recorded as in `long.md`, "Review", and listed in the PR.
 
 Then `references/deliver.md`.

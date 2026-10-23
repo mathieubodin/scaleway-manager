@@ -63,7 +63,7 @@ Before Plan: `_bmad-output/planning-artifacts/architecture/` must exist and name
 
 ## Review (step `review`)
 
-Launch `sdlc-review` as in `short-bug.md`, with `specPath` the `SPEC.md`, `dryPasses: 2`, `maxRounds: 5`. Memlog result and commit as there. The validated spec holds until proven otherwise: a finding that contradicts `SPEC.md`, a story spec or a frozen test is never fixed and never changes a frozen test; the user dismisses it, or it is recorded as a memlog result `open finding <id>: <claim>; scenario: <targeted scenario or test case that would settle it>` and listed in the PR. Not converged: show the recurring findings and propose to accept and list them in the PR, back to Plan, or back to Define; the user chooses. Only a return to Define reopens the spec. A return goes through that step and its gate again, and on to rails and build only for the new or changed story specs.
+Launch `sdlc-review` as in `short-bug.md`, with `specPath` the `SPEC.md`, `dryPasses: 2`, `maxRounds: 5`. Memlog result and commit as there. The validated spec holds until proven otherwise: a finding that contradicts `SPEC.md` or a frozen test is never fixed and never changes a frozen test; the user dismisses it, or it is recorded as a memlog result `open finding <id>: <claim>; scenario: <targeted scenario or test case that would settle it>` and listed in the PR. Not converged: show the recurring findings and propose to accept and list them in the PR, back to Plan, or back to Define; the user chooses. Only a return to Define reopens the spec. A return goes through that step and its gate again, and on to rails and build only for the new or changed story specs.
 
 ## Deliver (step `deliver`)
 

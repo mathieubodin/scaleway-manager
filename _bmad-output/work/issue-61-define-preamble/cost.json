@@ -1,7 +1,7 @@
 {
   "issue": 61,
   "route": "short",
-  "tokens": 244857,
+  "tokens": 584308,
   "totals": {
     "steps": {
       "change": {
@@ -10,6 +10,14 @@
           "output": 10500,
           "cacheCreation": 22347,
           "cacheRead": 3896034
+        }
+      },
+      "review": {
+        "claude-opus-5-5": {
+          "input": 136,
+          "output": 22082,
+          "cacheCreation": 317233,
+          "cacheRead": 12110175
         }
       },
       "triage": {
@@ -23,24 +31,24 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 106,
-        "output": 19852,
-        "cacheCreation": 224899,
-        "cacheRead": 9683097
+        "input": 242,
+        "output": 41934,
+        "cacheCreation": 542132,
+        "cacheRead": 21793272
       }
     },
     "unattributed": {
       "claude-opus-5-5": {
-        "input": 18,
-        "output": 3412,
-        "cacheCreation": 35931,
-        "cacheRead": 1013815
+        "input": 20,
+        "output": 3961,
+        "cacheCreation": 37047,
+        "cacheRead": 1325969
       }
     }
   },
   "sessions": {
     "839faf8a-1759-490e-9fe8-14ef16e4c39b": {
-      "computedAt": "2026-10-23T18:34:53Z",
+      "computedAt": "2026-10-23T19:49:40Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -48,6 +56,14 @@
             "output": 10500,
             "cacheCreation": 22347,
             "cacheRead": 3896034
+          }
+        },
+        "review": {
+          "claude-opus-5-5": {
+            "input": 66,
+            "output": 20280,
+            "cacheCreation": 34713,
+            "cacheRead": 10683386
           }
         },
         "triage": {
@@ -61,10 +77,10 @@
       },
       "unattributed": {
         "claude-opus-5-5": {
-          "input": 18,
-          "output": 3412,
-          "cacheCreation": 35931,
-          "cacheRead": 1013815
+          "input": 20,
+          "output": 3961,
+          "cacheCreation": 37047,
+          "cacheRead": 1325969
         }
       }
     }
@@ -73,13 +89,26 @@
     "wf_45e59cd0-794": {
       "session": "839faf8a-1759-490e-9fe8-14ef16e4c39b",
       "step": "triage",
-      "computedAt": "2026-10-23T18:34:53Z",
+      "computedAt": "2026-10-23T19:49:40Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
           "output": 580,
           "cacheCreation": 181283,
           "cacheRead": 207939
+        }
+      }
+    },
+    "wf_9f1f8948-2c6": {
+      "session": "839faf8a-1759-490e-9fe8-14ef16e4c39b",
+      "step": "review",
+      "computedAt": "2026-10-23T19:49:40Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 70,
+          "output": 1802,
+          "cacheCreation": 282520,
+          "cacheRead": 1426789
         }
       }
     }

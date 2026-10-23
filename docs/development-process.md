@@ -523,7 +523,7 @@ Each round of `.claude/workflows/sdlc-review.js`: an agent writes the diff of th
 | --- | --- | --- |
 | long | `dryPasses` 2, `maxRounds` 5 (2 dry rounds in a row) | Back to Plan, back to Define, or accept and list the findings in the PR; the human chooses |
 | bug | `dryPasses` 1, `maxRounds` 2 | Way out proposed; the human chooses |
-| short | `singlePass` | Unfixed findings listed in the PR |
+| short | `singlePass` | Unfixed findings listed in the PR; one that contradicts the spec or a frozen test is dismissed or recorded by the human |
 
 A validated spec holds until proven otherwise, and a finding alone is not that proof. A finding whose fix would contradict the spec, the bug report or a frozen test is never fixed and never changes a frozen test: the verifier marks it as needing a decision, so the fixer never receives it, and `sdlc-work` has the human dismiss it or record it with a targeted scenario or test case that would settle it, listed in the PR. Only an explicit return to Define, decided by the human, reopens the spec.
 
