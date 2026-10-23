@@ -279,3 +279,51 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
 - **Names:** every object is named `fake-operator`, with label `app.kubernetes.io/name: fake-operator`, which the Deployment's selector matches.
 - **CI:** the new step comes right after `make build-image`, before "Run the image tests".
 - **Formatting:** the JSON files use a 2-space indent and must pass `biome ci .`, which `make check` runs through `lint-workflows`.
+
+## Clarifications after cold-start round 2
+
+### internal/kube
+
+- **`Kind()` strings**, in the order of the constants:
+  - `Instance`, `LoadBalancer`, `ScalewaySecret`, `NamespaceRole`;
+  - `Namespace`, `Secret`, `CustomResourceDefinition`, `Deployment`.
+- **Empty name:** `Get`, `MergePatch` and `PatchStatus` with an empty name return `ErrInvalidName`.
+- **List items:** a list with `"items": null` or `[]` returns an empty, non-nil slice.
+- **Names of `Namespaces` objects** follow the DNS-1123 label rule, like every namespace argument.
+- **Large non-2xx body:** over 16 MiB, it gives an `*APIError` whose `Body` holds the first 16 MiB.
+
+### kubetest
+
+- **List order:** list responses return items sorted by namespace, then by name.
+- **List body:** `{"apiVersion":"v1","kind":"<Kind>List","metadata":{"resourceVersion":"<current>"},"items":[...]}`. A namespace with no objects gives an empty list, not 404.
+- **`Tokens()`:** one entry per received request, in order. An absent token is recorded as `""`.
+- **Finalizers during deletion:** kubetest does not refuse a patch that adds a finalizer while `deletionTimestamp` is set (decision D10: no 422). The fake never sends one, because deletion comes first.
+- **Status reasons:** a code outside the five listed reasons gets `http.StatusText(code)` with spaces removed. Unserved methods and collection `PATCH` get 405 `MethodNotAllowed`. An unparseable path gets 404 `NotFound`. A non-object patch body gets 400 `BadRequest`. These checks come after the token check.
+- **Patch responses:** a successful `PATCH` returns the updated object, or the last state of an object it removed.
+- **`deletionTimestamp`:** `time.Now().UTC().Format(time.RFC3339)`. `Delete` does not change `generation`. `Delete` on an absent object, or on one already deleting, does nothing.
+- **`status` key:**
+  - an object patch ignores it only for the three kinds with `/status`;
+  - other kinds apply it.
+- **409:** it applies to both endpoints, on any mismatch of a `metadata.resourceVersion` carried by the patch.
+
+### Engine (story 3)
+
+- **Reading the token:** `func readToken(path string) (kube.Token, error)`, in `operator.go`, reads the file and applies `strings.TrimSpace`. An empty result is an error. `pass` uses it, and so does story 6 for the start-up guard.
+- **ScalewaySecret recovering to `Synced`** (branch "`sync_state` other than `Synced` with a `scaleway_id`"):
+  - `current_version` is kept, or set to 1 when null;
+  - `observed_generation` is set to `metadata.generation`;
+  - `error_message` is null.
+- **`last_synced_resource_version`** is always sent as `null`. The fake never holds a value for it.
+- **Dispatch note:** the "dispatch note" of a story spec is its `invoke_dev_with` in `stories.yaml`: read scaleway-operator only at tag `scaleway-operator-v0.1.15`, with `git show`.
+- **Stub location:** the `revokedBeforeFinalizer` stub lives in `causes.go`.
+
+### Story 4
+
+- **`Locked` on delete:** `deleting` applies the `fake.scaleway-manager.test/message` annotation to the `TerminationBlocked` message, when the annotation is non-empty (decision P5: `message` replaces the message of `Error`, `Locked` and `Revoked`).
+
+### Story 5
+
+- **`source-version`:**
+  - when it equals `current_version`, `applyCause` returns `handled` false and the lifecycle runs;
+  - its write sets `observed_generation` to `metadata.generation` and `error_message` to null.
+- **`Revoked`** keeps `observed_generation`.

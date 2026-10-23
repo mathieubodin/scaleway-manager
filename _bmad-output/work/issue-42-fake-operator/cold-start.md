@@ -60,3 +60,63 @@ Red: six stories had blocking items, all about the Go API between stories (in `p
 - The metadata names of the ServiceAccount, ClusterRole, ClusterRoleBinding, Role, RoleBinding and Deployment, and the Deployment's labels and selector.
 - Where the new CI step goes in the `build-image` job: right after `make build-image`, or after the existing "Run the image tests" step.
 - A note that the new JSON manifests must pass `biome ci .`, which runs inside `make check` (via `lint-workflows`, 2-space indent, `**/*.json` included).
+
+## Round 2 (`wf_f1f5c655-bad`)
+
+Red: 8 blocking items (S2: 3, S4: 1, S5: 3, S6: 1); S1, S3, S7 none. Fixed in `go-interfaces.md`, section "Clarifications after cold-start round 2" (S2 finalizer during deletion follows D10; S4 message on TerminationBlocked follows P5).
+
+### 1-kubernetes-client.md
+
+- The exact Kind() string for each of the eight resources, especially CRDs ("CustomResourceDefinition"?), Secrets, Deployments and NamespaceRoles
+- What Get, MergePatch and PatchStatus return for an empty name (for example Get(Namespaces, "", "") or MergePatch(Instances, "ns", ""))
+- How a list response with "items": null, or an empty items array, is handled (ErrBadResponse, a nil slice or an empty non-nil slice)
+- Which name rule applies to the name argument when the resource is Namespaces (DNS-1123 label or subdomain)
+- Behavior for a non-2xx response whose body is over 16 MiB: *APIError with a truncated Body, or ErrBadResponse
+- Align the story spec with go-interfaces.md: its Tasks list leaves out ParsePath, Resources(), Resource.String/Namespaced/Kind and ErrBadResponse, and it describes APIError as {Code, Body} without Method and Path
+
+### 2-fake-api-server.md
+
+- Status `reason` for codes outside the listed five, especially codes injected by Fail (e.g. 403, 503) and any 400/405/422
+- Response to an unparseable path (kube.ParsePath error), an unserved method (POST, PUT, DELETE), or PATCH on a collection path
+- Response to a PATCH whose body is not a JSON object (invalid JSON, array, null)
+- Body returned by a successful PATCH, including the patch that empties finalizers and so removes the object
+- Source and format details of deletionTimestamp, and whether Delete bumps metadata.generation
+- Behavior of Delete on an absent object, or on one that already has deletionTimestamp
+- Whether a `status` key in an object-level patch is ignored for every kind or only for the three kinds with a /status subresource (Instances, LoadBalancers, ScalewaySecrets)
+- Whether the 409 check on a stale metadata.resourceVersion also applies to /status patches, and what counts as stale (any mismatch vs lower value)
+- Whether list responses carry apiVersion and metadata.resourceVersion besides kind and items, and whether listing a namespace that has no objects returns an empty list or 404
+
+### 3-fake-operator-engine.md
+
+- ScalewaySecret values for the step 'sync_state other than Synced with a scaleway_id → Synced' (for example Syncing left by a failed second creation patch, or Error/Revoked once a cause annotation is removed): whether current_version is kept, set to 1 when null, or bumped, and whether observed_generation is set to metadata.generation
+- Whether every ScalewaySecret status write sends last_synced_resource_version as null, which erases a value already stored
+- The 'dispatch note' that story spec line 27 points to
+- The file for the revokedBeforeFinalizer stub, and an aligned story spec
+- The value of the slog attribute 'kind' in the 'list failed' and 'object failed' logs (k.name such as 'Instance', or the resource plural such as 'instances')
+- Whether writeStatus updates obj in place from the PATCH response or from the computed status
+
+### 4-deletion-and-operator-checks.md
+
+- What `checkAfter` does when it re-reads the NamespaceRole for the Instance/LoadBalancer role check and that read fails (non-404 error or 404)
+- Behavior when `spec.region`, `spec.zone`, `spec.instance_type` or `spec.lb_type` is absent or not a string
+
+### 5-causes-by-annotation.md
+
+- Whether a refused cause and an invalid `source-version` keep the other status fields, like the `Error` cause does, or reset them.
+- What 'positive integer' accepts for `source-version`: is it decimal digits only, or does it follow `strconv.Atoi`, which also accepts `+3`? Are leading zeros (`03`) allowed? Is a value that overflows int64 an error?
+- Whether `operator.go` must be edited at all.
+- Whether `outcome` values are matched exactly, case-sensitive, so that `notfound` or `NotFound` counts as an unknown value and is refused.
+
+### 6-runtime.md
+
+- Reconciling the shutdown wording: the story spec says 'cancel the context, let the in-flight request finish'; go-interfaces.md says each pass runs with a context the signal does not cancel, with a 30 s timeout, and the loop ends after the in-flight pass
+- Whether every non-nil error returned by operator.pass counts as 'returned before listing' (so the pass does not count as ended for /healthz), or whether pass can also return errors after listing
+- The log msg and attributes for a pass error in the loop (e.g. msg 'pass failed', attribute 'error')
+- Exit code and log when the health server's Shutdown fails or exceeds its 5 s timeout, and what to do if Serve fails after a successful bind
+- Context and timeout for the start guard's List(Deployments, "scaleway-system") call
+- Exact /healthz 200 response: the body 'ok' with or without a trailing newline, and its Content-Type
+
+### 7-packaging-and-isolation.md
+
+- State explicitly the namespace of the ServiceAccount and the Deployment (presumably `fake-operator`), and that the ClusterRoleBinding and the RoleBinding in `scaleway-system` take as subject the ServiceAccount `fake-operator` in namespace `fake-operator`.
+- Fix the Code Map line that places the helper `read` in `tests/make/make_test.go`. It is in `tests/make/wiring_test.go`, which is also frozen. `repoRoot` is in make_test.go.
