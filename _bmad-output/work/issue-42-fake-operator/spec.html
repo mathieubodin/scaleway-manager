@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec gate: #42 Fake operator for automated tests (AD-9)</title>
+<style>
+:root {
+  --bg: #f5f6f4; --ink: #1f2421; --muted: #5d6762; --line: #d3d9d4;
+  --panel: #ffffff; --accent: #2f6f5e; --open: #a3620f;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816; --ink: #e2e7e3; --muted: #9ba59f; --line: #2c3430;
+    --panel: #1b201d; --accent: #7cc4ad; --open: #e0a24f;
+    color-scheme: dark;
+  }
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); padding: 0 16px; }
+main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 0 4rem; display: grid; gap: 1.8rem; }
+h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.25rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: grid; gap: .3rem; }
+section { display: grid; gap: .7rem; }
+.meta { color: var(--muted); font-size: .92rem; }
+.verdict { background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; padding: 1rem 1.2rem; display: grid; gap: .4rem; }
+.verdict strong { color: var(--accent); }
+.open { color: var(--open); font-weight: 600; }
+.wide { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
+.flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .2rem .6rem; }
+</style>
+</head>
+<body>
+<main>
+<header style="display: grid; gap: .5rem">
+  <h1>Spec gate: #42 Fake operator for automated tests (AD-9)</h1>
+  <p class="meta">Branch <code>feat/42-fake-operator</code>. Reference: <code>_bmad-output/specs/spec-fake-operator/SPEC.md</code>, <code>_bmad-output/specs/spec-fake-operator/fake-operator-contract.md</code>, AD-2 and AD-9 of <code>_bmad-output/planning-artifacts/architecture/architecture-scaleway-manager-2026-10-19/ARCHITECTURE-SPINE.md</code>. Decisions: <code>_bmad-output/work/issue-42-fake-operator/define-notes.md</code>.</p>
+</header>
+<div class="verdict">
+  <strong>What you validate</strong>
+  <p>A test-only fake operator that mimics <code>scaleway-operator-v0.1.15</code> exactly, so that automated tests can move custom-resource status without Scaleway, plus <code>internal/kube</code>, the only Kubernetes client, and <code>internal/kube/kubetest</code>, the fake API server of the Go tests. It unblocks #53 (automated-test kind cluster) and #15 (behavior diff).</p>
+  <p class="meta">This page helps you understand; the reference files are what you validate or invalidate.</p>
+</div>
+
+<section>
+  <h2>1. What changes for the user</h2>
+  <ul>
+    <li>Nothing visible in the UI: the fake never reaches the release image, <code>Dockerfile</code>, chart or release workflow.</li>
+    <li>Automated tests can create an Instance, LoadBalancer or ScalewaySecret and see it go through the real operator's steps: finalizer, <code>Syncing</code>, <code>Synced</code>, with the real status values and messages.</li>
+    <li>A test forces a Scaleway-side cause with the annotation <code>fake.scaleway-manager.test/outcome</code> (<code>NotFound</code>, <code>Error</code>, <code>Locked</code>, <code>Revoked</code>) and sees the effect the operator writes for that kind; a cause a kind cannot have is refused with a visible <code>Error</code>.</li>
+    <li>The fake checks what the operator checks and can read: <code>NamespaceRole</code>, read-only role, <code>project-id</code> annotation, spec lists, source configured, region.</li>
+    <li>Steps are <code>FAKE_OPERATOR_STEP_DELAY</code> apart (default <code>2s</code>), so a test and a human can see each state.</li>
+    <li>The fake refuses to start where the real operator runs, and has no access to Secrets.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>2. Scope and non-goals</h2>
+  <p>In scope: <code>cmd/fake-operator</code>; <code>internal/kube</code> (URL builder over the AD-2 closed list, list, get, merge patch, status patch); <code>internal/kube/kubetest</code>; <code>cmd/fake-operator/Dockerfile</code> and <code>make build-fake-operator-image</code>; raw manifests and RBAC in <code>tests/cluster/fake-operator/</code>; Go tests.</p>
+  <p>Non-goals:</p>
+  <ul>
+    <li>The automated-test kind cluster, CRD installation, loading the image and the real-cluster smoke test: #53.</li>
+    <li>Watch, create and delete in <code>internal/kube</code>: they come with the server.</li>
+    <li>The AD-2 discovery and review endpoints of the readiness screen: the readiness feature adds them to the same URL builder.</li>
+    <li><code>RDB</code> and any kind absent from <code>v0.1.15</code>.</li>
+    <li>Mimicking Secret-dependent checks, <code>last_synced_resource_version</code>, <code>FinalizerRemovedWithoutScalewayDelete</code> or the circuit breaker; the Secrets feature will need <code>@manual</code> scenarios for these.</li>
+    <li>Gherkin scenarios and steps.</li>
+  </ul>
+  <p>Constraints: contract <code>scaleway-operator-v0.1.15</code> with CRDs <code>0.1.14</code>, read only at that tag; Go standard library only (AD-1); no Scaleway call (AD-2); <code>internal/kube</code> reads no token itself; every cause applies on every pass while present, with no memory.</p>
+</section>
+
+<section>
+  <h2>3. Acceptance criteria</h2>
+  <div class="wide">
+  <table>
+    <tr><th>Criterion</th><th>What it shows</th><th>How it is verified</th></tr>
+    <tr><td>CAP-1</td><td><code>internal/kube</code>: exact URL per AD-2 entry; DNS-1123 label or subdomain refused, <code>/</code> and <code>%2F</code> refused; Bearer on the four operations, merge-patch content type on the two patches; empty token refused; address from <code>KUBERNETES_SERVICE_HOST</code>/<code>PORT</code>; only the given CA trusted; <code>kube.Token</code> redacted.</td><td>Automated: <code>make test-go</code></td></tr>
+    <tr><td>CAP-2</td><td><code>kubetest</code>: one test per sub-behavior (13 listed), each citing its Kubernetes documentation URL; fault injection in a table test.</td><td>Automated: <code>make test-go</code></td></tr>
+    <tr><td>CAP-3</td><td>Lifecycle per kind, whole status compared after each pass; ScalewaySecret <code>Syncing</code> then <code>Synced</code> patches in order in one pass; generated fields unchanged over three passes; a ScalewaySecret spec change raises <code>current_version</code> by 1.</td><td>Automated: Go tests, single passes with injected clock and random source</td></tr>
+    <tr><td>CAP-4</td><td>Deletion: finalizer removed with no check but the region; kept under <code>Error</code> with no status patch; <code>TerminationBlocked</code> under <code>Locked</code>; removed under a refused cause; kept for an invalid region.</td><td>Automated: Go tests</td></tr>
+    <tr><td>CAP-5</td><td>One test per message of the companion's Checks table, per kind, secondary messages included; finalizer presence per "before"/"after"; region on delete; spec-list fields write no status.</td><td>Automated: Go tests</td></tr>
+    <tr><td>CAP-6</td><td>Every cell and branch of the Causes table; <code>Locked</code> outside deletion has no effect; <code>Foo</code> per kind; empty <code>outcome</code>; <code>message</code> applied or ignored; <code>NotFound</code> cleared then re-created; <code>source-version</code> valid and invalid.</td><td>Automated: Go tests</td></tr>
+    <tr><td>CAP-7</td><td>Merge patches with whole list or struct, no <code>resourceVersion</code>; no PATCH on a pass with no change; nothing written on NamespaceRole, annotations, labels or events.</td><td>Automated: Go tests</td></tr>
+    <tr><td>CAP-8</td><td>Exit 1 on unset or empty <code>KUBERNETES_SERVICE_HOST</code> or <code>PORT</code>; exit 1 at start beside a real operator Deployment; token reread each pass; <code>/healthz</code> 503 before the first pass, 200 within 3 × the delay, 503 beyond; a failed list skips its kind only; SIGTERM exit 0.</td><td>Automated: Go tests</td></tr>
+    <tr><td>CAP-9</td><td><code>check-dockerfile.sh</code> passes on the fake's Dockerfile; <code>make build-fake-operator-image</code> builds the image; RBAC equals the companion's rules table, no <code>secrets</code> nor <code>*</code>; <code>fake-operator</code> absent from <code>Dockerfile</code>, <code>charts/</code>, <code>.github/workflows/deliver.yml</code>.</td><td>Automated: <code>scripts/check-dockerfile.sh</code>, <code>make build-fake-operator-image</code>, test in <code>tests/make</code> run by <code>make test-go</code></td></tr>
+  </table>
+  </div>
+  <p>Success signal: <code>make check</code> green with the Go tests of CAP-1 to CAP-9; against kubetest, an Instance in an <code>Editor</code> namespace with a UUID <code>project-id</code> goes finalizer, <code>Syncing</code>, <code>Synced</code> (<code>state: running</code>, a <code>192.0.2.x</code> IP), <code>Error</code> under <code>outcome: Error</code>, and is gone once the annotation is removed and the object deleted; <code>make build-fake-operator-image</code> produces the image.</p>
+</section>
+
+<section>
+  <h2>4. Decisions taken during Define</h2>
+  <p>Forge (<code>_bmad-output/forge/fake-operator/forged-idea.md</code>), architecture update and the answers of <code>define-notes.md</code>:</p>
+  <ul>
+    <li>All outcomes from the start, per kind, only where the operator produces them; AD-9 corrected before the spec.</li>
+    <li>The annotation names the Scaleway-side cause, never a <code>sync_state</code>; state model with no memory; <code>NotFound</code> stays cleared while present.</li>
+    <li>Contract: release <code>scaleway-operator-v0.1.15</code>, CRDs <code>0.1.14</code>; the first analysis read a stale local branch, every fact was re-checked at that tag.</li>
+    <li>Polling, no watch; <code>internal/kube</code> reads no token; no access to Secrets; AD-2 gained <code>apps/v1</code> <code>deployments</code>, <code>list</code> only.</li>
+    <li>P1: explicit projected token volume at <code>/var/run/secrets/kubernetes.io/serviceaccount</code>, automount off.</li>
+    <li>P2, P3: NamespaceRole and Namespace read errors and <code>Revoked</code> before the finalizer follow the operator.</li>
+    <li>P4: a refused cause never blocks deletion.</li>
+    <li>P5: the <code>message</code> annotation is ignored for <code>NotFound</code>.</li>
+    <li>P6: the read-only role wins over a cause before creation.</li>
+    <li>V1: a ScalewaySecret writes <code>Syncing</code> and <code>Synced</code> in one pass, as the operator.</li>
+    <li>R1: the operator version is named in AD-9; R2: follow-up #53 created, blocking #15; R3: each kubetest test cites its documentation; R4: exit 1 beside a real operator Deployment; R5: complete AD-2 URL builder, operations limited; R6: <code>/healthz</code> with a liveness probe.</li>
+    <li>Details D1 to D14, R7 to R10 validated as one list (messages, empty outcome, pass scheduling, SIGTERM, kubetest extras, guard test in <code>tests/make</code>, migration "no impact").</li>
+    <li>Research: none needed.</li>
+    <li>Spec-lint: three rounds; criteria reworded twice; after round 3 the substantive ambiguities were fixed and the form of tests left to the story specs and cold-start.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5. Risks and open points</h2>
+  <ul>
+    <li>Pre-mortem R1: drift from the operator; answered by the named version, any release change means reviewing the fake.</li>
+    <li>Pre-mortem R3: kubetest drifting from the API server; answered by cited documentation in #42 and a real-cluster smoke test in #53.</li>
+    <li>Pre-mortem R7: Secret-dependent checks are not mimicked; covered only by <code>@manual</code> scenarios of the Secrets feature.</li>
+    <li>Pre-mortem R10: frozen Go tests of different stories sharing <code>internal/kube</code> or <code>kubetest</code>; the plan avoids it where it can, otherwise the rules of #48 and #50 apply.</li>
+    <li>Assumption: <code>current_version</code> starts at 1 on a new secret (Scaleway numbering, not operator code).</li>
+    <li><span class="open">Open:</span> the form of tests (one <code>Test</code> function or <code>t.Run</code> subtests, exactly or at least one) and which failure a test injects: left to the story specs and cold-start.</li>
+  </ul>
+</section>
+</main>
+</body>
+</html>

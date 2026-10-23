@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge report: fake operator (#42)</title>
+<style>
+  :root { --ink:#1d1b18; --muted:#6b645a; --paper:#faf7f1; --line:#e2dccf; --seal:#8a1c1c; --ok:#2f5d3a; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#ece6da; --muted:#a59c8e; --paper:#191714; --line:#34302a; --seal:#c0453f; --ok:#7fb48a; } }
+  body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 Georgia, "Times New Roman", serif; }
+  main { max-width:860px; margin:0 auto; padding:32px 16px 64px; }
+  header { display:flex; gap:24px; align-items:center; flex-wrap:wrap; border-bottom:2px solid var(--line); padding-bottom:20px; }
+  h1 { font-size:28px; margin:0 0 4px; } h2 { font-size:19px; margin:28px 0 8px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .sub { color:var(--muted); margin:0; }
+  ul { padding-left:20px; } li { margin:4px 0; }
+  code { font:13px/1.4 ui-monospace, Menlo, monospace; background:color-mix(in srgb, var(--line) 60%, transparent); padding:1px 4px; border-radius:3px; }
+  .wrap { overflow-x:auto; } table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  .cast { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; }
+  .p { border:1px solid var(--line); border-radius:6px; padding:8px 10px; }
+  .p b { display:block; } .p span { color:var(--muted); font-size:13px; }
+  .rej li { color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <svg width="132" height="132" viewBox="0 0 132 132" role="img" aria-label="Seal: hardened">
+    <circle cx="66" cy="66" r="60" fill="var(--seal)" opacity="0.92"/>
+    <circle cx="66" cy="66" r="50" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 3" opacity="0.8"/>
+    <text x="66" y="62" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="17" font-weight="bold" letter-spacing="2">HARDENED</text>
+    <text x="66" y="82" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="11" opacity="0.9">#42 · 2026-10-23</text>
+  </svg>
+  <div>
+    <h1>Fake operator for automated tests</h1>
+    <p class="sub">Forge outcome: hardened. Handed to the spec through <code>forged-idea.md</code>, after AD-9 is corrected.</p>
+  </div>
+</header>
+
+<h2>Locked decisions</h2>
+<ul>
+  <li>The contract is the scaleway-operator code, not AD-9 as written. AD-9 is corrected before the spec.</li>
+  <li>All outcomes from the start, per kind, only where the real operator produces them.</li>
+  <li>The annotation carries the Scaleway-side cause (<code>NotFound</code>, <code>Error</code>, <code>Locked</code>, <code>Revoked</code>). The fake writes the kind's effect. A cause a kind does not support gives a visible <code>Error</code>.</li>
+  <li>State model with no memory: a cause applies while the annotation is present. <code>source-version: n</code> simulates a new secret version.</li>
+  <li>Preconditions are checked on the real cluster state: the <code>project-id</code> annotation and the <code>NamespaceRole</code>. On failure: <code>Error</code> and no finalizer.</li>
+  <li>The steps follow the real operator's order. The delay between steps is configurable, default 2 s. Polling, no watch.</li>
+  <li><code>internal/kube</code> reads no token. The fake passes its own ServiceAccount token. Its RBAC never touches Secrets.</li>
+  <li>A separate Dockerfile, a local image that is never pushed, raw manifests in <code>tests/cluster/fake-operator/</code>, and a guard test that keeps it out of the release.</li>
+  <li><code>kubetest</code> mimics the API server: merge patch, the <code>/status</code> subresource, deletion with finalizers, <code>resourceVersion</code> and <code>409</code>, <code>401</code>.</li>
+</ul>
+
+<h2>Effect of each cause, per kind</h2>
+<div class="wrap"><table>
+  <tr><th>Cause</th><th>Instance</th><th>LoadBalancer</th><th>ScalewaySecret</th></tr>
+  <tr><td><code>NotFound</code></td><td><code>Syncing</code>, fields cleared, re-created</td><td><code>Pending</code>, fields cleared, re-created</td><td>refused</td></tr>
+  <tr><td><code>Error</code></td><td><code>Error</code></td><td><code>Error</code></td><td><code>Error</code></td></tr>
+  <tr><td><code>Locked</code></td><td>refused</td><td>on delete: <code>TerminationBlocked</code>, finalizer kept</td><td>refused</td></tr>
+  <tr><td><code>Revoked</code></td><td>refused</td><td>refused</td><td><code>Revoked</code></td></tr>
+</table></div>
+
+<h2>Weak points found in the existing material</h2>
+<ul>
+  <li>AD-9 forces <code>Pending</code> and <code>TerminationBlocked</code> on every kind. In the operator they exist only for LoadBalancer. For an Instance, a Scaleway 404 gives <code>Syncing</code>.</li>
+  <li>AD-9 omits <code>Revoked</code>, <code>FinalizerRemovedWithoutScalewayDelete</code>, and the precondition errors that leave an object without a finalizer.</li>
+  <li>A fake with no consumer drifts. It is mitigated by copying the operator's code instead of inventing behavior.</li>
+  <li>With no access to Secrets, <code>last_synced_resource_version</code> is never written, and a real source-Secret change cannot be observed.</li>
+</ul>
+
+<h2>Rejected, and why</h2>
+<ul class="rej">
+  <li>Nominal cycle only: the coherence review would flag it against AD-9 and force a second round.</li>
+  <li>AD-9 to the letter: tests would mimic behavior the real operator never has.</li>
+  <li>Effect values in the annotation: every scenario would need the per-kind table.</li>
+  <li>Releasing <code>Syncing</code> by annotation instead of a delay; a watch in #42; <code>internal/kube</code> reading a ServiceAccount token (AD-3).</li>
+  <li>Access to Secrets; a third <code>FROM</code> in the release Dockerfile; an event model for causes; a <code>NewVersion</code> cause.</li>
+</ul>
+
+<h2>Voices</h2>
+<div class="cast">
+  <div class="p"><b>🏛 Winston</b><span>architect: "a fake with no consumer", and the watch kept for the server</span></div>
+  <div class="p"><b>🧪 Vex</b><span>skeptical tester: drift of stillborn fakes, the timing of polling</span></div>
+  <div class="p"><b>💻 Amelia</b><span>dev: why the annotation should not carry the effect</span></div>
+  <div class="p"><b>✂ Splinter</b><span>splitter: the cause model, token isolation</span></div>
+  <div class="p"><b>🚧 Boundary</b><span>boundaries: preconditions on the real state</span></div>
+  <div class="p"><b>🛠 Dana</b><span>SRE, generated: an acceptable read-only RBAC</span></div>
+  <div class="p"><b>🎨 Yui</b><span>UX: <code>Syncing</code> must stay visible</span></div>
+  <div class="p"><b>📏 Level</b><span>level of detail: real delays too slow, a stateless model</span></div>
+  <div class="p"><b>🙅 Killjoy</b><span>secret versions without access to Secrets</span></div>
+  <div class="p"><b>🧓 Grumbal</b><span>deletion with finalizers in kubetest</span></div>
+  <div class="p"><b>📊 Mary</b><span>analyst: correct AD-9 before the spec</span></div>
+</div>
+</main>
+</body>
+</html>

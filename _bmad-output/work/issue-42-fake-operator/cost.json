@@ -1,0 +1,139 @@
+{
+  "issue": 42,
+  "route": "long",
+  "tokens": 3546743,
+  "totals": {
+    "steps": {
+      "define": {
+        "claude-opus-5-5": {
+          "input": 1136,
+          "output": 148312,
+          "cacheCreation": 3240537,
+          "cacheRead": 71158351
+        }
+      },
+      "triage": {
+        "claude-opus-5-5": {
+          "input": 58,
+          "output": 6358,
+          "cacheCreation": 150342,
+          "cacheRead": 2392134
+        }
+      }
+    },
+    "models": {
+      "claude-opus-5-5": {
+        "input": 1194,
+        "output": 154670,
+        "cacheCreation": 3390879,
+        "cacheRead": 73550485
+      }
+    },
+    "unattributed": {
+      "claude-opus-5-5": {
+        "input": 14,
+        "output": 3117,
+        "cacheCreation": 11815,
+        "cacheRead": 753245
+      }
+    }
+  },
+  "sessions": {
+    "6910fa0e-7637-41b7-b12e-83ea28963359": {
+      "computedAt": "2026-10-23T12:17:38Z",
+      "steps": {
+        "define": {
+          "claude-opus-5-5": {
+            "input": 510,
+            "output": 137324,
+            "cacheCreation": 1038910,
+            "cacheRead": 59393653
+          }
+        },
+        "triage": {
+          "claude-opus-5-5": {
+            "input": 22,
+            "output": 5722,
+            "cacheCreation": 15899,
+            "cacheRead": 2139206
+          }
+        }
+      },
+      "unattributed": {
+        "claude-opus-5-5": {
+          "input": 14,
+          "output": 3117,
+          "cacheCreation": 11815,
+          "cacheRead": 753245
+        }
+      }
+    }
+  },
+  "runs": {
+    "wf_08bd9337-c17": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "define",
+      "computedAt": "2026-10-23T12:17:38Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 184,
+          "output": 3538,
+          "cacheCreation": 577410,
+          "cacheRead": 2872259
+        }
+      }
+    },
+    "wf_0daaad1a-e88": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "define",
+      "computedAt": "2026-10-23T12:17:38Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 176,
+          "output": 3559,
+          "cacheCreation": 645965,
+          "cacheRead": 2651443
+        }
+      }
+    },
+    "wf_315969d5-d48": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "define",
+      "computedAt": "2026-10-23T12:17:38Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 158,
+          "output": 3318,
+          "cacheCreation": 642815,
+          "cacheRead": 2301736
+        }
+      }
+    },
+    "wf_aa06de8d-16f": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "triage",
+      "computedAt": "2026-10-23T12:17:38Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 36,
+          "output": 636,
+          "cacheCreation": 134443,
+          "cacheRead": 252928
+        }
+      }
+    },
+    "wf_dce30ae0-cbc": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "define",
+      "computedAt": "2026-10-23T12:17:38Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 108,
+          "output": 573,
+          "cacheCreation": 335437,
+          "cacheRead": 3939260
+        }
+      }
+    }
+  }
+}
