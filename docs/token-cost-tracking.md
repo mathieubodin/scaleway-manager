@@ -48,7 +48,7 @@ Steps:
 - A gate is counted in the step it closes (spec gate in `define`, plan gate in `plan`). At a validated gate, the `step-end` and the next `step-start` are written before the gate commit, so that the pushed memlog already shows the next step.
 - `deliver` covers `/ce-compound`, MemPalace, the migration file, the evidence record, the PR and the fixes made after it is opened.
 - A resume (`/sdlc-work <n>`) opens a new `step-start` for the step resumed, in the new session.
-- A `step-start` ends at the next `step-start` or `step-end` of the same session, in any memlog, or never (end of transcript) when the session stopped. Starting work 8 in a session therefore closes the open step of work 7. Each work's memlog lives on its own branch, and `make cost` reads only the memlogs of the current checkout: `sdlc-work` therefore writes the `step-end` of the open step of work 7 before starting a step of work 8 in the same session, so that each memlog closes its own windows.
+- A `step-start` ends at the next `step-start` or `step-end` of the same session, in any memlog, or never (end of transcript) when the session stopped. Starting work 8 in a session therefore closes the open step of work 7. Each work's memlog lives on its own branch, and `make cost` reads only the memlogs of the current checkout: `sdlc-work` therefore writes the `step-end` of the open step of work 7 before starting a step of work 8 in the same session, so that each memlog closes its own windows. When the PR of work 7 is already merged, that `step-end` is never committed: `sdlc-work` restores the memlog and `cost.json` of work 7. Its memlog on `main` keeps the step open, so its window ends at the first `step-start` of work 8 in the same session (a triage or a resume), whatever `since` says: the messages between that `step-end` and that `step-start` count in work 7.
 
 ## Attribution rules
 
@@ -65,6 +65,8 @@ When this memlog and another one both match a case, this memlog's line wins. Win
 ## Where `make cost` runs and who runs it
 
 `sdlc-work`, in the human's session, runs `make cost ISSUE=<n>` before every commit it makes and at every resume, then writes the printed value to the Project `Tokens` field. Workflows and subagents never run it: their transcripts are read afterwards. The human can run `make cost` or `make cost-report` at any time.
+
+The `cost.json` present at the merge is the final figure. A `make cost ISSUE=<n>` run after the merge counts the later messages of the session in the step still open; its value is neither committed nor written to the Project `Tokens` field.
 
 ```mermaid
 sequenceDiagram

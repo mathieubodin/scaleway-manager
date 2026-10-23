@@ -17,7 +17,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A push that only changes work memlogs and cost.json (a step-end pushed after the PR),
+  # on top of a commit whose skippable jobs passed, skips the jobs that need changes; a
+  # skipped required job counts as passed. When this job fails, its output is empty and
+  # every job runs.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      run: ${{ steps.changes.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Decide whether the push changes more than work memlogs and cost.json
+        id: changes
+        env:
+          ACTION: ${{ github.event.action }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci-changes.sh >> "$GITHUB_OUTPUT"
+
   lint-docs:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -31,6 +59,8 @@ jobs:
       - run: make lint-docs
 
   lint-workflows:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,6 +74,8 @@ jobs:
       - run: make lint-workflows
 
   test-workflows:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -57,6 +89,8 @@ jobs:
       - run: make test-workflows
 
   check-frozen:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -65,6 +99,8 @@ jobs:
       - run: make check-frozen
 
   lint-go:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -77,6 +113,8 @@ jobs:
       - run: make lint-go
 
   test-go:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -89,6 +127,8 @@ jobs:
       - run: make test-go
 
   check-go-mod:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -101,6 +141,8 @@ jobs:
       - run: make check-go-mod
 
   lint-chart:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -119,6 +161,8 @@ jobs:
       - run: make lint-chart
 
   build-image:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.run != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
