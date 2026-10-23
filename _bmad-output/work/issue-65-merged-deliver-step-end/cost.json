@@ -1,7 +1,7 @@
 {
   "issue": 65,
   "route": "short",
-  "tokens": 190674,
+  "tokens": 429352,
   "totals": {
     "steps": {
       "change": {
@@ -10,6 +10,14 @@
           "output": 4795,
           "cacheCreation": 10494,
           "cacheRead": 977006
+        }
+      },
+      "review": {
+        "claude-opus-5-5": {
+          "input": 62,
+          "output": 6702,
+          "cacheCreation": 231914,
+          "cacheRead": 2026125
         }
       },
       "triage": {
@@ -23,24 +31,24 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 74,
-        "output": 8738,
-        "cacheCreation": 181862,
-        "cacheRead": 2012409
+        "input": 136,
+        "output": 15440,
+        "cacheCreation": 413776,
+        "cacheRead": 4038534
       }
     },
     "unattributed": {
       "claude-opus-5-5": {
-        "input": 18,
-        "output": 3244,
-        "cacheCreation": 38134,
-        "cacheRead": 701424
+        "input": 22,
+        "output": 4616,
+        "cacheCreation": 40978,
+        "cacheRead": 959108
       }
     }
   },
   "sessions": {
     "fe01ba2e-b1dc-4d92-a861-941f429a57e9": {
-      "computedAt": "2026-10-23T20:47:58Z",
+      "computedAt": "2026-10-23T20:58:43Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -48,6 +56,14 @@
             "output": 4795,
             "cacheCreation": 10494,
             "cacheRead": 977006
+          }
+        },
+        "review": {
+          "claude-opus-5-5": {
+            "input": 20,
+            "output": 6198,
+            "cacheCreation": 16801,
+            "cacheRead": 1251634
           }
         },
         "triage": {
@@ -61,10 +77,10 @@
       },
       "unattributed": {
         "claude-opus-5-5": {
-          "input": 18,
-          "output": 3244,
-          "cacheCreation": 38134,
-          "cacheRead": 701424
+          "input": 22,
+          "output": 4616,
+          "cacheCreation": 40978,
+          "cacheRead": 959108
         }
       }
     }
@@ -73,13 +89,26 @@
     "wf_1dad9968-8d5": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "triage",
-      "computedAt": "2026-10-23T20:47:58Z",
+      "computedAt": "2026-10-23T20:58:43Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
           "output": 927,
           "cacheCreation": 163401,
           "cacheRead": 278681
+        }
+      }
+    },
+    "wf_f3f45e29-5c8": {
+      "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
+      "step": "review",
+      "computedAt": "2026-10-23T20:58:43Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 42,
+          "output": 504,
+          "cacheCreation": 215113,
+          "cacheRead": 774491
         }
       }
     }
