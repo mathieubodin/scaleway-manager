@@ -17,11 +17,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # A push that only changes work memlogs and cost.json (a step-end pushed after the PR)
-  # skips the jobs that need changes; a skipped required job counts as passed. When this
-  # job fails, its output is empty and every job runs.
+  # A push that only changes work memlogs and cost.json (a step-end pushed after the PR),
+  # on top of a commit whose skippable jobs passed, skips the jobs that need changes; a
+  # skipped required job counts as passed. When this job fails, its output is empty and
+  # every job runs.
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
     outputs:
       run: ${{ steps.changes.outputs.run }}
     steps:
@@ -35,6 +39,8 @@ jobs:
           ACTION: ${{ github.event.action }}
           BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.event.after }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
         run: scripts/ci-changes.sh >> "$GITHUB_OUTPUT"
 
   lint-docs:

@@ -1,7 +1,7 @@
 {
   "issue": 65,
   "route": "short",
-  "tokens": 476079,
+  "tokens": 763759,
   "totals": {
     "steps": {
       "change": {
@@ -22,10 +22,16 @@
       },
       "review": {
         "claude-opus-5-5": {
-          "input": 62,
-          "output": 6702,
-          "cacheCreation": 231914,
-          "cacheRead": 2026125
+          "input": 86,
+          "output": 17601,
+          "cacheCreation": 254167,
+          "cacheRead": 4250793
+        },
+        "claude-sonnet-5-5": {
+          "input": 44,
+          "output": 1383,
+          "cacheCreation": 253077,
+          "cacheRead": 713824
         }
       },
       "triage": {
@@ -39,24 +45,30 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 190,
-        "output": 29955,
-        "cacheCreation": 445934,
-        "cacheRead": 8684816
+        "input": 214,
+        "output": 40854,
+        "cacheCreation": 468187,
+        "cacheRead": 10909484
+      },
+      "claude-sonnet-5-5": {
+        "input": 44,
+        "output": 1383,
+        "cacheCreation": 253077,
+        "cacheRead": 713824
       }
     },
     "unattributed": {
       "claude-opus-5-5": {
-        "input": 44,
-        "output": 11598,
-        "cacheCreation": 52442,
-        "cacheRead": 2694154
+        "input": 46,
+        "output": 12283,
+        "cacheCreation": 53228,
+        "cacheRead": 2885315
       }
     }
   },
   "sessions": {
     "fe01ba2e-b1dc-4d92-a861-941f429a57e9": {
-      "computedAt": "2026-10-23T21:28:48Z",
+      "computedAt": "2026-10-23T21:35:39Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -76,10 +88,10 @@
         },
         "review": {
           "claude-opus-5-5": {
-            "input": 20,
-            "output": 6198,
-            "cacheCreation": 16801,
-            "cacheRead": 1251634
+            "input": 44,
+            "output": 17097,
+            "cacheCreation": 39054,
+            "cacheRead": 3476302
           }
         },
         "triage": {
@@ -93,10 +105,10 @@
       },
       "unattributed": {
         "claude-opus-5-5": {
-          "input": 44,
-          "output": 11598,
-          "cacheCreation": 52442,
-          "cacheRead": 2694154
+          "input": 46,
+          "output": 12283,
+          "cacheCreation": 53228,
+          "cacheRead": 2885315
         }
       }
     }
@@ -105,7 +117,7 @@
     "wf_1dad9968-8d5": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "triage",
-      "computedAt": "2026-10-23T21:28:48Z",
+      "computedAt": "2026-10-23T21:35:39Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
@@ -115,10 +127,23 @@
         }
       }
     },
+    "wf_9fdeb9a7-d88": {
+      "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
+      "step": "review",
+      "computedAt": "2026-10-23T21:35:39Z",
+      "models": {
+        "claude-sonnet-5-5": {
+          "input": 44,
+          "output": 1383,
+          "cacheCreation": 253077,
+          "cacheRead": 713824
+        }
+      }
+    },
     "wf_f3f45e29-5c8": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "review",
-      "computedAt": "2026-10-23T21:28:48Z",
+      "computedAt": "2026-10-23T21:35:39Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
