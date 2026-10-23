@@ -24,7 +24,7 @@ Run `wf_a268a900-166` (code, practices, frameworks; none failed). Findings used 
 - **Pitfalls.**
   - `url.URL.Path` stores decoded paths, and setting an escaped `Path` double-escapes. Set `Path` decoded with `RawPath` escaped, or validate names so that no escaping is needed. Assert on `r.RequestURI`.
   - `fmt` prints an unexported struct field's raw value without calling `String`, so `kube.Token` lives in its own type and is never printed inside a struct.
-  - The API server refuses to add a finalizer once `deletionTimestamp` is set. The pass order (deletion first) avoids that, and kubetest refuses it too.
+  - The API server refuses to add a finalizer once `deletionTimestamp` is set. The pass order (deletion first) avoids that; kubetest does not refuse it (decision D10).
   - The liveness probe settings must exceed 3 × `FAKE_OPERATOR_STEP_DELAY`.
 - **Kubernetes documentation URLs for CAP-2 citations:**
   - <https://kubernetes.io/docs/reference/using-api/api-concepts/>: list, patch, 409;

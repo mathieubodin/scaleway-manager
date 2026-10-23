@@ -327,3 +327,9 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
   - when it equals `current_version`, `applyCause` returns `handled` false and the lifecycle runs;
   - its write sets `observed_generation` to `metadata.generation` and `error_message` to null.
 - **`Revoked`** keeps `observed_generation`.
+
+## Clarifications after cold-start round 3
+
+- **Precedence.** This file wins over a story spec on behavior as well as on signatures: the pass order (8 steps, with `revokedBeforeFinalizer`), the signal set (SIGTERM and SIGINT), and the helpers listed here.
+- **Annotation keys in story 4.** Story 4 declares its annotation keys as function-local constants, never at package level, so they cannot clash with story 5's `outcomeAnnotation` and `messageAnnotation` when the two leaves merge.
+- **Migration note.** No story writes `docs/migrations/next/42.md`. The deliver step of the epic writes it ("Migration: no impact", D14).
