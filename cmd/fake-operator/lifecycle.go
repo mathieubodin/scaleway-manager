@@ -128,50 +128,88 @@ func (o *operator) lifecycle(ctx context.Context, k kind, obj map[string]any) er
 	if id, _ := s["scaleway_id"].(string); id == "" {
 		return o.create(ctx, k, obj, s)
 	}
-	gen := metadata(obj)["generation"]
+	var write bool
+	switch k.resource {
+	case kube.Instances:
+		write = o.nextInstance(s)
+	case kube.LoadBalancers:
+		write = o.nextLoadBalancer(s)
+	default:
+		var err error
+		if write, err = nextSecret(s, metadata(obj)["generation"]); err != nil {
+			return err
+		}
+	}
+	if !write {
+		return nil
+	}
+	return o.writeStatus(ctx, k, obj, s)
+}
+
+// nextInstance moves a created Instance to running (decide_next_action);
+// false when it is already Synced.
+func (o *operator) nextInstance(s map[string]any) bool {
+	if s["sync_state"] == "Synced" {
+		return false
+	}
+	s["state"] = "running"
+	if s["public_ip"] == nil {
+		s["public_ip"] = fmt.Sprintf("192.0.2.%d", o.octet())
+	}
+	markSynced(s)
+	return true
+}
+
+// nextLoadBalancer moves a created LoadBalancer to ready
+// (decide_next_action_lb); false when it is already Synced.
+func (o *operator) nextLoadBalancer(s map[string]any) bool {
+	if s["sync_state"] == "Synced" {
+		return false
+	}
+	s["state"] = "ready"
+	if s["vip_address"] == nil {
+		s["vip_address"] = fmt.Sprintf("198.51.100.%d", o.octet())
+	}
+	markSynced(s)
+	return true
+}
+
+// nextSecret is the step of a created ScalewaySecret at generation gen
+// (decide_next_action_secret); false when nothing changes.
+func nextSecret(s map[string]any, gen any) (bool, error) {
 	switch {
-	case k.resource == kube.ScalewaySecrets && s["sync_state"] == "Synced" && s["observed_generation"] == nil:
+	case s["sync_state"] == "Synced" && s["observed_generation"] == nil:
 		// A generation never observed is recorded without a push, as the
 		// operator's AlreadySynced does (decide_next_action_secret step 7bis).
 		s["observed_generation"] = gen
-		return o.writeStatus(ctx, k, obj, s)
-	case k.resource == kube.ScalewaySecrets && (s["sync_state"] == "Revoked" ||
-		s["observed_generation"] != nil && numString(gen) != numString(s["observed_generation"])):
+		return true, nil
+	case s["sync_state"] == "Revoked" ||
+		s["observed_generation"] != nil && numString(gen) != numString(s["observed_generation"]):
 		// A spec change pushes a version whatever sync_state. Leaving Revoked
 		// pushes one too: the operator's Revoked status clears
 		// last_synced_resource_version (decide_next_action_secret step 7).
 		v, err := intValue(s["current_version"])
 		if err != nil {
-			return err
+			return false, err
 		}
 		s["current_version"] = v + 1
-		s["observed_generation"] = gen
-		s["last_synced_resource_version"] = nil
 	case s["sync_state"] != "Synced":
-		switch k.resource {
-		case kube.Instances:
-			s["state"] = "running"
-			if s["public_ip"] == nil {
-				s["public_ip"] = fmt.Sprintf("192.0.2.%d", o.octet())
-			}
-		case kube.LoadBalancers:
-			s["state"] = "ready"
-			if s["vip_address"] == nil {
-				s["vip_address"] = fmt.Sprintf("198.51.100.%d", o.octet())
-			}
-		default:
-			if s["current_version"] == nil {
-				s["current_version"] = 1
-			}
-			s["observed_generation"] = gen
-			s["last_synced_resource_version"] = nil
+		if s["current_version"] == nil {
+			s["current_version"] = 1
 		}
 	default:
-		return nil
+		return false, nil
 	}
+	s["observed_generation"] = gen
+	s["last_synced_resource_version"] = nil
+	markSynced(s)
+	return true, nil
+}
+
+// markSynced clears the error and sets sync_state to Synced.
+func markSynced(s map[string]any) {
 	s["error_message"] = nil
 	s["sync_state"] = "Synced"
-	return o.writeStatus(ctx, k, obj, s)
 }
 
 // create is the creation step: Syncing, and for a ScalewaySecret a second

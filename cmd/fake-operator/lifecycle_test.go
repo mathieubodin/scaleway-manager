@@ -620,3 +620,87 @@ func TestLifecycleDeletionStub(t *testing.T) {
 		t.Fatalf("pass after finalizer removal sent PATCH requests: %+v", p)
 	}
 }
+
+// The tests below reuse the helpers of causes_test.go.
+
+// A spec change pushes a version whenever scaleway_id is set, whatever
+// sync_state; leaving Revoked pushes one too.
+func TestLifecycleSecretSpecChangePushesWhateverSyncState(t *testing.T) {
+	cases := []struct {
+		syncState string
+		wantVer   int
+	}{
+		{"Error", 3},
+		{"Syncing", 3},
+		{"Revoked", 3},
+	}
+	for _, c := range cases {
+		t.Run(c.syncState, func(t *testing.T) {
+			e := causesSetup(t)
+			st := causesWith(causesSyncedSecret(), "sync_state", c.syncState, "error_message", "previous")
+			e.put(t, scalewaySecretKind, causesObject(scalewaySecretKind, "sec", 2, nil, true, st))
+
+			e.pass(t)
+
+			got := e.status(t, scalewaySecretKind, "sec")
+			if got["current_version"] != float64(c.wantVer) {
+				t.Errorf("current_version = %v, want %d", got["current_version"], c.wantVer)
+			}
+			if got["observed_generation"] != float64(2) {
+				t.Errorf("observed_generation = %v, want 2", got["observed_generation"])
+			}
+		})
+	}
+}
+
+// observed_generation null with a scaleway_id: the generation is recorded
+// without a version push (operator decide_next_action_secret step 7bis).
+func TestLifecycleSecretNullObservedGenerationRecordedWithoutPush(t *testing.T) {
+	e := causesSetup(t)
+	st := causesWith(causesSyncedSecret(), "observed_generation", nil)
+	e.put(t, scalewaySecretKind, causesObject(scalewaySecretKind, "sec", 4, nil, true, st))
+
+	e.pass(t)
+	causesWant(t, e.status(t, scalewaySecretKind, "sec"), causesWith(causesSyncedSecret(), "observed_generation", 4))
+
+	causesNoPatch(t, e.passPatches(t))
+}
+
+// A ScalewaySecret leaving Revoked pushes a version, as the operator does:
+// its Revoked status clears last_synced_resource_version (decide_next_action_secret
+// step 7).
+func TestLifecycleSecretLeavingRevokedPushes(t *testing.T) {
+	e := causesSetup(t)
+	st := causesWith(causesSyncedSecret(), "sync_state", "Revoked", "error_message", "revoked")
+	e.put(t, scalewaySecretKind, causesObject(scalewaySecretKind, "sec", 1, nil, true, st))
+
+	e.pass(t)
+	causesWant(t, e.status(t, scalewaySecretKind, "sec"), causesWith(causesSyncedSecret(), "current_version", 3))
+
+	causesNoPatch(t, e.passPatches(t))
+}
+
+// created_at carries the fraction of a second as chrono's RFC 3339 with
+// SecondsFormat::AutoSi: none, 3, 6 or 9 digits.
+func TestLifecycleCreatedAtFraction(t *testing.T) {
+	for _, tc := range []struct {
+		nsec int
+		want string
+	}{
+		{0, "2026-10-23T12:00:00Z"},
+		{500_000_000, "2026-10-23T12:00:00.500Z"},
+		{1_500_000, "2026-10-23T12:00:00.001500Z"},
+		{1, "2026-10-23T12:00:00.000000001Z"},
+	} {
+		t.Run(tc.want, func(t *testing.T) {
+			e := causesSetup(t)
+			e.o.clock = engFixedClock{time.Date(2026, 10, 23, 14, 0, 0, tc.nsec, time.FixedZone("CEST", 2*60*60))}
+			e.put(t, instanceKind, causesObject(instanceKind, "vm", 1, nil, true, nil))
+
+			e.pass(t)
+			if got := e.status(t, instanceKind, "vm")["created_at"]; got != tc.want {
+				t.Errorf("created_at = %v, want %s", got, tc.want)
+			}
+		})
+	}
+}

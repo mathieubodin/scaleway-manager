@@ -1099,3 +1099,42 @@ func TestRunStopsOnSIGTERM(t *testing.T) {
 	}
 	rtNoSecret(t, r.out, rtToken)
 }
+
+// stopClock closes stop the first time Now is called: Instance creation reads
+// the clock while its object is in flight.
+type stopClock struct {
+	once sync.Once
+	stop chan struct{}
+}
+
+func (c *stopClock) Now() time.Time {
+	c.once.Do(func() { close(c.stop) })
+	return causesNow
+}
+
+// Once the signal arrives, the pass finishes the in-flight object and starts
+// no other. Uses the helpers of causes_test.go.
+func TestRunSignalStopsPassBetweenObjects(t *testing.T) {
+	e := causesSetup(t)
+	clock := &stopClock{stop: make(chan struct{})}
+	e.o.clock = clock
+	e.o.stop = clock.stop
+	e.put(t, instanceKind, causesObject(instanceKind, "vm-a", 1, nil, true, nil))
+	e.put(t, instanceKind, causesObject(instanceKind, "vm-b", 1, nil, true, nil))
+	before := len(e.s.Requests())
+
+	e.pass(t)
+
+	if st := e.status(t, instanceKind, "vm-a"); st["sync_state"] != "Syncing" || st["scaleway_id"] == nil {
+		t.Errorf("vm-a (in flight): status %v, want its creation written", st)
+	}
+	if st := e.status(t, instanceKind, "vm-b"); len(st) != 0 {
+		t.Errorf("vm-b (next object): status %v, want none", st)
+	}
+	for _, r := range e.s.Requests()[before:] {
+		if strings.Contains(r.RequestURI, "/vm-b") || strings.Contains(r.RequestURI, "/loadbalancers") ||
+			strings.Contains(r.RequestURI, "/scalewaysecrets") {
+			t.Errorf("request after the signal: %s %s", r.Method, r.RequestURI)
+		}
+	}
+}

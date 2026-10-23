@@ -477,3 +477,22 @@ func TestChecksSpecListsValid(t *testing.T) {
 		}
 	}
 }
+
+// An empty spec.name is refused with no status write, as validate_spec and
+// validate_lb_spec do ("name cannot be empty"). Uses the helpers of
+// causes_test.go.
+func TestChecksEmptyNameRefused(t *testing.T) {
+	for _, k := range []kind{instanceKind, loadBalancerKind} {
+		t.Run(k.name, func(t *testing.T) {
+			e := causesSetup(t)
+			obj := causesObject(k, "obj", 1, nil, true, nil)
+			obj["spec"].(map[string]any)["name"] = ""
+			e.put(t, k, obj)
+
+			causesNoPatch(t, e.passPatches(t))
+			if _, ok := e.get(t, k, "obj")["status"]; ok {
+				t.Error("status written for an empty spec.name")
+			}
+		})
+	}
+}
