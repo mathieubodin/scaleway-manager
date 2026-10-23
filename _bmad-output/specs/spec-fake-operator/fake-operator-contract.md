@@ -89,12 +89,12 @@ Other annotations and values:
 
 ## Runtime
 
-- **Polling:** the delay is `FAKE_OPERATOR_STEP_DELAY` (Go duration, default `2s`). The next pass starts one delay after the previous one ends. A failed list skips only that kind.
+- **Polling:** the delay is `FAKE_OPERATOR_STEP_DELAY` (Go duration, default `2s`; an invalid or non-positive value exits 1 at start). The next pass starts one delay after the previous one ends. A failed list skips only that kind.
 - **Token:** read at each pass from `/var/run/secrets/kubernetes.io/serviceaccount/token`. The CA comes from `ca.crt` in the same directory, an explicit projected volume of the token and `kube-root-ca.crt`. Paths are passed into `main` so tests can inject them.
 - **Exit 1 at start:**
   - when `KUBERNETES_SERVICE_HOST` or `KUBERNETES_SERVICE_PORT` is missing;
   - when a Deployment labelled `app.kubernetes.io/name: scaleway-operator` exists in `scaleway-system`.
-- **`GET /healthz`:** 503 until the first pass ends; then 200 while the last pass ended less than 3 × the delay ago, 503 otherwise. A failed list still counts as an ended pass. It is used by a liveness probe.
+- **`GET /healthz`** on `HEALTH_ADDR` (default `:8081`): 503 until the first pass ends; then 200 while the last pass ended less than 3 × the delay ago, 503 otherwise. A failed list still counts as an ended pass. It is used by a liveness probe.
 - **SIGTERM:** cancel, finish the in-flight request, exit 0.
 
 ## Writes
