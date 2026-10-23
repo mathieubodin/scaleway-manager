@@ -1,7 +1,7 @@
 {
   "issue": 62,
   "route": "short",
-  "tokens": 424466,
+  "tokens": 437861,
   "totals": {
     "steps": {
       "change": {
@@ -10,6 +10,14 @@
           "output": 34370,
           "cacheCreation": 90592,
           "cacheRead": 4573930
+        }
+      },
+      "deliver": {
+        "claude-opus-5-5": {
+          "input": 18,
+          "output": 4110,
+          "cacheCreation": 9267,
+          "cacheRead": 1658796
         }
       },
       "review": {
@@ -23,24 +31,24 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 158,
-        "output": 53726,
-        "cacheCreation": 370582,
-        "cacheRead": 7509793
+        "input": 176,
+        "output": 57836,
+        "cacheCreation": 379849,
+        "cacheRead": 9168589
       }
     },
     "unattributed": {
       "claude-opus-5-5": {
-        "input": 30,
-        "output": 6808,
-        "cacheCreation": 43899,
-        "cacheRead": 976400
+        "input": 34,
+        "output": 8065,
+        "cacheCreation": 46662,
+        "cacheRead": 1332956
       }
     }
   },
   "sessions": {
     "5d70359f-547d-44fd-9e0f-4d8f883010be": {
-      "computedAt": "2026-10-23T22:21:02Z",
+      "computedAt": "2026-10-23T22:25:43Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -48,6 +56,14 @@
             "output": 34370,
             "cacheCreation": 90592,
             "cacheRead": 4573930
+          }
+        },
+        "deliver": {
+          "claude-opus-5-5": {
+            "input": 18,
+            "output": 4110,
+            "cacheCreation": 9267,
+            "cacheRead": 1658796
           }
         },
         "review": {
@@ -61,10 +77,10 @@
       },
       "unattributed": {
         "claude-opus-5-5": {
-          "input": 30,
-          "output": 6808,
-          "cacheCreation": 43899,
-          "cacheRead": 976400
+          "input": 34,
+          "output": 8065,
+          "cacheCreation": 46662,
+          "cacheRead": 1332956
         }
       }
     }
@@ -73,7 +89,7 @@
     "wf_8f1d98b4-e4b": {
       "session": "5d70359f-547d-44fd-9e0f-4d8f883010be",
       "step": "review",
-      "computedAt": "2026-10-23T22:21:02Z",
+      "computedAt": "2026-10-23T22:25:43Z",
       "models": {
         "claude-opus-5-5": {
           "input": 60,
