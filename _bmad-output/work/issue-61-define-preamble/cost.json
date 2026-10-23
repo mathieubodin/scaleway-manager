@@ -1,7 +1,7 @@
 {
   "issue": 61,
   "route": "short",
-  "tokens": 650362,
+  "tokens": 665553,
   "totals": {
     "steps": {
       "change": {
@@ -14,10 +14,10 @@
       },
       "deliver": {
         "claude-opus-5-5": {
-          "input": 50,
-          "output": 19922,
-          "cacheCreation": 38093,
-          "cacheRead": 8577246
+          "input": 66,
+          "output": 22055,
+          "cacheCreation": 51135,
+          "cacheRead": 9142148
         }
       },
       "review": {
@@ -39,10 +39,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 302,
-        "output": 65117,
-        "cacheCreation": 584943,
-        "cacheRead": 32119638
+        "input": 318,
+        "output": 67250,
+        "cacheCreation": 597985,
+        "cacheRead": 32684540
       }
     },
     "unattributed": {
@@ -56,7 +56,7 @@
   },
   "sessions": {
     "839faf8a-1759-490e-9fe8-14ef16e4c39b": {
-      "computedAt": "2026-10-23T20:15:42Z",
+      "computedAt": "2026-10-23T20:16:55Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -101,14 +101,14 @@
       }
     },
     "fe01ba2e-b1dc-4d92-a861-941f429a57e9": {
-      "computedAt": "2026-10-23T20:15:42Z",
+      "computedAt": "2026-10-23T20:16:55Z",
       "steps": {
         "deliver": {
           "claude-opus-5-5": {
-            "input": 4,
-            "output": 1406,
-            "cacheCreation": 2725,
-            "cacheRead": 119841
+            "input": 20,
+            "output": 3539,
+            "cacheCreation": 15767,
+            "cacheRead": 684743
           }
         }
       },
@@ -126,7 +126,7 @@
     "wf_45e59cd0-794": {
       "session": "839faf8a-1759-490e-9fe8-14ef16e4c39b",
       "step": "triage",
-      "computedAt": "2026-10-23T20:15:42Z",
+      "computedAt": "2026-10-23T20:16:55Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
@@ -139,7 +139,7 @@
     "wf_9f1f8948-2c6": {
       "session": "839faf8a-1759-490e-9fe8-14ef16e4c39b",
       "step": "review",
-      "computedAt": "2026-10-23T20:15:42Z",
+      "computedAt": "2026-10-23T20:16:55Z",
       "models": {
         "claude-opus-5-5": {
           "input": 70,
