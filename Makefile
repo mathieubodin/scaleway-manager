@@ -17,7 +17,7 @@ export MUTATION
 BASE ?= origin/main
 export BASE
 
-.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod check-docker check-curl build-image build-fake-operator-image check-helm print-helm-version lint-chart
+.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod check-docker check-curl build-image build-fake-operator-image test-image check-helm print-helm-version print-helm-unittest-version lint-chart
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -120,6 +120,12 @@ build-image: check-docker check-curl ## Check the Dockerfile, build scaleway-man
 build-fake-operator-image: check-docker ## Check the fake operator Dockerfile and build scaleway-manager-fake-operator:local (CAP-9)
 	scripts/build-fake-operator-image.sh
 
+test-image: check-docker check-curl ## Run tests/image/*.test.sh (they build the images); every test runs, the target fails when one fails
+	@failed=0; for t in tests/image/*.test.sh; do \
+		echo "== $$t"; \
+		"$$t" || { echo "FAILED: $$t"; failed=1; }; \
+	done; exit "$$failed"
+
 # Helm chart: helm at exactly HELM_VERSION (CI reads it through print-helm-version) and
 # the helm-unittest plugin at exactly HELM_UNITTEST_VERSION, installed from its release
 # archive and verified against the project key kept in HELM_UNITTEST_KEYRING. CI runs
@@ -141,9 +147,13 @@ check-helm:
 print-helm-version:
 	@echo $(HELM_VERSION)
 
+print-helm-unittest-version:
+	@echo $(HELM_UNITTEST_VERSION)
+
 lint-chart: check-helm ## Lint the Helm chart (helm lint, ci/test-values.yaml) and run its helm-unittest tests
 	helm lint $(CHART) --values $(CHART)/ci/test-values.yaml
 	helm unittest $(CHART)
+	@rmdir $(CHART)/tests/__snapshot__ 2>/dev/null || true # helm unittest leaves it empty
 
 check: lint-docs lint-workflows test-workflows check-frozen lint-go test-go check-go-mod lint-chart ## Run the checks that need no issue number (used by the sdlc-review fixer)
 

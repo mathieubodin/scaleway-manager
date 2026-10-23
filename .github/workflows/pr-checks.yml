@@ -148,16 +148,18 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Read the Helm version from the Makefile
+      - name: Read HELM_VERSION and HELM_UNITTEST_VERSION from the Makefile
         id: helm
-        run: echo "version=$(make -s print-helm-version)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(make -s print-helm-version)" >> "$GITHUB_OUTPUT"
+          echo "unittest=$(make -s print-helm-unittest-version)" >> "$GITHUB_OUTPUT"
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v${{ steps.helm.outputs.version }}
       # The same command as the hint of make check-helm (the archive, verified against the
       # project key in the repository); lint-chart.test.js fails when they differ.
       - name: Install helm-unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v1.2.1/unittest-1.2.1.tgz --keyring .github/keys/helm-unittest.asc
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest/releases/download/v${{ steps.helm.outputs.unittest }}/unittest-${{ steps.helm.outputs.unittest }}.tgz --keyring .github/keys/helm-unittest.asc
       - run: make lint-chart
 
   build-image:
