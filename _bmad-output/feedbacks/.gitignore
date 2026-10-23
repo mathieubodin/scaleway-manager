@@ -1,0 +1,5 @@
+# Full session logs hold the whole conversation (private instructions, extracts
+# of other projects): they stay on the author's machine. Only the anonymized
+# excerpt of a report is committed.
+*.jsonl
+!excerpt.jsonl
