@@ -53,7 +53,7 @@ The 403 comes from the registry token request, not from the plugin. `~/.docker/c
 
 - When ghcr.io answers 403 for a public artifact, look for a `ghcr.io` entry in `~/.docker/config.json` before suspecting the tag.
 - Prefer the release archive with `--keyring` for Helm plugins in CI: no registry login, and the signature is still checked.
-- The CI job writes `1.2.1` literally while the Makefile uses `HELM_UNITTEST_VERSION`: a version bump edits both; `tests/workflows/lint-chart.test.js` fails when the two commands differ.
+- The CI job reads the version through `make -s print-helm-unittest-version`: a version bump edits only `HELM_UNITTEST_VERSION` in the Makefile.
 - Renew `.github/keys/helm-unittest.asc` before 2028-05-06.
 
 ## Related
