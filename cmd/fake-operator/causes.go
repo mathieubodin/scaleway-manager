@@ -114,7 +114,7 @@ func (o *operator) applyCause(ctx context.Context, k kind, obj map[string]any) (
 
 // applySourceVersion handles the source-version annotation of a ScalewaySecret
 // with no cause: an invalid value is an Error whatever the state; a valid one
-// different from current_version is pushed once the secret is Synced.
+// greater than current_version is pushed once the secret is Synced.
 func (o *operator) applySourceVersion(ctx context.Context, k kind, obj map[string]any) (handled bool, err error) {
 	if k.resource != kube.ScalewaySecrets {
 		return false, nil
@@ -131,7 +131,16 @@ func (o *operator) applySourceVersion(ctx context.Context, k kind, obj map[strin
 		s["error_message"] = "fake-operator: source-version '" + v + "' is not a positive integer"
 		return true, o.writeStatus(ctx, k, obj, s)
 	}
-	if s["sync_state"] != "Synced" || numString(s["current_version"]) == strconv.FormatUint(n, 10) {
+	if s["sync_state"] != "Synced" {
+		return false, nil
+	}
+	cur, err := intValue(s["current_version"])
+	if err != nil {
+		return false, err
+	}
+	if int64(n) <= cur {
+		// Only raises the version: an equal or lower value lets the lifecycle
+		// run, so a spec change is not undone on the next pass.
 		return false, nil
 	}
 	s["current_version"] = int64(n)

@@ -198,7 +198,8 @@ func currentStatus(k kind, obj map[string]any) map[string]any // obj's status, o
 ### Lifecycle step
 
 - `status.scaleway_id` null or absent → creation (`Syncing`; for ScalewaySecret, `Syncing` then `Synced` in the same pass).
-- ScalewaySecret with a `scaleway_id` and `metadata.generation` ≠ `observed_generation` → a version push, whatever `sync_state`, except `Revoked`.
+- ScalewaySecret `Synced` with a `scaleway_id` and `observed_generation` null → `observed_generation` = `metadata.generation`, without a version push (`current_version` unchanged), as the operator's `AlreadySynced` (`decide_next_action_secret` step 7bis).
+- ScalewaySecret with a `scaleway_id` and a non-null `observed_generation` ≠ `metadata.generation` → a version push, whatever `sync_state`, except `Revoked`.
 - `sync_state` other than `Synced` with a `scaleway_id` → `Synced`.
 - Otherwise nothing.
 
@@ -256,7 +257,7 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
 - **Invalid `source-version`:**
   - it is reported on a ScalewaySecret with no cause, whatever its state;
   - on Instance and LoadBalancer it is ignored;
-  - a valid one waits for `Synced`;
+  - a valid one waits for `Synced`, and applies only when `n` is greater than `current_version`;
   - a cause takes precedence over `source-version`, and `source-version` takes precedence over a generation change in the same pass.
 - **`message`** also replaces `Source Secret unavailable (see operator logs)`.
 - **Annotation keys** are constants in `causes.go`: `outcomeAnnotation`, `messageAnnotation`, `sourceVersionAnnotation`. Story 4 reads `outcome` through its own local constant with the same value.
@@ -326,7 +327,7 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
 ### Story 5
 
 - **`source-version`:**
-  - when it equals `current_version`, `applyCause` returns `handled` false and the lifecycle runs;
+  - it applies only when `n` is greater than `current_version`. When `n` is equal or lower, `applyCause` returns `handled` false and the lifecycle runs, so a spec change is not undone on the next pass;
   - its write sets `observed_generation` to `metadata.generation` and `error_message` to null.
 - **`Revoked`** keeps `observed_generation`.
 

@@ -127,8 +127,13 @@ func (o *operator) lifecycle(ctx context.Context, k kind, obj map[string]any) er
 	}
 	gen := metadata(obj)["generation"]
 	switch {
+	case k.resource == kube.ScalewaySecrets && s["sync_state"] == "Synced" && s["observed_generation"] == nil:
+		// A generation never observed is recorded without a push, as the
+		// operator's AlreadySynced does (decide_next_action_secret step 7bis).
+		s["observed_generation"] = gen
+		return o.writeStatus(ctx, k, obj, s)
 	case k.resource == kube.ScalewaySecrets && s["sync_state"] != "Revoked" &&
-		numString(gen) != numString(s["observed_generation"]):
+		s["observed_generation"] != nil && numString(gen) != numString(s["observed_generation"]):
 		// A spec change pushes a version whatever sync_state, except Revoked
 		// (the operator stops there).
 		v, err := intValue(s["current_version"])

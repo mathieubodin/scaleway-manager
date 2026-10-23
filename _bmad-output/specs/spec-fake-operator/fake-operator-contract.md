@@ -45,7 +45,8 @@ One pass moves an object at most one step. The fake evaluates, in this order:
 | Next pass | `Synced`, `state: "running"`, `public_ip: 192.0.2.<x>`, `error_message: null` | `Synced`, `state: "ready"`, `vip_address: 198.51.100.<x>`, `error_message: null` | steady: no write |
 
 - Generated values (`scaleway_id`, IPs) are kept once written.
-- A ScalewaySecret with a `scaleway_id` whose `metadata.generation` differs from `status.observed_generation` pushes a version: `current_version` + 1, `observed_generation` updated, `Synced`. This holds whatever its `sync_state`, except `Revoked`.
+- A `Synced` ScalewaySecret with a `scaleway_id` and a null `status.observed_generation` records `observed_generation` = `metadata.generation` without a version push, as the operator does (`decide_next_action_secret` step 7bis).
+- A ScalewaySecret with a `scaleway_id` whose `metadata.generation` differs from a non-null `status.observed_generation` pushes a version: `current_version` + 1, `observed_generation` updated, `Synced`. This holds whatever its `sync_state`, except `Revoked`.
 
 ## Checks
 
@@ -84,7 +85,8 @@ Other annotations and values:
 - **Refused cause:** `Error` with `fake-operator: cause '<v>' is not supported for <Kind>`.
 - **Empty `outcome`:** treated as absent.
 - **`fake.scaleway-manager.test/message`:** replaces the message of a cause that writes one (`Error`, `Locked`, `Revoked`). It is ignored otherwise: no cause, `NotFound`, or a refused cause.
-- **`fake.scaleway-manager.test/source-version: "<n>"`**, without a cause, on a synced ScalewaySecret: sets `current_version` to `n` and writes `Synced`.
+- **`fake.scaleway-manager.test/source-version: "<n>"`**, without a cause, on a synced ScalewaySecret: sets `current_version` to `n` and writes `Synced`, only when `n` is greater than `current_version`.
+  - When `n` is equal or lower, it has no effect and the lifecycle runs.
   - On a new secret, the fake writes `current_version: 1` first, then `n` on the next pass.
   - A value that is not a positive integer gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
 

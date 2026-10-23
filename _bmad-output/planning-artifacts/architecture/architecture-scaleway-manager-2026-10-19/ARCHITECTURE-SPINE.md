@@ -235,7 +235,7 @@ flowchart LR
 
     - A refused cause gives `Error`, with an `error_message` naming the cause.
     - `fake.scaleway-manager.test/message`, while a cause that writes a message is present, replaces that message. In every other case it is ignored, `NotFound` included.
-    - Without a cause, `fake.scaleway-manager.test/source-version: "<n>"` stands for a changed source Secret: it sets `current_version` to `n` and writes `Synced`. A value that is not a positive integer gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
+    - Without a cause, `fake.scaleway-manager.test/source-version: "<n>"` stands for a changed source Secret: it sets `current_version` to `n` and writes `Synced`, only when `n` is greater than `current_version`; an equal or lower value has no effect. A value that is not a positive integer gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
   - **Gherkin steps:** steps steer outcomes only through these annotations and the spec, and never write `status`. The real operator is never installed in that cluster.
 
 ### AD-10: Operator CRDs come from the operator's published chart, pinned once [ADOPTED]
