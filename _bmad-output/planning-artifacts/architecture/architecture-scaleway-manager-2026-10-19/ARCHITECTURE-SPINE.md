@@ -187,7 +187,7 @@ flowchart LR
   - **Where it runs:**
     - `cmd/fake-operator` is a Go controller. Its own `cmd/fake-operator/Dockerfile`, on the release bases and checked by `scripts/check-dockerfile.sh`, is built by `make build-fake-operator-image` as `scaleway-manager-fake-operator:local`.
     - That image is never pushed. The Deployment uses `imagePullPolicy: Never`.
-    - Its manifests are raw YAML under `tests/cluster/fake-operator/`: namespace `fake-operator`, ServiceAccount, ClusterRole, ClusterRoleBinding, Role, RoleBinding, Deployment.
+    - Its manifests are raw Kubernetes manifests written as JSON (valid YAML, read by Go tests with the standard library) under `tests/cluster/fake-operator/`: namespace `fake-operator`, ServiceAccount, ClusterRole, ClusterRoleBinding, Role, RoleBinding, Deployment.
     - It runs only in the automated-test kind cluster. A test fails if the release `Dockerfile`, `charts/` or the release workflow mention it.
     - At start, it exits 1 if a Deployment labelled `app.kubernetes.io/name: scaleway-operator` exists in `scaleway-system`.
   - **Identity:**

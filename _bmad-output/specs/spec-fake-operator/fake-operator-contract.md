@@ -109,7 +109,7 @@ Other annotations and values:
 ## Packaging and RBAC
 
 - **Image:** `cmd/fake-operator/Dockerfile`, on the release bases, passes `scripts/check-dockerfile.sh`. `make build-fake-operator-image` builds `scaleway-manager-fake-operator:local`, which is never pushed.
-- **Manifests:** in `tests/cluster/fake-operator/`, `imagePullPolicy: Never`.
+- **Manifests:** JSON files in `tests/cluster/fake-operator/`, `imagePullPolicy: Never`.
   - Namespace `fake-operator`.
   - ServiceAccount.
   - ClusterRole and ClusterRoleBinding: `get` and `list` on `namespaces` and `namespaceroles`; `list` and `patch` on `instances`, `loadbalancers`, `scalewaysecrets` and their `/status`.

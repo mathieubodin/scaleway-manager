@@ -1,7 +1,7 @@
 {
   "issue": 42,
   "route": "long",
-  "tokens": 3546743,
+  "tokens": 3880176,
   "totals": {
     "steps": {
       "define": {
@@ -10,6 +10,14 @@
           "output": 148312,
           "cacheCreation": 3240537,
           "cacheRead": 71158351
+        }
+      },
+      "plan": {
+        "claude-opus-5-5": {
+          "input": 138,
+          "output": 17490,
+          "cacheCreation": 315805,
+          "cacheRead": 10669735
         }
       },
       "triage": {
@@ -23,10 +31,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 1194,
-        "output": 154670,
-        "cacheCreation": 3390879,
-        "cacheRead": 73550485
+        "input": 1332,
+        "output": 172160,
+        "cacheCreation": 3706684,
+        "cacheRead": 84220220
       }
     },
     "unattributed": {
@@ -40,7 +48,7 @@
   },
   "sessions": {
     "6910fa0e-7637-41b7-b12e-83ea28963359": {
-      "computedAt": "2026-10-23T12:17:38Z",
+      "computedAt": "2026-10-23T12:42:53Z",
       "steps": {
         "define": {
           "claude-opus-5-5": {
@@ -48,6 +56,14 @@
             "output": 137324,
             "cacheCreation": 1038910,
             "cacheRead": 59393653
+          }
+        },
+        "plan": {
+          "claude-opus-5-5": {
+            "input": 30,
+            "output": 16612,
+            "cacheCreation": 33620,
+            "cacheRead": 6596155
           }
         },
         "triage": {
@@ -73,7 +89,7 @@
     "wf_08bd9337-c17": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T12:17:38Z",
+      "computedAt": "2026-10-23T12:42:53Z",
       "models": {
         "claude-opus-5-5": {
           "input": 184,
@@ -86,7 +102,7 @@
     "wf_0daaad1a-e88": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T12:17:38Z",
+      "computedAt": "2026-10-23T12:42:53Z",
       "models": {
         "claude-opus-5-5": {
           "input": 176,
@@ -99,7 +115,7 @@
     "wf_315969d5-d48": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T12:17:38Z",
+      "computedAt": "2026-10-23T12:42:53Z",
       "models": {
         "claude-opus-5-5": {
           "input": 158,
@@ -109,10 +125,23 @@
         }
       }
     },
+    "wf_a268a900-166": {
+      "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
+      "step": "plan",
+      "computedAt": "2026-10-23T12:42:53Z",
+      "models": {
+        "claude-opus-5-5": {
+          "input": 108,
+          "output": 878,
+          "cacheCreation": 282185,
+          "cacheRead": 4073580
+        }
+      }
+    },
     "wf_aa06de8d-16f": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "triage",
-      "computedAt": "2026-10-23T12:17:38Z",
+      "computedAt": "2026-10-23T12:42:53Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
@@ -125,7 +154,7 @@
     "wf_dce30ae0-cbc": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T12:17:38Z",
+      "computedAt": "2026-10-23T12:42:53Z",
       "models": {
         "claude-opus-5-5": {
           "input": 108,
