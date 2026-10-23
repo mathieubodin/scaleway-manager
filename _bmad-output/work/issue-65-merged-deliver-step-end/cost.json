@@ -56,7 +56,7 @@
   },
   "sessions": {
     "fe01ba2e-b1dc-4d92-a861-941f429a57e9": {
-      "computedAt": "2026-10-23T21:06:11Z",
+      "computedAt": "2026-10-23T21:06:24Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -105,7 +105,7 @@
     "wf_1dad9968-8d5": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "triage",
-      "computedAt": "2026-10-23T21:06:11Z",
+      "computedAt": "2026-10-23T21:06:24Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
@@ -118,7 +118,7 @@
     "wf_f3f45e29-5c8": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "review",
-      "computedAt": "2026-10-23T21:06:11Z",
+      "computedAt": "2026-10-23T21:06:24Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
