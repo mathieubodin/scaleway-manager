@@ -1,17 +1,21 @@
 // Package kube is the only Kubernetes API client (AD-2, AD-3, AD-4).
-//
-// Contract stub (#42): the bodies are written by story 1.
 package kube
 
 import "log/slog"
 
+const redacted = "[REDACTED]"
+
 // Token is a bearer token, redacted wherever it is printed.
 type Token string
 
-func (t Token) String() string { return "" }
+// String returns [REDACTED], never the token.
+func (t Token) String() string { return redacted }
 
-func (t Token) GoString() string { return "" }
+// GoString returns [REDACTED], never the token.
+func (t Token) GoString() string { return redacted }
 
-func (t Token) LogValue() slog.Value { return slog.Value{} }
+// LogValue returns [REDACTED], never the token.
+func (t Token) LogValue() slog.Value { return slog.StringValue(redacted) }
 
-func (t Token) MarshalJSON() ([]byte, error) { return nil, errNotImplemented }
+// MarshalJSON returns "[REDACTED]", never the token.
+func (t Token) MarshalJSON() ([]byte, error) { return []byte(`"` + redacted + `"`), nil }
