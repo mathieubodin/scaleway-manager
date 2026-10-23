@@ -2,6 +2,7 @@
 id: SPEC-fake-operator
 companions:
   - fake-operator-contract.md
+  - go-interfaces.md
   - ../../planning-artifacts/architecture/architecture-scaleway-manager-2026-10-19/ARCHITECTURE-SPINE.md
 sources:
   - ../../forge/fake-operator/forged-idea.md

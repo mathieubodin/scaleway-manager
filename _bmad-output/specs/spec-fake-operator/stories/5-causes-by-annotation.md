@@ -6,6 +6,7 @@ status: 'ready-for-dev'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
+  - '{project-root}/_bmad-output/specs/spec-fake-operator/go-interfaces.md'
   - '{project-root}/_bmad-output/specs/spec-fake-operator/SPEC.md'
   - '{project-root}/_bmad-output/specs/spec-fake-operator/fake-operator-contract.md'
 ---
