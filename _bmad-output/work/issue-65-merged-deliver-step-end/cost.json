@@ -59,16 +59,16 @@
     },
     "unattributed": {
       "claude-opus-5-5": {
-        "input": 46,
-        "output": 12283,
-        "cacheCreation": 53228,
-        "cacheRead": 2885315
+        "input": 48,
+        "output": 12993,
+        "cacheCreation": 54677,
+        "cacheRead": 3099515
       }
     }
   },
   "sessions": {
     "fe01ba2e-b1dc-4d92-a861-941f429a57e9": {
-      "computedAt": "2026-10-23T21:35:39Z",
+      "computedAt": "2026-10-23T21:35:55Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -105,10 +105,10 @@
       },
       "unattributed": {
         "claude-opus-5-5": {
-          "input": 46,
-          "output": 12283,
-          "cacheCreation": 53228,
-          "cacheRead": 2885315
+          "input": 48,
+          "output": 12993,
+          "cacheCreation": 54677,
+          "cacheRead": 3099515
         }
       }
     }
@@ -117,7 +117,7 @@
     "wf_1dad9968-8d5": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "triage",
-      "computedAt": "2026-10-23T21:35:39Z",
+      "computedAt": "2026-10-23T21:35:55Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
@@ -130,7 +130,7 @@
     "wf_9fdeb9a7-d88": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "review",
-      "computedAt": "2026-10-23T21:35:39Z",
+      "computedAt": "2026-10-23T21:35:55Z",
       "models": {
         "claude-sonnet-5-5": {
           "input": 44,
@@ -143,7 +143,7 @@
     "wf_f3f45e29-5c8": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "review",
-      "computedAt": "2026-10-23T21:35:39Z",
+      "computedAt": "2026-10-23T21:35:55Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
