@@ -1,0 +1,17 @@
+{
+  "apiVersion": "rbac.authorization.k8s.io/v1",
+  "kind": "ClusterRoleBinding",
+  "metadata": { "name": "fake-operator" },
+  "roleRef": {
+    "apiGroup": "rbac.authorization.k8s.io",
+    "kind": "ClusterRole",
+    "name": "fake-operator"
+  },
+  "subjects": [
+    {
+      "kind": "ServiceAccount",
+      "name": "fake-operator",
+      "namespace": "fake-operator"
+    }
+  ]
+}

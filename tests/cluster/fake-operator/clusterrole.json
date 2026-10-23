@@ -1,0 +1,31 @@
+{
+  "apiVersion": "rbac.authorization.k8s.io/v1",
+  "kind": "ClusterRole",
+  "metadata": { "name": "fake-operator" },
+  "rules": [
+    {
+      "apiGroups": [""],
+      "resources": ["namespaces"],
+      "verbs": ["get", "list"]
+    },
+    {
+      "apiGroups": ["scaleway.mathieubodin.io"],
+      "resources": ["namespaceroles"],
+      "verbs": ["get", "list"]
+    },
+    {
+      "apiGroups": ["scaleway.mathieubodin.io"],
+      "resources": ["instances", "loadbalancers", "scalewaysecrets"],
+      "verbs": ["list", "patch"]
+    },
+    {
+      "apiGroups": ["scaleway.mathieubodin.io"],
+      "resources": [
+        "instances/status",
+        "loadbalancers/status",
+        "scalewaysecrets/status"
+      ],
+      "verbs": ["patch"]
+    }
+  ]
+}
