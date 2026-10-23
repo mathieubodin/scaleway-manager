@@ -38,7 +38,8 @@ type operator struct {
 	rand      *rand.Rand
 	tokenPath string
 	log       *slog.Logger
-	token     kube.Token // read at the start of each pass
+	token     kube.Token      // read at the start of each pass
+	stop      <-chan struct{} // closed on a signal: the pass ends before the next object; nil never stops
 }
 
 func newOperator(c *kube.Client, clock Clock, rnd *rand.Rand, tokenPath string, log *slog.Logger) *operator {
@@ -60,8 +61,20 @@ func readToken(path string) (kube.Token, error) {
 	return kube.Token(t), nil
 }
 
+// stopped reports whether a signal asked the pass to end.
+func (o *operator) stopped() bool {
+	select {
+	case <-o.stop:
+		return true
+	default:
+		return false
+	}
+}
+
 // pass moves every object of the three kinds at most one step. It returns an
 // error only when the token cannot be read; list and object errors are logged.
+// Once o.stop is closed it starts no other request: the in-flight object ends,
+// the next one is not started.
 func (o *operator) pass(ctx context.Context) error {
 	tok, err := readToken(o.tokenPath)
 	if err != nil {
@@ -69,12 +82,18 @@ func (o *operator) pass(ctx context.Context) error {
 	}
 	o.token = tok
 	for _, k := range kinds {
+		if o.stopped() {
+			return nil
+		}
 		items, err := o.kube.List(ctx, o.token, k.resource, "")
 		if err != nil {
 			o.log.Error("list failed", "kind", k.name, "error", err.Error())
 			continue
 		}
 		for _, raw := range items {
+			if o.stopped() {
+				return nil
+			}
 			obj, err := decodeObject(raw)
 			if err == nil {
 				err = o.reconcile(ctx, k, obj)

@@ -159,7 +159,8 @@ type operator struct {
     rand      *rand.Rand // math/rand/v2
     tokenPath string
     log       *slog.Logger
-    token     kube.Token // read at the start of each pass
+    token     kube.Token      // read at the start of each pass
+    stop      <-chan struct{} // story 6: closed on a signal; nil never stops
 }
 
 func newOperator(c *kube.Client, clock Clock, rnd *rand.Rand, tokenPath string, log *slog.Logger) *operator
@@ -197,8 +198,9 @@ func currentStatus(k kind, obj map[string]any) map[string]any // obj's status, o
 ### Lifecycle step
 
 - `status.scaleway_id` null or absent → creation (`Syncing`; for ScalewaySecret, `Syncing` then `Synced` in the same pass).
+- ScalewaySecret with a `scaleway_id` and `metadata.generation` ≠ `observed_generation` → a version push, whatever `sync_state`, except `Revoked`.
 - `sync_state` other than `Synced` with a `scaleway_id` → `Synced`.
-- `Synced`: for ScalewaySecret, a version push when `metadata.generation` ≠ `observed_generation`; otherwise nothing.
+- Otherwise nothing.
 
 ### ScalewaySecret creation patches
 
@@ -266,7 +268,7 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
 - **Loop:**
   - the first pass starts at once;
   - each pass runs with a context that the signal does not cancel, bounded by a 30 s timeout;
-  - a signal ends the loop after the in-flight pass;
+  - `run` sets `op.stop` to a channel closed by the signal. `pass` checks it before each kind and each object: the in-flight object finishes, the next one is not started, and the loop ends;
   - a pass whose `pass` returned an error before listing does not count as ended.
 - **Health server:**
   - `GET /healthz` returns 503 with an empty body;

@@ -32,7 +32,11 @@ func (o *operator) deleting(ctx context.Context, k kind, obj map[string]any) (ha
 	}
 	ann, _ := metadata(obj)["annotations"].(map[string]any)
 	outcome, _ := ann[outcomeKey].(string)
+	// The operator calls Scaleway on delete only when it has a scaleway_id;
+	// without one, a cause cannot block the deletion.
+	s := currentStatus(k, obj)
 	switch {
+	case !hasScalewayID(s):
 	case outcome == "Error":
 		return true, nil
 	case outcome == "Locked" && k.resource == kube.LoadBalancers:
@@ -40,7 +44,6 @@ func (o *operator) deleting(ctx context.Context, k kind, obj map[string]any) (ha
 		if m, _ := ann[messageKey].(string); m != "" {
 			msg = m
 		}
-		s := currentStatus(k, obj)
 		s["sync_state"] = "TerminationBlocked"
 		s["error_message"] = msg
 		return true, o.writeStatus(ctx, k, obj, s)

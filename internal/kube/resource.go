@@ -1,6 +1,9 @@
 package kube
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
 
 // Resource is one entry of the AD-2 closed list.
 type Resource int
@@ -108,7 +111,8 @@ func validSubdomain(s string) bool {
 	return isAlnum(s[0]) && isAlnum(s[len(s)-1])
 }
 
-// Path builds the request path of every call.
+// Path builds the request path of every call. Namespace and name pass the
+// DNS-1123 checks first, then each goes through url.PathEscape (AD-2).
 func Path(r Resource, namespace, name string, status bool) (string, error) {
 	info, ok := r.info()
 	if !ok {
@@ -144,13 +148,13 @@ func Path(r Resource, namespace, name string, status bool) (string, error) {
 	b.WriteString(info.prefix)
 	if namespace != "" {
 		b.WriteString("/namespaces/")
-		b.WriteString(namespace)
+		b.WriteString(url.PathEscape(namespace))
 	}
 	b.WriteString("/")
 	b.WriteString(info.plural)
 	if name != "" {
 		b.WriteString("/")
-		b.WriteString(name)
+		b.WriteString(url.PathEscape(name))
 	}
 	if status {
 		b.WriteString("/status")

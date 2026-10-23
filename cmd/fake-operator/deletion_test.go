@@ -299,6 +299,8 @@ func TestDeletionNoCauseKeepsOtherFinalizers(t *testing.T) {
 }
 
 func TestDeletionErrorKeepsFinalizer(t *testing.T) {
+	// The operator calls Scaleway on delete only with a scaleway_id, so the
+	// object carries one.
 	for _, k := range kinds {
 		t.Run(k.name, func(t *testing.T) {
 			e := s4Setup(t)
@@ -306,6 +308,7 @@ func TestDeletionErrorKeepsFinalizer(t *testing.T) {
 			e.putObj(t, k, s4Obj{
 				finalizers:  []string{k.finalizer},
 				annotations: map[string]string{s4OutcomeKey: "Error"},
+				status:      map[string]any{"scaleway_id": s4ExistingID, "sync_state": "Synced"},
 			})
 			e.srv.Delete(k.resource, s4Namespace, s4ObjName(k))
 
@@ -320,6 +323,45 @@ func TestDeletionErrorKeepsFinalizer(t *testing.T) {
 			}
 			if p := e.patches(k, false); len(p) != 0 {
 				t.Fatalf("object patches = %d, want 0", len(p))
+			}
+		})
+	}
+}
+
+func TestDeletionCauseWithoutScalewayIDRemovesFinalizer(t *testing.T) {
+	// Without a scaleway_id the operator calls no Scaleway API on delete:
+	// neither Error nor Locked blocks the deletion.
+	cases := []struct {
+		k      kind
+		cause  string
+		status map[string]any
+	}{
+		{instanceKind, "Error", nil},
+		{loadBalancerKind, "Error", nil},
+		{scalewaySecretKind, "Error", nil},
+		{instanceKind, "Error", map[string]any{"sync_state": "Error", "error_message": "x"}},
+		{scalewaySecretKind, "Error", map[string]any{"scaleway_id": "", "sync_state": "Error"}},
+		{loadBalancerKind, "Locked", nil},
+		{loadBalancerKind, "Locked", map[string]any{"state": "", "sync_state": "Pending"}},
+	}
+	for _, c := range cases {
+		t.Run(c.k.name+"/"+c.cause, func(t *testing.T) {
+			e := s4Setup(t)
+			e.valid(t)
+			e.putObj(t, c.k, s4Obj{
+				finalizers:  []string{c.k.finalizer},
+				annotations: map[string]string{s4OutcomeKey: c.cause},
+				status:      c.status,
+			})
+			e.srv.Delete(c.k.resource, s4Namespace, s4ObjName(c.k))
+
+			e.pass(t)
+
+			if obj := e.get(t, c.k); obj != nil {
+				t.Fatalf("object still present with finalizers %v, want finalizer removed", s4Finalizers(obj))
+			}
+			if p := e.patches(c.k, true); len(p) != 0 {
+				t.Fatalf("status patches = %d, want 0", len(p))
 			}
 		})
 	}

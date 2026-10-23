@@ -201,7 +201,7 @@ flowchart LR
 
       The fake has no access to Secrets.
   - **Lifecycle:** the fake polls every `FAKE_OPERATOR_STEP_DELAY` (a Go duration, default `2s`) and moves each object at most one step per pass, in the operator's order:
-    1. **Deletion first:** the preconditions are skipped, except the region check of a `ScalewaySecret`. The fake removes the finalizer, except under `Error` or `Locked`. A refused cause never blocks a deletion.
+    1. **Deletion first:** the preconditions are skipped, except the region check of a `ScalewaySecret`. The fake removes the finalizer, except under `Error` or `Locked` on an object with a `scaleway_id` (without one, the operator calls no Scaleway API on delete). A refused cause never blocks a deletion.
     2. **Finalizer:** only the finalizer is written, with no status.
     3. **`Syncing`**, then **`Synced`** on the next pass. A `ScalewaySecret` writes both in one pass, as the operator does.
   - **How it writes:**
@@ -211,12 +211,12 @@ flowchart LR
     - It writes nothing on `NamespaceRole`, and no annotation, label or event.
   - **Checks it mimics:** each in the operator's order, with the operator's message, from what the fake can read (the spec, namespaces, `NamespaceRole`):
     - a missing `NamespaceRole` named after the namespace;
-    - a read-only role (other than `Editor`, `Admin` or `OrganizationOwner`) while nothing is created yet;
+    - a read-only role (other than `Editor`, `Admin` or `OrganizationOwner`): for `Instance` and `LoadBalancer` only while nothing is created yet; for `ScalewaySecret` before the finalizer, on every pass;
     - the `scaleway.mathieubodin.io/project-id` annotation (a UUID for `Instance` and `LoadBalancer`);
     - the zone, instance type, `lb_type` and region lists;
     - a `ScalewaySecret` with no `spec.source.kubernetes_secret`.
 
-    A spec-list failure writes no status, as the operator does. A `spec` change of a synced `ScalewaySecret` (`metadata.generation` ≠ `observed_generation`) pushes a new version.
+    A spec-list failure writes no status, as the operator does. A `spec` change of a `ScalewaySecret` with a `scaleway_id` (`metadata.generation` ≠ `observed_generation`) pushes a new version, whatever its `sync_state` except `Revoked`.
   - **Not mimicked:**
     - checks on Secrets the fake cannot read: the source Secret, its opt-in and key, and `scaleway-ns-creds-<ns>`;
     - `last_synced_resource_version`;
@@ -229,13 +229,13 @@ flowchart LR
     | Cause | `Instance` | `LoadBalancer` | `ScalewaySecret` |
     | --- | --- | --- | --- |
     | `NotFound` | `Syncing`, `state: unknown`, ids cleared; re-created once removed | `Pending`, `state: ""`, ids cleared; re-created once removed | refused |
-    | `Error` | `Error`; on delete: finalizer kept, no status write | same as `Instance` | at creation only; on delete as `Instance` |
-    | `Locked` | refused | on delete: `TerminationBlocked`, finalizer kept | refused |
+    | `Error` | `Error`; on delete with a `scaleway_id`: finalizer kept, no status write | same as `Instance` | at creation only; on delete as `Instance` |
+    | `Locked` | refused | on delete with a `scaleway_id`: `TerminationBlocked`, finalizer kept | refused |
     | `Revoked` | refused | refused | `Revoked` once `scaleway_id` is set, `Error` before |
 
     - A refused cause gives `Error`, with an `error_message` naming the cause.
     - `fake.scaleway-manager.test/message`, while a cause that writes a message is present, replaces that message. In every other case it is ignored, `NotFound` included.
-    - Without a cause, `fake.scaleway-manager.test/source-version: "<n>"` stands for a changed source Secret: it sets `current_version` to `n` and writes `Synced`. A value that is not a positive integer is a refused cause.
+    - Without a cause, `fake.scaleway-manager.test/source-version: "<n>"` stands for a changed source Secret: it sets `current_version` to `n` and writes `Synced`. A value that is not a positive integer gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
   - **Gherkin steps:** steps steer outcomes only through these annotations and the spec, and never write `status`. The real operator is never installed in that cluster.
 
 ### AD-10: Operator CRDs come from the operator's published chart, pinned once [ADOPTED]

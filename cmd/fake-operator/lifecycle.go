@@ -127,6 +127,17 @@ func (o *operator) lifecycle(ctx context.Context, k kind, obj map[string]any) er
 	}
 	gen := metadata(obj)["generation"]
 	switch {
+	case k.resource == kube.ScalewaySecrets && s["sync_state"] != "Revoked" &&
+		numString(gen) != numString(s["observed_generation"]):
+		// A spec change pushes a version whatever sync_state, except Revoked
+		// (the operator stops there).
+		v, err := intValue(s["current_version"])
+		if err != nil {
+			return err
+		}
+		s["current_version"] = v + 1
+		s["observed_generation"] = gen
+		s["last_synced_resource_version"] = nil
 	case s["sync_state"] != "Synced":
 		switch k.resource {
 		case kube.Instances:
@@ -146,14 +157,6 @@ func (o *operator) lifecycle(ctx context.Context, k kind, obj map[string]any) er
 			s["observed_generation"] = gen
 			s["last_synced_resource_version"] = nil
 		}
-	case k.resource == kube.ScalewaySecrets && numString(gen) != numString(s["observed_generation"]):
-		v, err := intValue(s["current_version"])
-		if err != nil {
-			return err
-		}
-		s["current_version"] = v + 1
-		s["observed_generation"] = gen
-		s["last_synced_resource_version"] = nil
 	default:
 		return nil
 	}

@@ -90,6 +90,7 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
 	}()
 
 	op := newOperator(client, clock, rnd, tokenPath, log)
+	op.stop = ctx.Done()
 	loop(ctx, op, delay, h, log)
 
 	shutCtx, shutCancel := context.WithTimeout(context.Background(), shutdownTimeout)
@@ -152,8 +153,9 @@ func guard(c *kube.Client, tokenPath string, log *slog.Logger) int {
 }
 
 // loop runs passes until ctx is canceled. The first pass starts at once; the
-// next starts one delay after the previous one ends. A pass is never canceled
-// by the signal: it runs on its own context bounded by passTimeout.
+// next starts one delay after the previous one ends. The signal never cancels
+// a request: a pass runs on its own context bounded by passTimeout, and stops
+// between two objects once op.stop is closed.
 func loop(ctx context.Context, op *operator, delay time.Duration, h *health, log *slog.Logger) {
 	for ctx.Err() == nil {
 		passCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), passTimeout)
