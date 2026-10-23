@@ -99,7 +99,8 @@ func (o *operator) checkAfter(ctx context.Context, k kind, obj map[string]any) (
 }
 
 // specListsValid checks spec.zone, spec.instance_type and spec.lb_type
-// against the lists of the operator's src/scaleway.rs.
+// against the lists of the operator's src/scaleway.rs, then that spec.name is
+// not empty (validate_spec, validate_lb_spec).
 func specListsValid(k kind, obj map[string]any) bool {
 	spec, _ := obj["spec"].(map[string]any)
 	str := func(key string) string {
@@ -108,9 +109,9 @@ func specListsValid(k kind, obj map[string]any) bool {
 	}
 	switch k.resource {
 	case kube.Instances:
-		return slices.Contains(checkZones, str("zone")) && slices.Contains(checkInstanceTypes, str("instance_type"))
+		return slices.Contains(checkZones, str("zone")) && slices.Contains(checkInstanceTypes, str("instance_type")) && str("name") != ""
 	case kube.LoadBalancers:
-		return slices.Contains(checkZones, str("zone")) && slices.Contains(checkLBTypes, str("lb_type"))
+		return slices.Contains(checkZones, str("zone")) && slices.Contains(checkLBTypes, str("lb_type")) && str("name") != ""
 	}
 	return true
 }

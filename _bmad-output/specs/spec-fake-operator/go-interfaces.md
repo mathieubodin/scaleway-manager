@@ -176,7 +176,7 @@ func currentStatus(k kind, obj map[string]any) map[string]any // obj's status, o
 ### Objects and helpers
 
 - **`obj`** is decoded with `json.Decoder.UseNumber`, so numbers are `json.Number`. Status numbers (`current_version`, `observed_generation`) are written as JSON integers.
-- **`writeStatus`** sends `{"status":{...}}` with every field of the kind, absent ones as `null`. It sends nothing when the result equals `currentStatus`, and updates `obj` in place after a write.
+- **`writeStatus`** sends `{"status":{...}}` with every field of the kind, absent ones as `null`. It sends nothing when `obj` has a status equal to the result; a missing status always gets the patch, even when the result equals `defaultStatus`. It updates `obj` in place after a write.
 - **`setFinalizer`** sends the whole list with the kind's finalizer added or removed, keeps the others, and sends nothing when there is no change.
 
 ### `pass`
@@ -199,7 +199,8 @@ func currentStatus(k kind, obj map[string]any) map[string]any // obj's status, o
 
 - `status.scaleway_id` null or absent → creation (`Syncing`; for ScalewaySecret, `Syncing` then `Synced` in the same pass).
 - ScalewaySecret `Synced` with a `scaleway_id` and `observed_generation` null → `observed_generation` = `metadata.generation`, without a version push (`current_version` unchanged), as the operator's `AlreadySynced` (`decide_next_action_secret` step 7bis).
-- ScalewaySecret with a `scaleway_id` and a non-null `observed_generation` ≠ `metadata.generation` → a version push, whatever `sync_state`, except `Revoked`.
+- ScalewaySecret with a `scaleway_id` and a non-null `observed_generation` ≠ `metadata.generation` → a version push, whatever `sync_state`.
+- ScalewaySecret with a `scaleway_id` in `Revoked`, its cause removed → a version push, as the operator after `build_revoked_status` (`decide_next_action_secret` step 7).
 - `sync_state` other than `Synced` with a `scaleway_id` → `Synced`.
 - Otherwise nothing.
 
@@ -212,7 +213,7 @@ func currentStatus(k kind, obj map[string]any) map[string]any // obj's status, o
 
 - **`scaleway_id`:** two `o.rand.Uint64()` calls give 16 bytes (big-endian). Set the version (byte 6 = `0x40 | b&0x0f`) and the variant (byte 8 = `0x80 | b&0x3f`), then format lowercase 8-4-4-4-12.
 - **IP last octet:** `o.rand.IntN(254) + 1`, drawn after the id, at the step that writes the IP.
-- **`created_at`:** `o.clock.Now().UTC().Format(time.RFC3339)`.
+- **`created_at`:** `o.clock.Now()` in UTC, formatted as chrono's serde writes a `DateTime<Utc>` (`SecondsFormat::AutoSi`): no fraction when nanoseconds are 0, else 3, 6 or 9 digits, ending with `Z`.
 
 ### Other rules
 
@@ -255,6 +256,7 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
 
 - **Synced** means `sync_state` is `Synced`. The `Error` cause on a ScalewaySecret with a `scaleway_id` has no effect whatever its `sync_state`.
 - **Invalid `source-version`:**
+  - valid means an integer from 1 to 4294967295 (`strconv.ParseUint(v, 10, 32)`), since the operator's `current_version` is a `u32`;
   - it is reported on a ScalewaySecret with no cause, whatever its state;
   - on Instance and LoadBalancer it is ignored;
   - a valid one waits for `Synced`, and applies only when `n` is greater than `current_version`;
@@ -279,7 +281,7 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
 
 ## Story 7 details
 
-- **Names:** every object is named `fake-operator`, with label `app.kubernetes.io/name: fake-operator`, which the Deployment's selector matches.
+- **Names:** every object is named `fake-operator`. Only the Deployment and its pod template carry the label `app.kubernetes.io/name: fake-operator`, which the Deployment's selector matches.
 - **CI:** the new step comes right after `make build-image`, before "Run the image tests".
 - **Formatting:** the JSON files use a 2-space indent and must pass `biome ci .`, which `make check` runs through `lint-workflows`.
 

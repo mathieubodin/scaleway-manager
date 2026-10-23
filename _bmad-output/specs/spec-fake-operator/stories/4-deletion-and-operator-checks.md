@@ -31,9 +31,9 @@ context:
 - Every check failure writes `sync_state: Error` with the companion's exact message, through a whole-struct status patch. The other fields keep their current values, or the kind's Rust defaults when there is no status yet (Instance `state: "unknown"`, LoadBalancer `state: ""`).
 - **Region (ScalewaySecret).** `spec.region` must be one of `fr-par`, `nl-ams`, `pl-waw`. This check runs first, deletion included: `deleting` checks it before anything else. A failure keeps the finalizer and writes `Configuration error: Invalid region '<r>'. Use one of: fr-par, nl-ams, pl-waw.`
 - **Deletion** (`metadata.deletionTimestamp` set). The fake skips every other check and does one of three things:
-  - under `outcome: Error`, it keeps the finalizer and sends no status patch;
-  - under `outcome: Locked` on a LoadBalancer, it writes `sync_state: TerminationBlocked` with `error_message: Load balancer is locked — deletion blocked by Scaleway` and keeps the finalizer;
-  - otherwise it removes the finalizer, including under a refused cause, and sends no status patch.
+  - under `outcome: Error`, with a `scaleway_id`, it keeps the finalizer and sends no status patch;
+  - under `outcome: Locked` on a LoadBalancer, with a `scaleway_id`, it writes `sync_state: TerminationBlocked` with `error_message: Load balancer is locked — deletion blocked by Scaleway` and keeps the finalizer;
+  - otherwise it removes the finalizer, including under a refused cause or without a `scaleway_id`, and sends no status patch.
 
   The finalizer is removed with a whole-list merge patch.
 - **`checkBefore`.** In the companion's order:
@@ -51,6 +51,7 @@ context:
   - `spec.zone` must be one of `fr-par-1`, `fr-par-2`, `nl-ams-1`, `pl-waw-1`, `sg-sin-1`, `it-mil-1` (Instance and LoadBalancer).
   - `spec.instance_type` must be one of `DEV1-S`, `DEV1-M`, `DEV1-L`, `DEV1-XL`, `GP1-XS`, `GP1-S`, `GP1-M`, `GP1-L`, `GP1-XL`, `CPU1-XS`, `CPU1-S`, `CPU1-M`, `CPU1-L`, `GPU-3090`, `GPU-4090` (Instance).
   - `spec.lb_type` must be one of `LB-S`, `LB-GP` (LoadBalancer).
+  - `spec.name` must not be empty (Instance and LoadBalancer), checked after the lists, as `validate_spec` and `validate_lb_spec` (`name cannot be empty`).
   - These lists come from `src/scaleway.rs` at the tag.
   - A false result makes the engine end the object's pass with no status write; the finalizer stays.
 - Roles allowed: exactly `Editor`, `Admin`, `OrganizationOwner`, read from `spec.scaleway_role` of the NamespaceRole.
@@ -67,8 +68,8 @@ context:
 | Scenario | Input / State | Expected Output / Behavior | Error Handling |
 | --- | --- | --- | --- |
 | Delete, no cause | each kind, namespace with neither NamespaceRole nor annotation, valid region for the secret | finalizer removed, no status patch | N/A |
-| Delete, Error | each kind, `outcome: Error` | finalizer kept, no status patch | N/A |
-| Delete, Locked | LoadBalancer, `outcome: Locked` | `TerminationBlocked` and its message, finalizer kept | N/A |
+| Delete, Error | each kind with a `scaleway_id`, `outcome: Error` | finalizer kept, no status patch | N/A |
+| Delete, Locked | LoadBalancer with a `scaleway_id`, `outcome: Locked` | `TerminationBlocked` and its message, finalizer kept | N/A |
 | Delete, refused | Instance `Locked`, ScalewaySecret `NotFound`, LoadBalancer `Revoked` | finalizer removed, no status patch | N/A |
 | Delete, bad region | ScalewaySecret, region `xx-yyy` | finalizer kept, region `Error` | N/A |
 | No NamespaceRole | each kind, new object | `Error`, `No NamespaceRole found…`, no finalizer | N/A |
@@ -76,7 +77,7 @@ context:
 | Read-only role | Instance and LoadBalancer with finalizer and no `scaleway_id`; ScalewaySecret new | `Error` with the kind's message; finalizer present (Instance, LoadBalancer), absent (ScalewaySecret) | N/A |
 | Annotation | Instance and LoadBalancer: missing, not a UUID, namespace read error; ScalewaySecret at creation: missing, namespace read error | the row's message; no finalizer (Instance, LoadBalancer), finalizer present (ScalewaySecret) | N/A |
 | No source | ScalewaySecret without `spec.source.kubernetes_secret` | `Error`, `Secret source not configured…`, finalizer present | N/A |
-| Spec lists | zone (Instance, LoadBalancer), `instance_type` (Instance), `lb_type` (LoadBalancer) out of list | no status written, finalizer present | N/A |
+| Spec lists | zone (Instance, LoadBalancer), `instance_type` (Instance), `lb_type` (LoadBalancer) out of list, or empty `spec.name` (Instance, LoadBalancer) | no status written, finalizer present | N/A |
 
 </frozen-after-approval>
 

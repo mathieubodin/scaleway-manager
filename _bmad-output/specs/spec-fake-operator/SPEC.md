@@ -64,8 +64,9 @@ This work exists for two reasons: it unblocks other work, and it meets a mandate
   - **intent:** Deleting an object releases it the way the operator would, or holds it where the operator would.
   - **success:** Go tests show, on an object with `deletionTimestamp`, for each kind each case applies to:
     - **No `outcome` (all three kinds):** the finalizer is removed. The namespace has neither NamespaceRole nor `project-id`, which shows that no row of the companion's "Checks" runs except the ScalewaySecret region. The ScalewaySecret of this case has a valid region.
-    - **`outcome: Error` (all three kinds):** the finalizer is kept and no status patch is sent.
-    - **`outcome: Locked` on a LoadBalancer:** `sync_state: TerminationBlocked` is written with the operator's fixed message, and the finalizer is kept.
+    - **`outcome: Error` (all three kinds), with a `scaleway_id`:** the finalizer is kept and no status patch is sent.
+    - **`outcome: Locked` on a LoadBalancer, with a `scaleway_id`:** `sync_state: TerminationBlocked` is written with the operator's fixed message, and the finalizer is kept.
+    - **`outcome: Error` or `Locked` without a `scaleway_id`:** the finalizer is removed and no status patch is sent, since the operator calls no Scaleway API on delete without one.
     - **A refused `outcome`:** the finalizer is removed and no status patch is sent. The test uses `Locked` on Instance, `NotFound` on ScalewaySecret and `Revoked` on LoadBalancer.
     - **A ScalewaySecret with an invalid region and no `outcome`:** it keeps its finalizer and gets the region `Error`.
 - **CAP-5**
@@ -77,7 +78,7 @@ This work exists for two reasons: it unblocks other work, and it meets a mandate
     - Each test asserts the exact message, and whether the finalizer is present: a row marked "before" leaves it absent on a new object, and a row marked "after" leaves it present.
     - `Kubernetes API error` is tested on each of the three kinds.
     - The ScalewaySecret region is also tested on delete: finalizer kept, region message.
-    - Each spec-list field is tested on the kinds that have it (zone on Instance and LoadBalancer, instance type on Instance, `lb_type` on LoadBalancer). The test asserts that no status is written and that the finalizer stays.
+    - Each spec-list field is tested on the kinds that have it (zone on Instance and LoadBalancer, instance type on Instance, `lb_type` on LoadBalancer), and so is an empty `spec.name` on Instance and LoadBalancer. The test asserts that no status is written and that the finalizer stays.
 - **CAP-6**
   - **intent:** A test forces a Scaleway-side cause through an annotation and sees the effect the operator writes for that kind.
   - **success:** every cell of the companion's "Causes" table has its own Go test. A cell with two branches has one test per branch:

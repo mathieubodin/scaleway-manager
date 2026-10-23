@@ -125,7 +125,7 @@ func (o *operator) applySourceVersion(ctx context.Context, k kind, obj map[strin
 		return false, nil
 	}
 	s := currentStatus(k, obj)
-	n, perr := strconv.ParseUint(v, 10, 63)
+	n, perr := strconv.ParseUint(v, 10, 32) // current_version is a u32 in the operator
 	if perr != nil || n == 0 {
 		s["sync_state"] = "Error"
 		s["error_message"] = "fake-operator: source-version '" + v + "' is not a positive integer"

@@ -135,10 +135,11 @@ func (o *operator) lifecycle(ctx context.Context, k kind, obj map[string]any) er
 		// operator's AlreadySynced does (decide_next_action_secret step 7bis).
 		s["observed_generation"] = gen
 		return o.writeStatus(ctx, k, obj, s)
-	case k.resource == kube.ScalewaySecrets && s["sync_state"] != "Revoked" &&
-		s["observed_generation"] != nil && numString(gen) != numString(s["observed_generation"]):
-		// A spec change pushes a version whatever sync_state, except Revoked
-		// (the operator stops there).
+	case k.resource == kube.ScalewaySecrets && (s["sync_state"] == "Revoked" ||
+		s["observed_generation"] != nil && numString(gen) != numString(s["observed_generation"])):
+		// A spec change pushes a version whatever sync_state. Leaving Revoked
+		// pushes one too: the operator's Revoked status clears
+		// last_synced_resource_version (decide_next_action_secret step 7).
 		v, err := intValue(s["current_version"])
 		if err != nil {
 			return err
@@ -183,7 +184,7 @@ func (o *operator) create(ctx context.Context, k kind, obj map[string]any, s map
 	case kube.Instances, kube.LoadBalancers:
 		if k.resource == kube.Instances {
 			s["state"] = "creating"
-			s["created_at"] = o.clock.Now().UTC().Format(time.RFC3339)
+			s["created_at"] = chronoRFC3339(o.clock.Now())
 		} else {
 			s["state"] = "pending"
 		}
@@ -235,6 +236,21 @@ func (o *operator) uuid() string {
 
 // octet draws an IP last octet in 1..254.
 func (o *operator) octet() int { return o.rand.IntN(254) + 1 }
+
+// chronoRFC3339 formats t in UTC as chrono's serde does for DateTime<Utc>
+// (SecondsFormat::AutoSi): no fraction, or 3, 6 or 9 digits.
+func chronoRFC3339(t time.Time) string {
+	t = t.UTC()
+	switch ns := t.Nanosecond(); {
+	case ns == 0:
+		return t.Format("2006-01-02T15:04:05Z")
+	case ns%1_000_000 == 0:
+		return t.Format("2006-01-02T15:04:05.000Z")
+	case ns%1_000 == 0:
+		return t.Format("2006-01-02T15:04:05.000000Z")
+	}
+	return t.Format("2006-01-02T15:04:05.000000000Z")
+}
 
 // numString is the decimal form of a JSON number, "" when absent.
 func numString(v any) string {

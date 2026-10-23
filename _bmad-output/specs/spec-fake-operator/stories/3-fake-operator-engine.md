@@ -61,8 +61,8 @@ context:
   - `vip_address`: `198.51.100.<1..254>`.
 
   They are written once and kept.
-- **Timestamps.** `created_at` (Instance) is the injected clock's `Now()` in RFC 3339 UTC.
-- **ScalewaySecret versions.** When `metadata.generation` differs from `status.observed_generation`, the engine pushes a version: `current_version` + 1, `observed_generation` set, `Synced`.
+- **Timestamps.** `created_at` (Instance) is the injected clock's `Now()` in RFC 3339 UTC, with the fraction of a second as chrono writes it (none, 3, 6 or 9 digits).
+- **ScalewaySecret versions.** When `metadata.generation` differs from a non-null `status.observed_generation`, or when the secret leaves `Revoked`, the engine pushes a version: `current_version` + 1, `observed_generation` set, `Synced`. A `Synced` secret with a null `observed_generation` records the generation without a push.
 - **Writes.** As in the companion's "Writes":
   - the finalizer is written as `{"metadata":{"finalizers":[<whole list>]}}` with `MergePatch`;
   - the status is written as `{"status":{<whole struct, absent fields as null>}}` with `PatchStatus`;

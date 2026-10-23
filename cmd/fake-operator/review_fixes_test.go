@@ -23,7 +23,7 @@ func (c *stopClock) Now() time.Time {
 }
 
 // F9: a spec change pushes a version whenever scaleway_id is set, whatever
-// sync_state, except Revoked.
+// sync_state; leaving Revoked pushes one too (F1 of the second review).
 func TestReviewFixSpecChangePushesWhateverSyncState(t *testing.T) {
 	cases := []struct {
 		syncState string
@@ -31,7 +31,7 @@ func TestReviewFixSpecChangePushesWhateverSyncState(t *testing.T) {
 	}{
 		{"Error", 3},
 		{"Syncing", 3},
-		{"Revoked", 2},
+		{"Revoked", 3},
 	}
 	for _, c := range cases {
 		t.Run(c.syncState, func(t *testing.T) {

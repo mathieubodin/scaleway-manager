@@ -45,7 +45,7 @@ context:
 
   An empty `outcome` counts as absent.
 - **`message` annotation.** When non-empty, it replaces the message written by `Error`, `Locked` and `Revoked`. It is ignored with no cause, with `NotFound`, and with a refused cause.
-- **`source-version: "<n>"`.** It applies only on a synced ScalewaySecret with no cause, and when `n` differs from `current_version`: it writes `current_version: n` and `Synced`. A new secret gets `current_version: 1` from the engine first, and `n` on the next pass. A value that is not a positive integer gives `Error`, `fake-operator: source-version '<v>' is not a positive integer`.
+- **`source-version: "<n>"`.** It applies only on a synced ScalewaySecret with no cause, and when `n` is greater than `current_version`: it writes `current_version: n` and `Synced`; an equal or lower `n` lets the lifecycle run. A new secret gets `current_version: 1` from the engine first, and `n` on the next pass. A value that is not a positive integer up to 4294967295 (the operator's `current_version` is a `u32`) gives `Error`, `fake-operator: source-version '<v>' is not a positive integer`.
 - **Writes.** A whole-struct status patch, only when the result differs from the object read.
 
 **Never:**

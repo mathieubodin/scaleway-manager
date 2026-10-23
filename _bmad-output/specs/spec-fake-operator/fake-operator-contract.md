@@ -41,12 +41,13 @@ One pass moves an object at most one step. The fake evaluates, in this order:
 
 | Step | `Instance` | `LoadBalancer` | `ScalewaySecret` |
 | --- | --- | --- | --- |
-| Creation pass | `Syncing`, `state: "creating"`, `scaleway_id` (random UUID), `project_id` (namespace annotation), `created_at` (now), `error_message: null` | `Syncing`, `state: "pending"`, `scaleway_id`, `project_id`, `error_message: null` | `Syncing` then `Synced` in the same pass, as two patches. The first carries `scaleway_id`, with `current_version` and `last_synced_resource_version` null. The second carries `current_version: 1` and `observed_generation` |
+| Creation pass | `Syncing`, `state: "creating"`, `scaleway_id` (random UUID), `project_id` (namespace annotation), `created_at` (now, with chrono's fraction of a second: none, 3, 6 or 9 digits), `error_message: null` | `Syncing`, `state: "pending"`, `scaleway_id`, `project_id`, `error_message: null` | `Syncing` then `Synced` in the same pass, as two patches. The first carries `scaleway_id`, with `current_version` and `last_synced_resource_version` null. The second carries `current_version: 1` and `observed_generation` |
 | Next pass | `Synced`, `state: "running"`, `public_ip: 192.0.2.<x>`, `error_message: null` | `Synced`, `state: "ready"`, `vip_address: 198.51.100.<x>`, `error_message: null` | steady: no write |
 
 - Generated values (`scaleway_id`, IPs) are kept once written.
 - A `Synced` ScalewaySecret with a `scaleway_id` and a null `status.observed_generation` records `observed_generation` = `metadata.generation` without a version push, as the operator does (`decide_next_action_secret` step 7bis).
-- A ScalewaySecret with a `scaleway_id` whose `metadata.generation` differs from a non-null `status.observed_generation` pushes a version: `current_version` + 1, `observed_generation` updated, `Synced`. This holds whatever its `sync_state`, except `Revoked`.
+- A ScalewaySecret with a `scaleway_id` whose `metadata.generation` differs from a non-null `status.observed_generation` pushes a version: `current_version` + 1, `observed_generation` updated, `Synced`. This holds whatever its `sync_state`.
+- A ScalewaySecret leaving `Revoked` (its cause removed) pushes a version the same way: the operator's `Revoked` status clears `last_synced_resource_version`, so `decide_next_action_secret` step 7 pushes.
 
 ## Checks
 
@@ -62,8 +63,8 @@ Each check uses the operator's message, with `<ns>`, `<r>` and `<pid>` filled in
 | `Instance`, `LoadBalancer` | 4 | role is `Editor`, `Admin` or `OrganizationOwner`, while `scaleway_id` is null | after | `Configuration error: Role '<r>' is read-only and cannot create instances. Use 'Editor' or 'Admin'.` (`load balancers` for LoadBalancer) |
 | `ScalewaySecret` | 3 | `spec.source.kubernetes_secret` set | after | `Secret source not configured: spec.source must have kubernetes_secret configured` |
 | `ScalewaySecret` | 4 | `project-id` annotation present (no UUID check), at creation | after | same message as `Instance` |
-| `Instance` | spec list | `spec.zone` in `fr-par-1`, `fr-par-2`, `nl-ams-1`, `pl-waw-1`, `sg-sin-1`, `it-mil-1`; `spec` instance type in the operator's list | after | no status write |
-| `LoadBalancer` | spec list | `spec.zone` as above; `lb_type` in `LB-S`, `LB-GP` | after | no status write |
+| `Instance` | spec list | `spec.zone` in `fr-par-1`, `fr-par-2`, `nl-ams-1`, `pl-waw-1`, `sg-sin-1`, `it-mil-1`; `spec` instance type in the operator's list; then `spec.name` not empty | after | no status write |
+| `LoadBalancer` | spec list | `spec.zone` as above; `lb_type` in `LB-S`, `LB-GP`; then `spec.name` not empty | after | no status write |
 
 The exact field names of the spec lists and the instance-type list are read from `src/scaleway.rs` at the tag.
 
@@ -88,7 +89,7 @@ Other annotations and values:
 - **`fake.scaleway-manager.test/source-version: "<n>"`**, without a cause, on a synced ScalewaySecret: sets `current_version` to `n` and writes `Synced`, only when `n` is greater than `current_version`.
   - When `n` is equal or lower, it has no effect and the lifecycle runs.
   - On a new secret, the fake writes `current_version: 1` first, then `n` on the next pass.
-  - A value that is not a positive integer gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
+  - A value that is not a positive integer up to 4294967295 (the operator's `current_version` is a `u32`) gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
 
 ## Runtime
 
