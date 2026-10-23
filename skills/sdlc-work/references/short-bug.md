@@ -32,7 +32,7 @@ Extract them with jq into the workflow `args`; never retype them.
 1. `base` = `git merge-base origin/main HEAD`; `diffDir` = a new folder from `mktemp -d` (outside the repository). Launch `sdlc-review` with `{ base, diffDir, specPath: "<work folder>/bug-report.md", layers, verifierPrompt, fixerPrompt, dryPasses: 1, maxRounds: 2 }`.
 2. Memlog result: `review converged=<true|false> rounds=<r> unfixed=<count>`.
 3. The fixer leaves its fixes uncommitted. Run `make check`; it passes: commit them with the memlog and `cost.json`, `fix: apply the review of #<n>`; no fix: commit the memlog and `cost.json`, `chore(process): record the review of #<n>`. `make check` fails: tell the user and fix with them.
-4. Not converged: show the recurring and unfixed findings in plain language and propose a way out (fix by hand now, list them in the PR, or switch to the long route); the user chooses. The fixes of the last round that no round reviewed (`unreviewedFixes`) go to the PR body.
+4. Not converged: show the recurring and unfixed findings in plain language and propose a way out (fix by hand now, list them in the PR, or switch to the long route); the user chooses. A finding that contradicts `bug-report.md` or a frozen test is never fixed by hand and never changes a frozen test: the user dismisses it, or it is recorded as in `long.md`, "Review", and listed in the PR. The fixes of the last round that no round reviewed (`unreviewedFixes`) go to the PR body.
 
 Then `references/deliver.md`.
 
@@ -50,6 +50,6 @@ Then `references/deliver.md`.
 
 1. Launch `sdlc-review` as in the bug route, with `specPath` the issue text written to a temporary file outside the repository, and `singlePass: true` instead of `dryPasses` and `maxRounds`.
 2. A single pass converges only when it finds nothing: here `converged` false is normal, and there is no way out to propose. Memlog result and commit as in the bug route, steps 2 and 3.
-3. The findings left unfixed (`unfixed`) and the fixes no round reviewed (`unreviewedFixes`) go to the PR body.
+3. The findings left unfixed (`unfixed`) and the fixes no round reviewed (`unreviewedFixes`) go to the PR body. A finding that contradicts the issue text or a frozen test is never fixed by hand and never changes a frozen test: the user dismisses it, or it is recorded as in `long.md`, "Review", and listed in the PR.
 
 Then `references/deliver.md`.

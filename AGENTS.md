@@ -4,6 +4,7 @@ Web interface hosted in a Kubernetes cluster (often a throwaway kind cluster) th
 
 ## Working rules
 
+- Nothing without a source. Before writing or proposing anything, check that every element comes from a source: the issue, an author decision, AGENTS.md, a spec or the code. A source is a sentence you can quote; what only follows from it by deduction has no source. An element without a source is neither written nor proposed: first ask one short question that quotes word for word what the source says and names what is missing. Add nothing beyond what the source asks. A statement whose source you do not have is said as "I do not know".
 - Never fill a gap with an assumption. Leave it blank and marked, or ask one yes/no question.
 - Never reassure. State facts and results only.
 - Honor every rule the user gives. Never replace a rule with your own judgment; if you think a rule should be broken, say so before acting.
