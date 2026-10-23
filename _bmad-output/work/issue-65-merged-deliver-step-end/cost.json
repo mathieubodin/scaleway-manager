@@ -1,15 +1,15 @@
 {
   "issue": 65,
   "route": "short",
-  "tokens": 439550,
+  "tokens": 476079,
   "totals": {
     "steps": {
       "change": {
         "claude-opus-5-5": {
-          "input": 16,
-          "output": 4795,
-          "cacheCreation": 10494,
-          "cacheRead": 977006
+          "input": 56,
+          "output": 15677,
+          "cacheCreation": 36101,
+          "cacheRead": 4559787
         }
       },
       "deliver": {
@@ -39,31 +39,31 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 150,
-        "output": 19073,
-        "cacheCreation": 420327,
-        "cacheRead": 5102035
+        "input": 190,
+        "output": 29955,
+        "cacheCreation": 445934,
+        "cacheRead": 8684816
       }
     },
     "unattributed": {
       "claude-opus-5-5": {
-        "input": 24,
-        "output": 5591,
-        "cacheCreation": 41703,
-        "cacheRead": 1106647
+        "input": 44,
+        "output": 11598,
+        "cacheCreation": 52442,
+        "cacheRead": 2694154
       }
     }
   },
   "sessions": {
     "fe01ba2e-b1dc-4d92-a861-941f429a57e9": {
-      "computedAt": "2026-10-23T21:13:15Z",
+      "computedAt": "2026-10-23T21:28:48Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
-            "input": 16,
-            "output": 4795,
-            "cacheCreation": 10494,
-            "cacheRead": 977006
+            "input": 56,
+            "output": 15677,
+            "cacheCreation": 36101,
+            "cacheRead": 4559787
           }
         },
         "deliver": {
@@ -93,10 +93,10 @@
       },
       "unattributed": {
         "claude-opus-5-5": {
-          "input": 24,
-          "output": 5591,
-          "cacheCreation": 41703,
-          "cacheRead": 1106647
+          "input": 44,
+          "output": 11598,
+          "cacheCreation": 52442,
+          "cacheRead": 2694154
         }
       }
     }
@@ -105,7 +105,7 @@
     "wf_1dad9968-8d5": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "triage",
-      "computedAt": "2026-10-23T21:13:15Z",
+      "computedAt": "2026-10-23T21:28:48Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
@@ -118,7 +118,7 @@
     "wf_f3f45e29-5c8": {
       "session": "fe01ba2e-b1dc-4d92-a861-941f429a57e9",
       "step": "review",
-      "computedAt": "2026-10-23T21:13:15Z",
+      "computedAt": "2026-10-23T21:28:48Z",
       "models": {
         "claude-opus-5-5": {
           "input": 42,
