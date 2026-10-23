@@ -78,9 +78,9 @@ test("small change with a split defect: short, the defect cannot change it", asy
   assert.deepEqual(run.result.uncertain, []);
 });
 
-test("nothing says yes: long, the safest route", async () => {
+test("nothing says yes: undecided, the human chooses short or long", async () => {
   const run = await triage({ smallChange: 1 });
-  assert.equal(run.result.route, "long");
+  assert.equal(run.result.route, "undecided");
   assert.deepEqual(run.result.uncertain, ["smallChange"]);
 });
 
@@ -96,7 +96,7 @@ test("a dead vote counts as a missing yes and breaks unanimity", async () => {
   assert.equal(defect.yes, false);
   assert.equal(defect.unanimous, false);
   assert.deepEqual(defect.votes[1], { yes: null, reason: "agent died" });
-  assert.equal(run.result.route, "long");
+  assert.equal(run.result.route, "undecided");
   assert.deepEqual(run.result.uncertain, ["defect"]);
 });
 

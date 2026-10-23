@@ -32,7 +32,7 @@ Extract them with jq into the workflow `args`; never retype them.
 1. `base` = `git merge-base origin/main HEAD`; `diffDir` = a new folder from `mktemp -d` (outside the repository). Launch `sdlc-review` with `{ base, diffDir, specPath: "<work folder>/bug-report.md", layers, verifierPrompt, fixerPrompt, dryPasses: 1, maxRounds: 2 }`.
 2. Memlog result: `review converged=<true|false> rounds=<r> unfixed=<count>`.
 3. The fixer leaves its fixes uncommitted. Run `make check`; it passes: commit them with the memlog and `cost.json`, `fix: apply the review of #<n>`; no fix: commit the memlog and `cost.json`, `chore(process): record the review of #<n>`. `make check` fails: tell the user and fix with them.
-4. Not converged: show the recurring and unfixed findings in plain language and propose a way out (fix by hand now, list them in the PR, or switch to the long route); the user chooses. The fixes of the last round that no round reviewed (`unreviewedFixes`) go to the PR body.
+4. Not converged: show the recurring and unfixed findings in plain language and propose a way out (fix by hand now, list them in the PR, or switch to the long route); the user chooses. A finding that contradicts `bug-report.md` or a frozen test is never fixed by hand and never changes a frozen test: the user dismisses it, or it is recorded as in `long.md`, "Review", and listed in the PR. The fixes of the last round that no round reviewed (`unreviewedFixes`) go to the PR body.
 
 Then `references/deliver.md`.
 

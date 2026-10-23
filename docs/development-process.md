@@ -57,7 +57,7 @@ Triage questions and rule are defined once in `.claude/workflows/sdlc-triage.js`
 4. `data`: Does it change the content or the format of what the project exports or sends, or how Secrets are handled?
 5. `smallChange`: Is it limited to a small edit: a typo, a wording, or a simplification that keeps the same behavior?
 
-A question is "yes" with at least 2 "yes" out of 3 votes; a vote whose agent died counts as a missing "yes". The rule, in order: `newBehavior`, `adoptionKeys` or `data` yes gives long; otherwise `smallChange` gives short; otherwise `defect` gives bug; otherwise long, the safest route. `smallChange` comes before `defect` because a typo is a defect too. The agreement is the number of unanimous questions; a split question is returned as uncertain when flipping its answer would change the route. Voters are read-only agents (`Explore`); the idea and the facts are quoted as data, the question before them.
+A question is "yes" with at least 2 "yes" out of 3 votes; a vote whose agent died counts as a missing "yes". The rule, in order: `newBehavior`, `adoptionKeys` or `data` yes gives long; otherwise `smallChange` gives short; otherwise `defect` gives bug; otherwise `undecided`: no question decided the route, so `sdlc-work` proposes none and the human chooses short or long from a TL;DR justification (the rule line reached, and why no question decided). Process work lands there: the questions are written for product changes. `smallChange` comes before `defect` because a typo is a defect too. The agreement is the number of unanimous questions; a split question is returned as uncertain when flipping its answer would change the route. Voters are read-only agents (`Explore`); the idea and the facts are quoted as data, the question before them.
 
 At the same confirmation, `sdlc-work` proposes the issue title, the slug and, optionally, a milestone. A milestone that does not exist is created after confirmation: title checked as semver, theme asked and written in its description. An issue may have no milestone. This one confirmation covers the GitHub writes that follow (issue or labels, milestone, board status); `sdlc-work` then creates the branch from `origin/main` and the memlog, and pushes nothing yet. The board is updated with `scripts/project-item.sh`.
 
@@ -147,6 +147,7 @@ On another machine the memlog is available from the last gate commit; without it
 
 ### Define and spec gate
 
+- Preamble, before forge: `sdlc-work` answers, for this feature, what is authoritative on the expected behavior (code at an exact version, a standard, a document, the author) and which resources to read first to fill the missing context: a short ordered list to start with, not an exhaustive list of gaps. It asks the human whether resources are missing; the human validates the list; the resources are read before forge and recorded in `define-notes.md`, section "Sources". The questions are generic; their answers depend on the feature.
 - `bmad-forge-idea` explores the problem, checks the code before each question, and has every recorded assumption validated by yes or no.
 - `sdlc-parallax`: 3 fresh agents each write, alone, the spec they would execute from `forged-idea.md`, reading the code it concerns; an agent compares the specs and returns every divergence as a question, with each reader's position. The specs stay in the run's transcript, under the reader numbers the result uses. The run stops when fewer than 2 specs were written. Each divergence comes with a proposed answer and is classified important (what the user sees or does, data, security, cost, acceptance) or detail; `sdlc-work` asks the important ones one at a time and shows the details as one list of proposed answers, validated or corrected together.
 - Pre-mortem with `bmad-advanced-elicitation`: "three months from now the project failed, write the postmortem"; every risk becomes a question; `sdlc-work` writes the risks to `define-notes.md` itself. Risks are sorted like the parallax divergences, important ones asked one at a time, details shown as one list of proposed answers.
@@ -498,7 +499,7 @@ sequenceDiagram
 
 ### Frozen tests
 
-Tests are frozen by detection, not by a lock. `make freeze FILES="..."` records the sha256 of the given test files (code tests and Gherkin features) in `frozen-tests.sha256`, replacing their entries and keeping the others. `make check-frozen` fails when a frozen file changed or disappeared. New tests are frozen without a human decision on the long route (by `sdlc-rails`, or by a manual `bmad-build`), and after the human confirms their failure reason on the bug route. Changing a frozen test always needs the human's decision, then `make freeze`.
+Tests are frozen by detection, not by a lock. `make freeze FILES="..."` records the sha256 of the given test files (code tests and Gherkin features) in `frozen-tests.sha256`, replacing their entries and keeping the others. `make check-frozen` fails when a frozen file changed or disappeared. New tests are frozen without a human decision on the long route (by `sdlc-rails`, or by a manual `bmad-build`), and after the human confirms their failure reason on the bug route. Changing a frozen test always needs the human's decision, then `make freeze`; a review finding is never a reason to propose it (see "Review loop").
 
 ### Manual use of `bmad-build`
 
@@ -523,6 +524,8 @@ Each round of `.claude/workflows/sdlc-review.js`: an agent writes the diff of th
 | long | `dryPasses` 2, `maxRounds` 5 (2 dry rounds in a row) | Back to Plan, back to Define, or accept and list the findings in the PR; the human chooses |
 | bug | `dryPasses` 1, `maxRounds` 2 | Way out proposed; the human chooses |
 | short | `singlePass` | Unfixed findings listed in the PR |
+
+A validated spec holds until proven otherwise, and a finding alone is not that proof. A finding whose fix would contradict the spec, the bug report or a frozen test is never fixed and never changes a frozen test: the verifier marks it as needing a decision, so the fixer never receives it, and `sdlc-work` has the human dismiss it or record it with a targeted scenario or test case that would settle it, listed in the PR. Only an explicit return to Define, decided by the human, reopens the spec.
 
 A loop that does not converge signals a contradictory spec or a bad split.
 

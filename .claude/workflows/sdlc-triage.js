@@ -1,7 +1,7 @@
 export const meta = {
   name: "sdlc-triage",
   description:
-    "Ask each triage question about an idea or issue to 3 independent agents; combine the answers into a proposed route (short, bug, long) with the vote agreement",
+    "Ask each triage question about an idea or issue to 3 independent agents; combine the answers into a proposed route (short, bug, long, or undecided) with the vote agreement",
   whenToUse:
     "Launched by sdlc-work at triage, after its own questions, with args { idea, facts }.",
   phases: [{ title: "Votes" }],
@@ -13,9 +13,10 @@ export const meta = {
 // question is "yes" with at least MIN_YES "yes" out of VOTES; a vote whose
 // agent died counts as a missing "yes". The rule reads, in order:
 // newBehavior, adoptionKeys or data -> long; else smallChange -> short; else
-// defect -> bug; else long (order and data question changed with the author
+// defect -> bug; else undecided (order and data question changed with the author
 // after the first real runs: a typo is a defect too, and a deletion changes
-// what is kept). A split question is uncertain when
+// what is kept; the default was long until #61: process work answers no
+// everywhere, so no question decides and the human chooses short or long). A split question is uncertain when
 // flipping its answer would change the route. Voters are read-only Explore
 // agents; the idea comes from issues anyone can open.
 const VOTES = 3;
@@ -97,7 +98,7 @@ const routeOf = (yes) =>
       ? "short"
       : yes.defect
         ? "bug"
-        : "long";
+        : "undecided";
 const yes = Object.fromEntries(answers.map((a) => [a.id, a.yes]));
 const route = routeOf(yes);
 const uncertain = answers

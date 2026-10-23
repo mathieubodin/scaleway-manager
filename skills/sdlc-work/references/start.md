@@ -17,12 +17,13 @@ From an idea to an issue with its route, a work branch and a process memlog (`do
 ## 3. Triage
 
 - Launch the workflow `sdlc-triage` with `args` `{ idea, facts }`: `idea` is the idea in the user's words (for an external issue: its title and body), `facts` the lines of step 2. Note its run id.
-- Its result: `route` (`long`, `bug` or `short`), `answers` (per question: `yes`, the 3 votes with reasons, `unanimous`), `agreement` and `uncertain`.
+- Its result: `route` (`long`, `bug`, `short`, or `undecided` when no question decided), `answers` (per question: `yes`, the 3 votes with reasons, `unanimous`), `agreement` and `uncertain`.
 
 ## 4. Proposal and confirmation
 
-Show the user, in plain language:
+Show the user, in plain language, starting with a TL;DR (the proposed route and the rule line that decided it, in one or two lines; the details come after):
 
+- `undecided`: propose no route; the TL;DR says which rule line was reached and why no question decided, and the user chooses short or long;
 - the proposed route and what it means for them (long: spec gate and plan gate before any code; bug: tests that reproduce the bug first, then the fix; short: the change, a light review, the PR);
 - each question with its answer and its vote count, the uncertain ones first, with the voters' reasons when they disagree;
 - the issue title (English, imperative, at most about 70 characters);

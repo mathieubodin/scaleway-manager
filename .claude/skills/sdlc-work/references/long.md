@@ -6,6 +6,8 @@ Text written by agents (story titles and bodies, review leads) follows the SKILL
 
 ## Define (step `define`, board status Define)
 
+Preamble, before step 1: answer, for this feature, (a) what is authoritative on the expected behavior: code at an exact version, a standard, a document, or the author; (b) which resources to read first to fill the missing context: a short ordered list to start with, not an exhaustive list of gaps. Show both as a TL;DR, ask the user whether resources are missing, and let the user validate the list. Read the resources, then write `define-notes.md`, section "Sources": the authority, each resource with its exact reference, and what was read; memlog decision `define sources validated: <authority>`. Forge starts from what was read: pass it the "Sources" section with the idea.
+
 1. `bmad-forge-idea` (Skill tool), on the idea and the issue body. It checks the code before each question, has every assumption validated, and hands control back through the memlog. Only its "Hardened" exit writes `_bmad-output/forge/<slug>/forged-idea.md`. "Killed": tell the user and ask whether to close the epic (`gh issue close <n> --reason 'not planned'`) or stop here. "Clearer" without a forged idea: ask the user how to go on.
 2. Launch `sdlc-parallax` with `{ ideaPath: "<forged-idea.md>" }`; readers in `deadReaders` are reported. Write each divergence to the work folder's `define-notes.md`, section "Parallax".
 3. Pre-mortem: `bmad-advanced-elicitation` with the method "Pre-mortem Analysis" on `forged-idea.md` ("three months from now the project failed, write the postmortem"). It has no hand-back: write each risk to `define-notes.md`, section "Premortem", yourself, add a memlog result `pre-mortem: <count> risks in define-notes.md`, and keep control.
@@ -61,7 +63,7 @@ Before Plan: `_bmad-output/planning-artifacts/architecture/` must exist and name
 
 ## Review (step `review`)
 
-Launch `sdlc-review` as in `short-bug.md`, with `specPath` the `SPEC.md`, `dryPasses: 2`, `maxRounds: 5`. Memlog result and commit as there. Not converged: show the recurring findings and propose back to Plan, back to Define, or accept and list them in the PR; the user chooses. A return goes through that step and its gate again, and on to rails and build only for the new or changed story specs.
+Launch `sdlc-review` as in `short-bug.md`, with `specPath` the `SPEC.md`, `dryPasses: 2`, `maxRounds: 5`. Memlog result and commit as there. The validated spec holds until proven otherwise: a finding that contradicts `SPEC.md`, a story spec or a frozen test is never fixed and never changes a frozen test; the user dismisses it, or it is recorded as a memlog result `open finding <id>: <claim>; scenario: <targeted scenario or test case that would settle it>` and listed in the PR. Not converged: show the recurring findings and propose to accept and list them in the PR, back to Plan, or back to Define; the user chooses. Only a return to Define reopens the spec. A return goes through that step and its gate again, and on to rails and build only for the new or changed story specs.
 
 ## Deliver (step `deliver`)
 
