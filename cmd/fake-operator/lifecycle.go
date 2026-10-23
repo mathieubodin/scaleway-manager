@@ -63,13 +63,16 @@ func wholeStatus(k kind, st map[string]any) map[string]any {
 	return s
 }
 
-// writeStatus sends {"status":{...}} with every field of the kind, unless it
-// equals currentStatus, and updates obj in place from the response.
+// writeStatus sends {"status":{...}} with every field of the kind, unless obj
+// has a status equal to it, and updates obj in place from the response. A
+// missing status always differs, even from defaultStatus.
 func (o *operator) writeStatus(ctx context.Context, k kind, obj map[string]any, status map[string]any) error {
 	next := wholeStatus(k, status)
-	same, err := sameJSON(next, currentStatus(k, obj))
-	if err != nil || same {
-		return err
+	if _, ok := obj["status"].(map[string]any); ok {
+		same, err := sameJSON(next, currentStatus(k, obj))
+		if err != nil || same {
+			return err
+		}
 	}
 	body, err := json.Marshal(map[string]any{"status": next})
 	if err != nil {

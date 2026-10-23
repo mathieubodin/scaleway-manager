@@ -1,5 +1,5 @@
-# Allowlist: only what `go build ./cmd/scaleway-manager` needs reaches the build
-# context.
+# Allowlist: only what `go build ./cmd/scaleway-manager` and
+# `go build ./cmd/fake-operator` need reaches the build context.
 *
 !go.mod
 !embed.go

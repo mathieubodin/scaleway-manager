@@ -24,6 +24,10 @@ One row per file of `frozen-tests.sha256`, after Rails (`wf_2286961f-b30`). The 
 | `cmd/fake-operator/run_test.go` | `make test-go` | S6 (#59) |
 | `tests/make/fake_operator_test.go` | `make test-go` | S7 (#60) |
 | `tests/image/build-fake-operator-image.test.sh` | CI job `build-image` of `.github/workflows/pr-checks.yml` (runs every `tests/image/*.test.sh`) | S7 (#60) |
+| `cmd/fake-operator/events_test.go` | `make test-go` | Review (e402ae2) |
+| `cmd/fake-operator/review_fixes_test.go` | `make test-go` | Review (0ee55fa) |
+| `cmd/fake-operator/review_fixes2_test.go` | `make test-go` | Review (2e21c34) |
+| `cmd/fake-operator/review_fixes3_test.go` | `make test-go` | Review (after 2e21c34, not committed yet) |
 
 Every `*_test.go` above is also compiled by `make lint-go` (`go vet ./...`). A `make lint-go` failure of one of these files is judged against its `make test-go` row.
 
