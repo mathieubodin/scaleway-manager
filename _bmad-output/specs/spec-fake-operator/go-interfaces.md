@@ -274,7 +274,7 @@ func run(getenv func(string) string, stdout io.Writer, sigs <-chan os.Signal, to
   - `run` sets `op.stop` to a channel closed by the signal. `pass` checks it before each kind and each object: the in-flight object finishes, the next one is not started, and the loop ends;
   - a pass whose `pass` returned an error before listing does not count as ended.
 - **Health server:**
-  - `GET /healthz` returns 503 with an empty body;
+  - `GET /healthz` returns 200 with `Content-Type: text/plain; charset=utf-8` and body `ok` when healthy (story 6), and 503 with an empty body otherwise;
   - other methods get 405 and other paths 404, through `ServeMux` patterns;
   - `ReadHeaderTimeout` 10 s, `Shutdown` timeout 5 s.
 - **Signals:** SIGINT is handled like SIGTERM, and a second signal is ignored.
