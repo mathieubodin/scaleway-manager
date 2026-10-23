@@ -125,6 +125,7 @@ jobs:
         with:
           persist-credentials: false
       - run: make build-image
+      - run: make build-fake-operator-image
       # Every image test runs; the job fails when one of them fails.
       - name: Run the image tests
         run: |

@@ -1,0 +1,48 @@
+- id: "1"
+  title: Kubernetes client internal/kube
+  description: >-
+    The internal/kube package of CAP-1: the AD-2 URL builder over the closed list, kube.Token, and list, get,
+    merge patch and status patch with a caller-supplied token, as in the S1 contract of the plan.
+  spec_checkpoint: true
+- id: "2"
+  title: Fake API server internal/kube/kubetest
+  description: >-
+    The internal/kube/kubetest package of CAP-2, behaving like the API server on every behavior of the
+    companion's kubetest section, each test citing its Kubernetes documentation URL.
+- id: "3"
+  title: Fake operator engine
+  description: >-
+    The cmd/fake-operator engine of CAP-3 and CAP-7: one pass over the three kinds, lifecycle values and
+    write discipline, with no-effect stubs in deletion.go, checks.go, causes.go and run.go for the leaves.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Read scaleway-operator only at tag scaleway-operator-v0.1.15 with git show in
+    /home/mathieu/dev/github.com/scaleway-operator; never the working tree, which is a stale branch.
+- id: "4"
+  title: Deletion and operator checks
+  description: >-
+    Deletion handling of CAP-4 and the operator checks of CAP-5 (companion "Pass order" and "Checks"), in
+    deletion.go and checks.go of cmd/fake-operator.
+  invoke_dev_with: >-
+    Read scaleway-operator only at tag scaleway-operator-v0.1.15 with git show in
+    /home/mathieu/dev/github.com/scaleway-operator; never the working tree, which is a stale branch.
+- id: "5"
+  title: Causes by annotation
+  description: >-
+    The causes, message and source-version annotations of CAP-6 (companion "Causes"), in causes.go of
+    cmd/fake-operator.
+  invoke_dev_with: >-
+    Read scaleway-operator only at tag scaleway-operator-v0.1.15 with git show in
+    /home/mathieu/dev/github.com/scaleway-operator; never the working tree, which is a stale branch.
+- id: "6"
+  title: Runtime of the fake operator
+  description: >-
+    The run function of CAP-8 in run.go of cmd/fake-operator: polling at FAKE_OPERATOR_STEP_DELAY, token
+    reread, startup guards, /healthz and SIGTERM.
+- id: "7"
+  title: Packaging and isolation
+  description: >-
+    CAP-9: cmd/fake-operator/Dockerfile, the build-fake-operator-image script and target, the JSON manifests
+    and RBAC under tests/cluster/fake-operator/, and the tests/make test that checks the RBAC and the release
+    artifacts.

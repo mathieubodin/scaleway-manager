@@ -17,7 +17,7 @@ export MUTATION
 BASE ?= origin/main
 export BASE
 
-.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod check-docker check-curl build-image check-helm print-helm-version lint-chart
+.PHONY: help check lint-docs fix-docs freeze check-frozen check-markdownlint cost cost-report check-node lint-workflows fix-workflows test-workflows check-migration evidence release-note check-go lint-go test-go check-go-mod check-docker check-curl build-image build-fake-operator-image check-helm print-helm-version lint-chart
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -115,6 +115,10 @@ check-curl:
 
 build-image: check-docker check-curl ## Check the Dockerfile, build scaleway-manager:local, probe /healthz (CAP-3)
 	scripts/build-image.sh
+
+# Test-only image of the fake operator: never pushed, never run here.
+build-fake-operator-image: check-docker ## Check the fake operator Dockerfile and build scaleway-manager-fake-operator:local (CAP-9)
+	scripts/build-fake-operator-image.sh
 
 # Helm chart: helm at exactly HELM_VERSION (CI reads it through print-helm-version) and
 # the helm-unittest plugin at exactly HELM_UNITTEST_VERSION, installed from its release

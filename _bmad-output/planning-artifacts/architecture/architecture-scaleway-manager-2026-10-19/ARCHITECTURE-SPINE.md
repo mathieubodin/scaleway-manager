@@ -7,7 +7,7 @@ paradigm: 'ports and adapters (hexagonal), standard library only'
 scope: 'The scaleway-manager application, first version (brief stages 1 and 2): Go server, browser page, Helm chart, test-only fake operator'
 status: final
 created: '2026-10-19'
-updated: '2026-10-19'
+updated: '2026-10-23'
 binds: []
 sources:
   - _bmad-output/planning-artifacts/briefs/brief-scaleway-manager-2026-10-16/brief.md
@@ -71,6 +71,7 @@ flowchart LR
     - `namespaces`;
     - `secrets`: create and replace; read as metadata only (AD-14);
     - `apiextensions.k8s.io/customresourcedefinitions`, `get` only;
+    - `apps/v1` `deployments`, `list` only, for the AD-9 startup guard of the fake operator;
     - the discovery and review endpoints the readiness screen needs.
   - Namespace and name must pass DNS-1123 validation, and each path segment goes through `url.PathEscape`. No browser query parameter is forwarded as is.
 
@@ -174,17 +175,68 @@ flowchart LR
 
 ### AD-9: The fake operator mimics the real lifecycle, for tests only [ADOPTED]
 
-- **Binds:** `cmd/fake-operator`, test cluster, Gherkin scenarios
-- **Prevents:** tests passing against behavior the real operator never has; Gherkin steps faking status their own way.
+- **Binds:** `cmd/fake-operator`, `internal/kube`, `tests/cluster/fake-operator/`, test cluster, Gherkin scenarios
+- **Prevents:** tests passing against behavior the real operator never has; Gherkin steps faking status their own way; a cause forced on a kind that cannot have it; fake status written next to the real operator.
 - **Rule:**
-  - **Where it runs:** the fake operator is a Go controller under `cmd/fake-operator`, deployed only in the automated-test kind cluster with its own RBAC. It is never part of the release image or chart.
-  - **Lifecycle:** it writes status through the status subresource:
-    - **finalizer:** it adds the operator's finalizer (`scaleway.mathieubodin.io/instance-finalizer`, `…/loadbalancer-finalizer`, `…/scalewaysecret-finalizer`);
-    - **initial `sync_state`:** `Syncing` for `Instance`, `LoadBalancer` and `ScalewaySecret`, as the operator writes after creation, then `Synced`;
-    - **deletion:** it removes the finalizer on delete;
-    - **`NamespaceRole`:** it writes nothing, like the real operator.
-  - **Test annotations:** the annotation `fake.scaleway-manager.test/outcome` forces `Pending` (as after Scaleway reports the object not found), `Error` or `TerminationBlocked`. The annotation `fake.scaleway-manager.test/message` is copied to `status.error_message`.
-  - **Gherkin steps:** steps steer outcomes only through these annotations and never write `status`. The real operator is never installed in that cluster.
+  - **Contract:** the release `scaleway-operator-v0.1.15` with its CRD chart `scaleway-operator-crds` `0.1.14`, the version AD-10 pins. The fake copies, kind by kind:
+    - status field names and Rust defaults;
+    - `sync_state` values and messages;
+    - when the finalizer is added or kept.
+
+    The finalizers are `scaleway.mathieubodin.io/instance-finalizer`, `…/loadbalancer-finalizer` and `…/secret-finalizer`. Moving to another operator release means reviewing the fake. Kinds not in that release (such as `RDB`) are out of scope.
+  - **Where it runs:**
+    - `cmd/fake-operator` is a Go controller. Its own `cmd/fake-operator/Dockerfile`, on the release bases and checked by `scripts/check-dockerfile.sh`, is built by `make build-fake-operator-image` as `scaleway-manager-fake-operator:local`.
+    - That image is never pushed. The Deployment uses `imagePullPolicy: Never`.
+    - Its manifests are raw Kubernetes manifests written as JSON (valid YAML, read by Go tests with the standard library) under `tests/cluster/fake-operator/`: namespace `fake-operator`, ServiceAccount, ClusterRole, ClusterRoleBinding, Role, RoleBinding, Deployment.
+    - It runs only in the automated-test kind cluster. A test fails if the release `Dockerfile`, `charts/` or the release workflow mention it.
+    - At start, it exits 1 if a Deployment labelled `app.kubernetes.io/name: scaleway-operator` exists in `scaleway-system`.
+  - **Identity:**
+    - `internal/kube` never reads a token itself: each call receives one. This holds for the server (AD-3) and for the fake.
+    - The fake's Deployment sets `automountServiceAccountToken: false` and mounts an explicit projected volume (token and `kube-root-ca.crt`) at `/var/run/secrets/kubernetes.io/serviceaccount`.
+    - The fake rereads the token at each pass.
+    - RBAC:
+      - `get` and `list` on `namespaces` and `namespaceroles`;
+      - `list` and `patch` on the three other kinds, and `patch` only on their `/status`;
+      - in `scaleway-system` only, `list` on `deployments`.
+
+      The fake has no access to Secrets.
+  - **Lifecycle:** the fake polls every `FAKE_OPERATOR_STEP_DELAY` (a Go duration, default `2s`) and moves each object at most one step per pass, in the operator's order:
+    1. **Deletion first:** the preconditions are skipped, except the region check of a `ScalewaySecret`. The fake removes the finalizer, except under `Error` or `Locked` on an object with a `scaleway_id` (without one, the operator calls no Scaleway API on delete). A refused cause never blocks a deletion.
+    2. **Finalizer:** only the finalizer is written, with no status.
+    3. **`Syncing`**, then **`Synced`** on the next pass. A `ScalewaySecret` writes both in one pass, as the operator does.
+  - **How it writes:**
+    - The finalizer goes by merge patch on the object, with the whole list.
+    - Status goes by merge patch on `/status`, with the whole struct; `null` removes a key. Neither patch carries a `resourceVersion`.
+    - The fake patches only when the result differs from what it read, and it keeps the values it generated. A steady object therefore keeps its `resourceVersion`, and a UI edit does not get `409` (AD-4).
+    - It writes nothing on `NamespaceRole`, and no annotation, label or event.
+  - **Checks it mimics:** each in the operator's order, with the operator's message, from what the fake can read (the spec, namespaces, `NamespaceRole`):
+    - a missing `NamespaceRole` named after the namespace;
+    - a read-only role (other than `Editor`, `Admin` or `OrganizationOwner`): for `Instance` and `LoadBalancer` only while nothing is created yet; for `ScalewaySecret` before the finalizer, on every pass;
+    - the `scaleway.mathieubodin.io/project-id` annotation (a UUID for `Instance` and `LoadBalancer`);
+    - the zone, instance type, `lb_type` and region lists;
+    - a `ScalewaySecret` with no `spec.source.kubernetes_secret`.
+
+    A spec-list failure writes no status, as the operator does. A `spec` change of a `ScalewaySecret` with a `scaleway_id` (`metadata.generation` ≠ `observed_generation`) pushes a new version, whatever its `sync_state` except `Revoked`.
+  - **Not mimicked:**
+    - checks on Secrets the fake cannot read: the source Secret, its opt-in and key, and `scaleway-ns-creds-<ns>`;
+    - `last_synced_resource_version`;
+    - `FinalizerRemovedWithoutScalewayDelete`;
+    - the operator's circuit breaker.
+
+    A scenario stands for a Secret failure with the `Error` cause and the operator's message. The real behavior is covered by `@manual` scenarios.
+  - **Causes:** `fake.scaleway-manager.test/outcome` names a Scaleway-side cause, never a `sync_state`. The fake writes that kind's effect on every pass while the annotation is present, with no memory. A cause applies only where the operator would call Scaleway, after the checks above:
+
+    | Cause | `Instance` | `LoadBalancer` | `ScalewaySecret` |
+    | --- | --- | --- | --- |
+    | `NotFound` | `Syncing`, `state: unknown`, ids cleared; re-created once removed | `Pending`, `state: ""`, ids cleared; re-created once removed | refused |
+    | `Error` | `Error`; on delete with a `scaleway_id`: finalizer kept, no status write | same as `Instance` | at creation only; on delete as `Instance` |
+    | `Locked` | refused | on delete with a `scaleway_id`: `TerminationBlocked`, finalizer kept | refused |
+    | `Revoked` | refused | refused | `Revoked` once `scaleway_id` is set, `Error` before |
+
+    - A refused cause gives `Error`, with an `error_message` naming the cause.
+    - `fake.scaleway-manager.test/message`, while a cause that writes a message is present, replaces that message. In every other case it is ignored, `NotFound` included.
+    - Without a cause, `fake.scaleway-manager.test/source-version: "<n>"` stands for a changed source Secret: it sets `current_version` to `n` and writes `Synced`, only when `n` is greater than `current_version`; an equal or lower value has no effect. A value that is not a positive integer gives `Error` with `fake-operator: source-version '<v>' is not a positive integer`.
+  - **Gherkin steps:** steps steer outcomes only through these annotations and the spec, and never write `status`. The real operator is never installed in that cluster.
 
 ### AD-10: Operator CRDs come from the operator's published chart, pinned once [ADOPTED]
 
@@ -238,7 +290,7 @@ flowchart LR
 - **Binds:** tests, Makefile, CI
 - **Prevents:** each feature writing its own fake API server; tools leaking into shipped code; coverage gates applying to the wrong code.
 - **Rule:**
-  - **Go:** Go tests sit next to the code and fake the Kubernetes API with the shared `internal/kube/kubetest` package (`net/http/httptest`). Coverage uses `go test -coverprofile`, with a script that checks the threshold. Mutation uses `avito-tech/go-mutesting` at `v0.0.0-20251226130216-48d0401f00fb`, on the Go files changed by the PR, through a wrapper that fails on surviving mutants, since the tool exits 0.
+  - **Go:** Go tests sit next to the code and fake the Kubernetes API with the shared `internal/kube/kubetest` package (`net/http/httptest`), which keeps `resourceVersion` on a patch that changes nothing, like the API server. Coverage uses `go test -coverprofile`, with a script that checks the threshold. Mutation uses `avito-tech/go-mutesting` at `v0.0.0-20251226130216-48d0401f00fb`, on the Go files changed by the PR, through a wrapper that fails on surviving mutants, since the tool exits 0.
   - **JavaScript:** `tests/web/*.test.js` files run with `node:test`. Coverage of `web/` uses c8, with a configuration separate from the workflow-script thresholds. Mutation uses StrykerJS with its tap runner.
   - **Mutation switch:** `MUTATION=0` skips both mutation runs.
   - **Gherkin:** scenarios live under `tests/e2e/features/`. Anything that touches Scaleway is tagged `@manual`.
@@ -292,6 +344,8 @@ charts/
 tests/
   web/                # node:test unit tests of web/ (AD-15)
   e2e/features/       # Gherkin scenarios (playwright-bdd)
+  cluster/
+    fake-operator/    # raw manifests of the fake operator, test cluster only (AD-9)
 ```
 
 ```mermaid
@@ -306,7 +360,7 @@ flowchart TB
   scw[("Scaleway")]
   browser -->|"HTTPS"| gw -->|"HTTPRoute"| sm
   sm -->|"user token"| api
-  op -->|"watch, status"| api
+  op -->|"watch (operator) or poll (fake), status"| api
   op -.->|"real operator only"| scw
 ```
 
