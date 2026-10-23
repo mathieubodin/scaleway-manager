@@ -1,7 +1,7 @@
 {
   "issue": 42,
   "route": "long",
-  "tokens": 4886826,
+  "tokens": 4900497,
   "totals": {
     "steps": {
       "define": {
@@ -14,10 +14,10 @@
       },
       "plan": {
         "claude-opus-5-5": {
-          "input": 450,
-          "output": 79466,
-          "cacheCreation": 1260167,
-          "cacheRead": 41121906
+          "input": 462,
+          "output": 85363,
+          "cacheCreation": 1267929,
+          "cacheRead": 44716414
         }
       },
       "triage": {
@@ -31,10 +31,10 @@
     },
     "models": {
       "claude-opus-5-5": {
-        "input": 1644,
-        "output": 234136,
-        "cacheCreation": 4651046,
-        "cacheRead": 114672391
+        "input": 1656,
+        "output": 240033,
+        "cacheCreation": 4658808,
+        "cacheRead": 118266899
       }
     },
     "unattributed": {
@@ -48,7 +48,7 @@
   },
   "sessions": {
     "6910fa0e-7637-41b7-b12e-83ea28963359": {
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "steps": {
         "define": {
           "claude-opus-5-5": {
@@ -60,10 +60,10 @@
         },
         "plan": {
           "claude-opus-5-5": {
-            "input": 132,
-            "output": 76028,
-            "cacheCreation": 138578,
-            "cacheRead": 32828472
+            "input": 144,
+            "output": 81925,
+            "cacheCreation": 146340,
+            "cacheRead": 36422980
           }
         },
         "triage": {
@@ -89,7 +89,7 @@
     "wf_08bd9337-c17": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 184,
@@ -102,7 +102,7 @@
     "wf_0daaad1a-e88": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 176,
@@ -115,7 +115,7 @@
     "wf_315969d5-d48": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 158,
@@ -128,7 +128,7 @@
     "wf_682f3126-35d": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "plan",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 80,
@@ -141,7 +141,7 @@
     "wf_724308f2-deb": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "plan",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 62,
@@ -154,7 +154,7 @@
     "wf_a268a900-166": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "plan",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 108,
@@ -167,7 +167,7 @@
     "wf_aa06de8d-16f": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "triage",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 36,
@@ -180,7 +180,7 @@
     "wf_dce30ae0-cbc": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "define",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 108,
@@ -193,7 +193,7 @@
     "wf_f1f5c655-bad": {
       "session": "6910fa0e-7637-41b7-b12e-83ea28963359",
       "step": "plan",
-      "computedAt": "2026-10-23T13:12:01Z",
+      "computedAt": "2026-10-23T13:17:03Z",
       "models": {
         "claude-opus-5-5": {
           "input": 68,

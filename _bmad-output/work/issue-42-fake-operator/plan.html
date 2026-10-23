@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan gate: #42 Fake operator for automated tests (AD-9)</title>
+<style>
+:root {
+  --bg: #f5f6f4; --ink: #1f2421; --muted: #5d6762; --line: #d3d9d4;
+  --panel: #ffffff; --accent: #2f6f5e; --open: #a3620f;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816; --ink: #e2e7e3; --muted: #9ba59f; --line: #2c3430;
+    --panel: #1b201d; --accent: #7cc4ad; --open: #e0a24f;
+    color-scheme: dark;
+  }
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); padding: 0 16px; }
+main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 0 4rem; display: grid; gap: 1.8rem; }
+h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.25rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: grid; gap: .3rem; }
+section { display: grid; gap: .7rem; }
+.meta { color: var(--muted); font-size: .92rem; }
+.verdict { background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; padding: 1rem 1.2rem; display: grid; gap: .4rem; }
+.verdict strong { color: var(--accent); }
+.open { color: var(--open); font-weight: 600; }
+.wide { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+code { font-family: var(--mono); font-size: .88em; overflow-wrap: anywhere; }
+.flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .2rem .6rem; }
+</style>
+</head>
+<body>
+<main>
+<header style="display: grid; gap: .5rem">
+  <h1>Plan gate: #42 Fake operator for automated tests (AD-9)</h1>
+  <p class="meta">Branch <code>feat/42-fake-operator</code>. Reference: <code>_bmad-output/work/issue-42-fake-operator/plan.md</code>, <code>_bmad-output/work/issue-42-fake-operator/cold-start.md</code>, <code>_bmad-output/specs/spec-fake-operator/stories.yaml</code>, <code>_bmad-output/specs/spec-fake-operator/go-interfaces.md</code>, <code>_bmad-output/specs/spec-fake-operator/stories/</code>.</p>
+</header>
+<div class="verdict">
+  <strong>What you validate</strong>
+  <p>How the fake operator is built: seven stories (a trunk of three, then four leaves), the Go API between them, and what a builder still has to choose.</p>
+  <p class="meta">This page helps you understand; the reference files are what you validate or invalidate.</p>
+</div>
+<section>
+  <h2>1. Chosen approach</h2>
+  <p><strong>A. Layered trunk, then leaves</strong> (chosen by the author): the trunk builds the client, the fake API server and the engine; the leaves then add deletion and checks, causes, runtime and packaging in parallel. Each story covers one or two capabilities, with contracts between layers.</p>
+  <p>Set aside:</p>
+  <ul>
+    <li><strong>B. Vertical slices per kind</strong>: every story would touch <code>internal/kube</code>, <code>kubetest</code> and <code>cmd/fake-operator</code>, with the most shared packages between stories (pre-mortem R10) and blurred contracts.</li>
+    <li><strong>C. Three large stories</strong>: the middle story would hold all fake behavior and risk exhausting the builder's two-failure rule.</li>
+  </ul>
+  <p>Other choices: manifests written as JSON (author; AD-9 and the companion updated); time injected through a small <code>Clock</code> interface; randomness from an injected <code>math/rand/v2</code> source.</p>
+</section>
+
+<section>
+  <h2>2. Build order</h2>
+  <p>Trunk, one story at a time, each merged before the next:</p>
+  <div class="flow"><span class="step">1 internal/kube</span> → <span class="step">2 kubetest</span> → <span class="step">3 engine</span></div>
+  <p>Then the leaves, in parallel, after story 3:</p>
+  <div class="flow"><span class="step">4 deletion and checks</span><span class="step">5 causes</span><span class="step">6 runtime</span><span class="step">7 packaging</span></div>
+  <p>Checkpoints: story spec review before the build of stories 1 and 3 (done); a pause after story 3 is merged, before the leaves.</p>
+</section>
+
+<section>
+  <h2>3. Stories</h2>
+  <div class="wide">
+  <table>
+    <tr><th>#</th><th>Title</th><th>What it delivers</th><th>Story spec</th></tr>
+<tr><td>1</td><td>Kubernetes client internal/kube</td><td>CAP-1: AD-2 URL builder over the closed list, redacted <code>kube.Token</code>, list, get, merge patch and status patch with a caller-supplied token.</td><td><code>_bmad-output/specs/spec-fake-operator/stories/1-kubernetes-client.md</code></td></tr>
+<tr><td>2</td><td>Fake API server internal/kube/kubetest</td><td>CAP-2: a TLS <code>httptest</code> server behaving like the API server on what the fake relies on, each behavior's test citing its Kubernetes documentation URL.</td><td><code>_bmad-output/specs/spec-fake-operator/stories/2-fake-api-server.md</code></td></tr>
+<tr><td>3</td><td>Fake operator engine</td><td>CAP-3, CAP-7: one pass over the three kinds, lifecycle values, write discipline, and no-effect stubs for the leaves.</td><td><code>_bmad-output/specs/spec-fake-operator/stories/3-fake-operator-engine.md</code></td></tr>
+<tr><td>4</td><td>Deletion and operator checks</td><td>CAP-4, CAP-5: deletion rules, NamespaceRole, role, <code>project-id</code>, source, region and spec-list checks with the operator's messages.</td><td><code>_bmad-output/specs/spec-fake-operator/stories/4-deletion-and-operator-checks.md</code></td></tr>
+<tr><td>5</td><td>Causes by annotation</td><td>CAP-6: <code>outcome</code>, <code>message</code> and <code>source-version</code> annotations and their per-kind effects.</td><td><code>_bmad-output/specs/spec-fake-operator/stories/5-causes-by-annotation.md</code></td></tr>
+<tr><td>6</td><td>Runtime of the fake operator</td><td>CAP-8: polling at <code>FAKE_OPERATOR_STEP_DELAY</code>, token reread, start-up guards, <code>/healthz</code>, SIGTERM.</td><td><code>_bmad-output/specs/spec-fake-operator/stories/6-runtime.md</code></td></tr>
+<tr><td>7</td><td>Packaging and isolation</td><td>CAP-9: Dockerfile, <code>make build-fake-operator-image</code>, JSON manifests and RBAC, and the <code>tests/make</code> guard test.</td><td><code>_bmad-output/specs/spec-fake-operator/stories/7-packaging-and-isolation.md</code></td></tr>
+  </table>
+  </div>
+  <p>Stories 3, 4 and 5 carry the dispatch note: read scaleway-operator only at tag <code>scaleway-operator-v0.1.15</code> with <code>git show</code>, never the stale working tree.</p>
+</section>
+
+<section>
+  <h2>4. Contracts between stories</h2>
+  <p>The exact Go API and cross-story rules are in <code>_bmad-output/specs/spec-fake-operator/go-interfaces.md</code>, read by every story; it wins over a story spec on signatures and behavior.</p>
+  <ul>
+    <li><strong>1 → 2, 3, 6:</strong> <code>kube.Token</code>, the closed list <code>kube.Resource</code> with <code>Path</code> and <code>ParsePath</code>, <code>NewInCluster</code>, <code>List</code>, <code>Get</code>, <code>MergePatch</code>, <code>PatchStatus</code>, <code>*APIError</code> and the sentinel errors with their precedence.</li>
+    <li><strong>2 → 3 to 6:</strong> <code>kubetest.New</code>, <code>Put</code>, <code>Object</code>, <code>Delete</code>, <code>ExpectToken</code>, <code>Tokens</code>, <code>Requests</code>, <code>Fail</code>; Kubernetes <code>Status</code> error bodies, a global <code>resourceVersion</code> counter, lists sorted by namespace then name.</li>
+    <li><strong>3 → 4, 5, 6:</strong> <code>operator</code>, <code>kind</code>, <code>Clock</code>, <code>pass</code>, <code>readToken</code>, <code>writeStatus</code>, <code>setFinalizer</code>; the 8-step pass order; one file per leaf (<code>deletion.go</code>, <code>checks.go</code>, <code>causes.go</code>, <code>run.go</code>) holding a no-effect stub with a fixed signature.</li>
+    <li><strong>3 → 7:</strong> <code>./cmd/fake-operator</code> compiles; story 7 owns the Dockerfile, the build script, the Makefile target, the JSON manifests and the <code>tests/make</code> test.</li>
+    <li><strong>Shared package:</strong> stories 4, 5 and 6 share <code>cmd/fake-operator</code> with story 3; frozen tests of a leaf may not compile before it is built, so the runner map and set-aside rules of #48 and #50 apply. Test names carry a per-story prefix.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5. Useful items of the last cold-start round</h2>
+  <p>Round 3 (<code>wf_682f3126-35d</code>) was green: no blocking item. Rounds 1 and 2 were red; their fixes are in <code>_bmad-output/specs/spec-fake-operator/go-interfaces.md</code>. Useful items left, per story (<code>_bmad-output/work/issue-42-fake-operator/cold-start.md</code>):</p>
+<h3 style="font-size:1rem;margin:.4rem 0 0"><code>1-kubernetes-client.md</code></h3>
+<ul>
+<li>Return values of String(), Kind() and Namespaced() for a Resource outside the closed list (e.g. Resource(0) or Resource(99))</li>
+<li>How the http.Client handles redirects (CheckRedirect) and proxies (Transport.Proxy: none, or ProxyFromEnvironment)</li>
+<li>Whether sentinel errors are returned bare or wrapped with context (e.g. fmt.Errorf("%w: ..."))</li>
+</ul>
+<h3 style="font-size:1rem;margin:.4rem 0 0"><code>2-fake-api-server.md</code></h3>
+<ul>
+<li>How the token is taken from the Authorization header: is only <code>Bearer TOKEN</code> accepted, and what is recorded and answered for a header with another scheme (e.g. <code>Basic x</code>) or <code>Bearer</code> with an empty value?</li>
+<li>Value of <code>metadata.resourceVersion</code> in a list response before any change. The global counter "starts at 1": is the current value "0" or "1" when the store is empty?</li>
+<li>Definition of a no-op patch: is "changes nothing" a deep comparison of the merged <code>map[string]any</code>, where <code>json.Number</code> "1" and "1.0" count as different? Does it run after the ignored keys are dropped (status on the object endpoint, metadata.name, namespace and resourceVersion)?</li>
+<li>Content-Type matching for 415: an exact string match, or the media type parsed so that parameters such as <code>; charset=utf-8</code> are accepted?</li>
+<li>Contradiction between plan.md and go-interfaces.md on adding a finalizer while <code>deletionTimestamp</code> is set. The plan's pitfalls say "kubetest refuses it too"; the round-2 clarification (D10) says it does not refuse it.</li>
+<li>Field list of <code>Request</code>: the story spec gives <code>{Method, RequestURI, ContentType, Body}</code>, and go-interfaces.md adds <code>Token string</code>.</li>
+<li>Which path <code>Fail</code> matches <code>pathPrefix</code> against: the decoded <code>r.URL.Path</code> or the escaped path or RequestURI.</li>
+<li>Whether <code>generation</code> increments when <code>spec</code> changes on kinds that are not custom resources (Namespace, Secret, Deployment, CRD), and what changes for a kind that has no <code>spec</code>.</li>
+</ul>
+<h3 style="font-size:1rem;margin:.4rem 0 0"><code>3-fake-operator-engine.md</code></h3>
+<ul>
+<li>Which document wins where the story spec and go-interfaces.md disagree on things other than signatures. The story gives a 7-step pass order and has main.go call signal.Notify on SIGTERM only. go-interfaces.md gives an 8-step order, with revokedBeforeFinalizer plus applyCause between checkBefore and the finalizer, and has main.go notify SIGTERM and SIGINT. It also adds pieces the story does not mention: an operator.token field, newOperator, readToken, writeStatus, setFinalizer, defaultStatus, currentStatus, and the revokedBeforeFinalizer stub in causes.go.</li>
+<li>The full status written by a ScalewaySecret version push (Synced plus generation change): is error_message written as null, and is current_version still sent as a JSON integer (last_synced_resource_version is already said to be always null)?</li>
+<li>Instance creation pass: the value of public_ip, and LoadBalancer creation pass: the values of vip_address and created_at, when the object already has a status (for example after an Error written at creation by story 4 or 5). Are they written as null or kept?</li>
+<li>Whether this story's change must add or update docs/migrations/next/42.md. AGENTS.md requires it for every PR; the story's Code Map says 'Touch nothing else'.</li>
+</ul>
+<h3 style="font-size:1rem;margin:.4rem 0 0"><code>4-deletion-and-operator-checks.md</code></h3>
+<ul>
+<li>Names of the annotation constants story 4 declares (outcome and message keys), and confirmation that the <code>fake.scaleway-manager.test/message</code> key also gets a story-4-local constant</li>
+<li>How checkAfter gets the role (Instance, LoadBalancer) and the namespace annotation (ScalewaySecret): a second GET in checkAfter, or reuse of what checkBefore read; and what a read failure there writes</li>
+<li>Behavior when the <code>project-id</code> annotation is present but empty</li>
+<li>Whether the Rust <code>spec.name cannot be empty</code> check (reconcilers.rs validate_spec, Instance) is deliberately left out of specListsValid</li>
+<li>Handling of an absent or non-string <code>spec.region</code>, <code>spec.zone</code>, <code>spec.instance_type</code> or <code>spec.lb_type</code></li>
+<li>The other status fields on a Locked deletion (TerminationBlocked)</li>
+</ul>
+<h3 style="font-size:1rem;margin:.4rem 0 0"><code>5-causes-by-annotation.md</code></h3>
+<ul>
+<li>Whether story 5 edits operator.go at all</li>
+<li>Which status fields are kept when an Error is written for a refused cause, an invalid source-version, or Revoked without scaleway_id</li>
+<li>Exact parsing rule for a 'positive integer' source-version</li>
+</ul>
+<h3 style="font-size:1rem;margin:.4rem 0 0"><code>6-runtime.md</code></h3>
+<ul>
+<li>Whether <code>operator.pass</code> returns nil when one or more per-kind <code>List</code> calls fail, i.e. whether a non-nil return from <code>pass</code> always means 'failed before listing' (token read).</li>
+<li>The log record for a pass error in the loop: <code>msg</code> text, level and attributes.</li>
+<li>What happens when the health server's <code>Shutdown</code> exceeds its 5 s timeout or returns an error during SIGTERM handling (exit code, log message, whether <code>Close</code> is called).</li>
+<li>What to do when the health server's <code>Serve</code> fails after a successful bind (log and exit 1, or keep looping).</li>
+<li>Behavior when a signal arrives during the start sequence, before the loop begins (for example while the guard <code>List</code> is running).</li>
+</ul>
+<h3 style="font-size:1rem;margin:.4rem 0 0"><code>7-packaging-and-isolation.md</code></h3>
+<ul>
+<li>Names of the manifest objects: ServiceAccount, ClusterRole, ClusterRoleBinding, Role, RoleBinding, Deployment, container name, pod labels/selector, and confirmation that the ServiceAccount and Deployment live in namespace <code>fake-operator</code></li>
+<li>Who writes <code>tests/make/fake_operator_test.go</code>: the builder (Tasks lists it) or the frozen rails tests</li>
+<li>Exact place of the new CI step in the <code>build-image</code> job: right after <code>- run: make build-image</code> (before 'Run the image tests') or after the image-tests step</li>
+</ul>
+</section>
+
+<section>
+  <h2>6. Risks and open points</h2>
+  <ul>
+    <li>R10, shared package <code>cmd/fake-operator</code>: frozen tests of stories 4, 5 and 6 break its compilation until each is merged; handled by the runner map and set-aside rules.</li>
+    <li>Merge conflicts between leaves: each leaf owns its own files; story 3's stubs fix the signatures.</li>
+    <li>Liveness settings versus the step delay: the probe's <code>periodSeconds × failureThreshold</code> (10 s × 3) must exceed 3 × the delay (6 s by default).</li>
+    <li>Go 1.27.3 (2026-10-19) fixes <code>crypto/x509</code> while the project pins 1.27.2: a separate tooling PR, outside #42.</li>
+    <li>MemPalace was not searched during Plan: the server was not connected in this session.</li>
+    <li><span class="open">Open:</span> the round 3 useful items above are left to the builders.</li>
+  </ul>
+</section>
+
+</main>
+</body>
+</html>
