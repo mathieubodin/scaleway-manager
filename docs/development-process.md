@@ -531,7 +531,7 @@ A loop that does not converge signals a contradictory spec or a bad split.
 The Gherkin runner comes with #15, the manual cluster target with #16, and the fake operator with its own issue (AD-9 of the architecture spine); the rules below already apply.
 
 - No automated test may cause cost at Scaleway; automated tests never leave the local machine.
-- A fake local operator, used only by automated tests, writes the CR `status` (Pending, Syncing, Synced, Error, TerminationBlocked) without calling Scaleway. The real operator is not installed in the test cluster.
+- A fake local operator, used only by automated tests, writes the CR `status` (Pending, Syncing, Synced, Error, TerminationBlocked, Revoked) without calling Scaleway. The real operator is not installed in the test cluster.
 - Gherkin scenarios tagged `@manual` touch real Scaleway: never run automatically, played by the human. The others run automatically against the fake operator.
 - A `make` target run by the human builds the image and the Helm chart, creates a kind cluster and installs the real operator and the local chart, for manual tests. It runs no scenario.
 - The fake operator may drift from the real one; `@manual` scenarios remain the reality check.

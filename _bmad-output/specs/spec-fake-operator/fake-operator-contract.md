@@ -112,7 +112,7 @@ Other annotations and values:
 - **Manifests:** JSON files in `tests/cluster/fake-operator/`, `imagePullPolicy: Never`.
   - Namespace `fake-operator`.
   - ServiceAccount.
-  - ClusterRole and ClusterRoleBinding: `get` and `list` on `namespaces` and `namespaceroles`; `list` and `patch` on `instances`, `loadbalancers`, `scalewaysecrets` and their `/status`.
+  - ClusterRole and ClusterRoleBinding: `get` and `list` on `namespaces` and `namespaceroles`; `list` and `patch` on `instances`, `loadbalancers` and `scalewaysecrets`; `patch` only on their `/status`.
   - Role and RoleBinding in `scaleway-system`: `list` on `deployments`.
   - Deployment with `automountServiceAccountToken: false`, the projected volume and a liveness probe on `/healthz`.
 - **No access to Secrets.**

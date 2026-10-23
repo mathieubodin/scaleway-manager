@@ -196,7 +196,7 @@ flowchart LR
     - The fake rereads the token at each pass.
     - RBAC:
       - `get` and `list` on `namespaces` and `namespaceroles`;
-      - `list` and `patch` on the three other kinds and on their `/status`;
+      - `list` and `patch` on the three other kinds, and `patch` only on their `/status`;
       - in `scaleway-system` only, `list` on `deployments`.
 
       The fake has no access to Secrets.

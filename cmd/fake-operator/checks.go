@@ -62,11 +62,11 @@ func (o *operator) checkBefore(ctx context.Context, k kind, obj map[string]any) 
 }
 
 // checkAfter runs the checks after the finalizer: the read-only role while
-// scaleway_id is null (Instance, LoadBalancer); the source, then the
+// scaleway_id is null or empty (Instance, LoadBalancer); the source, then the
 // project-id annotation at creation (ScalewaySecret).
 func (o *operator) checkAfter(ctx context.Context, k kind, obj map[string]any) (failed bool, err error) {
 	ns := metaString(obj, "namespace")
-	created := currentStatus(k, obj)["scaleway_id"] != nil
+	created := hasScalewayID(currentStatus(k, obj))
 	if k.resource == kube.ScalewaySecrets {
 		spec, _ := obj["spec"].(map[string]any)
 		src, _ := spec["source"].(map[string]any)
