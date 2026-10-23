@@ -38,4 +38,4 @@ When the PR adds a job to `.github/workflows/pr-checks.yml`, remind the user tha
 
 ## 5. After the PR
 
-Fixes after the PR stay in the `deliver` step: `make cost` before each commit, push, and `make evidence` again when a check changed. When this session stops working on the PR, append the `step-end` of `deliver`.
+Fixes after the PR stay in the `deliver` step: `make cost` before each commit, push, and `make evidence` again when a check changed. When this session stops working on the PR, append the `step-end` of `deliver`. Once the PR is merged, that `step-end` is never committed: it stays local until the next work restores it (`start.md` and `resume.md`, section 1).

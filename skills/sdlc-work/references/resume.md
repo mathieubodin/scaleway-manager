@@ -5,7 +5,7 @@
 ## 1. Before anything
 
 - Apart from the commit above, no tracked file may be changed outside this work's folder (`git status --porcelain --untracked-files=no`): the memlog and `cost.json` of the work are often uncommitted between two commits. Otherwise tell the user what is uncommitted and stop.
-- Find the session id. If the current branch is another work's branch with a step of this session still open in its memlog, append that `step-end` first (SKILL.md, "One open step per session"), then commit that work's memlog and `cost.json` on its branch (`chore(process): record the step of #<that n>`, with `make cost ISSUE=<that n>` first), since switching branches would refuse them.
+- Find the session id. If the current branch is another work's branch with a step of this session still open in its memlog, append that `step-end` first (SKILL.md, "One open step per session"), then commit that work's memlog and `cost.json` on its branch (`chore(process): record the step of #<that n>`, with `make cost ISSUE=<that n>` first), since switching branches would refuse them. When that work's PR is already merged (`gh pr list --head <branch> --state merged --json url` is not empty), commit nothing: restore both instead (`git restore <memlog> <cost.json>`); the `cost.json` at the merge stays the final figure (`docs/token-cost-tracking.md`).
 
 ## 2. Find the work branch
 

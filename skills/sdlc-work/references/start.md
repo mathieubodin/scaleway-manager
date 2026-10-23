@@ -4,7 +4,7 @@ From an idea to an issue with its route, a work branch and a process memlog (`do
 
 ## 1. Before anything
 
-- No tracked file may be changed (`git status --porcelain --untracked-files=no` empty), except the memlog and `cost.json` of the work this session is leaving: after the `step-end` below, commit those two on that work's branch (`chore(process): record the step of #<n>`, with `make cost` first as for every commit), since switching branches would refuse them. Any other change: tell the user what is uncommitted and stop.
+- No tracked file may be changed (`git status --porcelain --untracked-files=no` empty), except the memlog and `cost.json` of the work this session is leaving: after the `step-end` below, commit those two on that work's branch (`chore(process): record the step of #<n>`, with `make cost` first as for every commit), since switching branches would refuse them. When that work's PR is already merged (`gh pr list --head <branch> --state merged --json url` is not empty), commit nothing: once `since` is noted below, restore both (`git restore <memlog> <cost.json>`); the `cost.json` at the merge stays the final figure (`docs/token-cost-tracking.md`). Any other change: tell the user what is uncommitted and stop.
 - If the current branch is a work branch whose memlog has a `step-start` of this session without its `step-end`, append that `step-end` there first (SKILL.md, "One open step per session"). Note `since`: the time of the last `step-end` of this session in that memlog; none when this session has not worked on another work.
 - Find the session id and note the time `t0` (UTC) at which this triage starts.
 
