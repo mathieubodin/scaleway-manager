@@ -1,7 +1,7 @@
 {
   "issue": 47,
   "route": "short",
-  "tokens": 484368,
+  "tokens": 749602,
   "totals": {
     "steps": {
       "change": {
@@ -23,6 +23,14 @@
           "cacheCreation": 248657,
           "cacheRead": 8869618
         }
+      },
+      "review": {
+        "claude-sonnet-5-5": {
+          "input": 58,
+          "output": 9423,
+          "cacheCreation": 255753,
+          "cacheRead": 2624448
+        }
       }
     },
     "models": {
@@ -39,10 +47,10 @@
         "cacheRead": 204177
       },
       "claude-sonnet-5-5": {
-        "input": 80,
-        "output": 27179,
-        "cacheCreation": 248657,
-        "cacheRead": 8869618
+        "input": 138,
+        "output": 36602,
+        "cacheCreation": 504410,
+        "cacheRead": 11494066
       }
     },
     "unattributed": {
@@ -51,12 +59,18 @@
         "output": 8065,
         "cacheCreation": 46662,
         "cacheRead": 1332956
+      },
+      "claude-sonnet-5-5": {
+        "input": 50,
+        "output": 14563,
+        "cacheCreation": 22833,
+        "cacheRead": 6538959
       }
     }
   },
   "sessions": {
     "5d70359f-547d-44fd-9e0f-4d8f883010be": {
-      "computedAt": "2026-10-23T23:05:15Z",
+      "computedAt": "2026-10-23T23:18:09Z",
       "steps": {
         "change": {
           "claude-opus-5-5": {
@@ -77,6 +91,14 @@
             "cacheCreation": 248657,
             "cacheRead": 8869618
           }
+        },
+        "review": {
+          "claude-sonnet-5-5": {
+            "input": 16,
+            "output": 4571,
+            "cacheCreation": 12769,
+            "cacheRead": 1931415
+          }
         }
       },
       "unattributed": {
@@ -85,9 +107,29 @@
           "output": 8065,
           "cacheCreation": 46662,
           "cacheRead": 1332956
+        },
+        "claude-sonnet-5-5": {
+          "input": 50,
+          "output": 14563,
+          "cacheCreation": 22833,
+          "cacheRead": 6538959
         }
       }
     }
   },
-  "runs": {}
+  "runs": {
+    "wf_773995e0-119": {
+      "session": "5d70359f-547d-44fd-9e0f-4d8f883010be",
+      "step": "review",
+      "computedAt": "2026-10-23T23:18:09Z",
+      "models": {
+        "claude-sonnet-5-5": {
+          "input": 42,
+          "output": 4852,
+          "cacheCreation": 242984,
+          "cacheRead": 693033
+        }
+      }
+    }
+  }
 }
