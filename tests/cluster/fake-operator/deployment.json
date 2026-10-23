@@ -1,0 +1,66 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "fake-operator",
+    "namespace": "fake-operator",
+    "labels": { "app.kubernetes.io/name": "fake-operator" }
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": { "app.kubernetes.io/name": "fake-operator" }
+    },
+    "template": {
+      "metadata": { "labels": { "app.kubernetes.io/name": "fake-operator" } },
+      "spec": {
+        "serviceAccountName": "fake-operator",
+        "automountServiceAccountToken": false,
+        "securityContext": { "runAsNonRoot": true, "runAsUser": 65532 },
+        "containers": [
+          {
+            "name": "fake-operator",
+            "image": "scaleway-manager-fake-operator:local",
+            "imagePullPolicy": "Never",
+            "env": [{ "name": "FAKE_OPERATOR_STEP_DELAY", "value": "2s" }],
+            "ports": [{ "name": "health", "containerPort": 8081 }],
+            "livenessProbe": {
+              "httpGet": { "path": "/healthz", "port": 8081 },
+              "periodSeconds": 10,
+              "failureThreshold": 3
+            },
+            "securityContext": {
+              "runAsNonRoot": true,
+              "readOnlyRootFilesystem": true,
+              "allowPrivilegeEscalation": false,
+              "capabilities": { "drop": ["ALL"] }
+            },
+            "volumeMounts": [
+              {
+                "name": "kube-api-access",
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "kube-api-access",
+            "projected": {
+              "sources": [
+                { "serviceAccountToken": { "path": "token" } },
+                {
+                  "configMap": {
+                    "name": "kube-root-ca.crt",
+                    "items": [{ "key": "ca.crt", "path": "ca.crt" }]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

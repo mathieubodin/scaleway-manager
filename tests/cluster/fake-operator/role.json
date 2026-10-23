@@ -1,0 +1,8 @@
+{
+  "apiVersion": "rbac.authorization.k8s.io/v1",
+  "kind": "Role",
+  "metadata": { "name": "fake-operator", "namespace": "scaleway-system" },
+  "rules": [
+    { "apiGroups": ["apps"], "resources": ["deployments"], "verbs": ["list"] }
+  ]
+}
