@@ -13,6 +13,11 @@ export const meta = {
 // question; a vote whose agent died counts as a missing "yes".
 const VOTES = 3;
 const MIN_YES = 2;
+// The judges (the vote agents, not the agent that lists the criteria) run on a pinned
+// model and a high reasoning effort. The full model ID pins Opus 5.5; the alias `opus`
+// moves to the newest Opus (https://code.claude.com/docs/en/model-config.md).
+const JUDGE_MODEL = "claude-opus-5-5";
+const JUDGE_EFFORT = "high";
 
 const CRITERIA = {
   type: "object",
@@ -62,6 +67,8 @@ const results = await pipeline(criteria, (c) =>
               `You judge one acceptance criterion of the spec ${specPath}, alone. Criterion ${c.id}: "${c.text}". Question: ${q} Answer yes or no from the criterion's own wording (read the spec only for context), with a one-sentence reason.`,
               {
                 schema: VOTE,
+                model: JUDGE_MODEL,
+                effort: JUDGE_EFFORT,
                 phase: "Votes",
                 label: `${c.id} q${questions.indexOf(q) + 1} v${i + 1}`,
               },
