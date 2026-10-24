@@ -99,7 +99,7 @@ Project v2 (<https://github.com/users/mathieubodin/projects/4>) statuses:
 | File | Content |
 | --- | --- |
 | `.memlog.md` | Process memlog: route, steps, triage answers, gate decisions, workflow runs, results of the called skills |
-| `define-notes.md` | Long route: questions and answers from Parallax, Premortem and Research sections |
+| `define-notes.md` | Long route: questions and answers from Parallax, Premortem and Research sections, and the acquired criteria of the Spec-lint section |
 | `plan.md` | Long route: plan of this work |
 | `cold-start.md` | Long route: useful items of the last cold-start round, rewritten by `sdlc-work` at each round, shown on `plan.html` |
 | `bug-report.md` | Bug route: written from the issue at triage, enriched at each builder failure |
@@ -153,14 +153,14 @@ On another machine the memlog is available from the last gate commit; without it
 - Pre-mortem with `bmad-advanced-elicitation`: "three months from now the project failed, write the postmortem"; every risk becomes a question; `sdlc-work` writes the risks to `define-notes.md` itself. Risks are sorted like the parallax divergences, important ones asked one at a time, details shown as one list of proposed answers.
 - Answers go to `define-notes.md`. When it holds an external factual question without answer, `sdlc-work` proposes research (`bmad-deep-recon`); the human decides, and a skipped research is recorded.
 - `bmad-spec` writes `SPEC.md` from `forged-idea.md` and `define-notes.md`, scope with non-goals and success signal included. Every acceptance criterion names its verification method.
-- Spec-lint loop: `sdlc-spec-lint` asks each atomic question of each acceptance criterion to 3 independent agents; a criterion fails with fewer than 2 "yes" out of 3 on a question, and a spec without criteria fails as a whole. Each failing criterion becomes a question to the human, the answer goes to `define-notes.md`, `bmad-spec` updates `SPEC.md`, and spec-lint runs again. No gate page while it is red; alert to the human after 3 rounds. A manual `bmad-review` with the `spec-lint` lens asks the same questions once.
+- Spec-lint loop: `sdlc-spec-lint` asks each atomic question of each acceptance criterion to 3 independent agents; a criterion fails with fewer than 2 "yes" out of 3 on a question, and a spec without criteria fails as a whole. After each round, `sdlc-work` records each criterion that passed in `define-notes.md`, section "Spec-lint", as `- <id>: acquired (run <run id>): <text>`, with the criterion text. `sdlc-work` passes the work folder to `sdlc-spec-lint`, which reads these lines in `define-notes.md`; the agent that lists the criteria does not list an acquired criterion again unless its text changed. Each failing criterion becomes a question to the human, the answer goes to `define-notes.md`, `bmad-spec` updates `SPEC.md`, and spec-lint runs again. No gate page while it is red; alert to the human after 3 rounds. A manual `bmad-review` with the `spec-lint` lens asks the same questions once.
 
 Spec-lint questions are defined once in `_bmad/custom/bmad-review.toml` (`spec_lint_questions`, used by the `spec-lint` lens and passed to `sdlc-spec-lint`):
 
 1. Does this criterion say how we will verify that it is met?
 2. Does this criterion have only one possible reading?
 
-A criterion passes with at least 2 "yes" out of 3 independent votes for each question; a vote whose agent died counts as a missing "yes" (`.claude/workflows/sdlc-spec-lint.js`).
+A criterion passes with at least 2 "yes" out of 3 independent votes for each question; a vote whose agent died counts as a missing "yes". The voting agents run on the model `claude-opus-5-5` with the reasoning effort `high`; the agent that lists the criteria runs on `claude-sonnet-5-5` with `high`, and the agent that reads `define-notes.md` on `claude-haiku-5-5` with `medium` (`.claude/workflows/sdlc-spec-lint.js`).
 
 ### Gates
 
